@@ -9,12 +9,11 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 public class PropertyFileRecommendationProvider extends AbstractRecommendationProvider {
     private Properties recommendations;
-    private Map<Pattern, String> wildcards;
+    private Map<Pattern, String> globs;
 
     @Override
     public String getVersion(String org, String name) {
@@ -33,20 +32,20 @@ public class PropertyFileRecommendationProvider extends AbstractRecommendationPr
         String version = recommendations.getProperty(key);
         if(version != null) return version;
 
-        if(wildcards == null) {
-            wildcards = new HashMap<>();
+        if(globs == null) {
+            // initialize glob cache
+            globs = new HashMap<>();
             for (String name : recommendations.stringPropertyNames()) {
                 if(name.contains("*")) {
-                    wildcards.put(Pattern.compile(name.replaceAll("\\*", ".*?")),
+                    globs.put(Pattern.compile(name.replaceAll("\\*", ".*?")),
                             (String) recommendations.get(name));
                 }
             }
         }
 
-        for (Map.Entry<Pattern, String> wildcard: wildcards.entrySet()) {
-            if(wildcard.getKey().matcher(key).matches())
-                return wildcard.getValue();
-        }
+        for (Map.Entry<Pattern, String> glob: globs.entrySet())
+            if(glob.getKey().matcher(key).matches())
+                return glob.getValue();
 
         return null;
     }
@@ -70,6 +69,7 @@ public class PropertyFileRecommendationProvider extends AbstractRecommendationPr
             this.reader = reader;
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public int read(char[] cbuf, int off, int len) throws IOException {
             int pos = reader.read(cbuf, off, len);

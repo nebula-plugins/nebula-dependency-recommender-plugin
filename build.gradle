@@ -27,6 +27,6 @@ repositories {
 
 dependencies {
     compile gradleApi()
-    compile 'org.codehaus.groovy:groovy-all:2.3.3'
+    testCompile 'org.codehaus.groovy:groovy-all:2.3.3'
     testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
 }

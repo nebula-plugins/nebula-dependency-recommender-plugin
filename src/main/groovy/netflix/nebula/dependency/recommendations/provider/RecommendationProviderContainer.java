@@ -1,7 +1,5 @@
-package netflix.nebula.dependency.recommendations;
+package netflix.nebula.dependency.recommendations.provider;
 
-import netflix.nebula.dependency.recommendations.provider.PropertyFileRecommendationProvider;
-import netflix.nebula.dependency.recommendations.provider.RecommendationProvider;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.internal.ConfigureByMapAction;
@@ -10,14 +8,14 @@ import org.gradle.api.internal.DefaultNamedDomainObjectList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RecommendationProviderExtension extends DefaultNamedDomainObjectList<RecommendationProvider> {
+public class RecommendationProviderContainer extends DefaultNamedDomainObjectList<RecommendationProvider> {
     private final Action<? super RecommendationProvider> addLastAction = new Action<RecommendationProvider>() {
         public void execute(RecommendationProvider r) {
-            RecommendationProviderExtension.super.add(r);
+            RecommendationProviderContainer.super.add(r);
         }
     };
 
-    public RecommendationProviderExtension() {
+    public RecommendationProviderContainer() {
         super(RecommendationProvider.class, null, new RecommendationProviderNamer());
     }
 
