@@ -6,48 +6,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 public class PropertyFileRecommendationProvider extends AbstractRecommendationProvider {
     private Properties recommendations;
-    private Map<Pattern, String> globs;
 
     @Override
     public String getVersion(String org, String name) {
         if(recommendations == null)
             throw new InvalidUserDataException("No properties file was provided");
         return resolveVersion(versionOf(org + "/" + name));
-    }
-
-    private String resolveVersion(String value) {
-        if(value == null) return null;
-        if(!value.startsWith("$")) return value;
-        return resolveVersion(versionOf(value.substring(1)));
-    }
-
-    private String versionOf(String key) {
-        String version = recommendations.getProperty(key);
-        if(version != null) return version;
-
-        if(globs == null) {
-            // initialize glob cache
-            globs = new HashMap<>();
-            for (String name : recommendations.stringPropertyNames()) {
-                if(name.contains("*")) {
-                    globs.put(Pattern.compile(name.replaceAll("\\*", ".*?")),
-                            (String) recommendations.get(name));
-                }
-            }
-        }
-
-        for (Map.Entry<Pattern, String> glob: globs.entrySet())
-            if(glob.getKey().matcher(key).matches())
-                return glob.getValue();
-
-        return null;
     }
 
     public void setFile(File file) {
@@ -57,6 +26,16 @@ public class PropertyFileRecommendationProvider extends AbstractRecommendationPr
         } catch (IOException e) {
             throw new InvalidUserDataException(String.format("Properties file %s does not exist", file.getAbsolutePath()));
         }
+    }
+
+    @Override
+    protected Collection<String> propertyNames() {
+        return recommendations.stringPropertyNames();
+    }
+
+    @Override
+    protected String propertyValue(String name) {
+        return recommendations.getProperty(name);
     }
 
     /**

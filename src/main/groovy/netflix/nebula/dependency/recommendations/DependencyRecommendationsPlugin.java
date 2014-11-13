@@ -27,10 +27,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                         conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
                             @Override
                             public void execute(DependencyResolveDetails details) {
-                                RecommendationProviderContainer providerContainer = (RecommendationProviderContainer) project.getExtensions().getByName("recommendationProvider");
-
                                 if (StringUtils.isBlank(details.getRequested().getVersion())) {
-                                    for (RecommendationProvider provider : providerContainer) {
+                                    for (RecommendationProvider provider : project.getExtensions().getByType(RecommendationProviderContainer.class)) {
                                         String version = provider.getVersion(details.getRequested().getGroup(),
                                                 details.getRequested().getName());
                                         if (version != null) {

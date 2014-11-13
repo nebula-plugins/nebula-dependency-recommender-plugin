@@ -1,7 +1,9 @@
 package netflix.nebula.dependency.recommendations.provider;
 
+import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
+import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
 
@@ -25,7 +27,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         }
     }
 
-    public <T extends RecommendationProvider> T addProvider(T provider, Action<? super T> configureAction) {
+    public <T extends RecommendationProvider> T add(T provider, Action<? super T> configureAction) {
         configureAction.execute(provider);
         assertCanAdd(provider.getName());
         addLastAction.execute(provider);
@@ -34,6 +36,10 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public PropertyFileRecommendationProvider propertiesFile(Map<String, ?> args) {
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
-        return addProvider(new PropertyFileRecommendationProvider(), new ConfigureByMapAction<PropertyFileRecommendationProvider>(modifiedArgs));
+        return add(new PropertyFileRecommendationProvider(), new ConfigureByMapAction<PropertyFileRecommendationProvider>(modifiedArgs));
+    }
+
+    public PropertyFileRecommendationProvider propertiesFile(Closure closure) {
+        return add(new PropertyFileRecommendationProvider(), new ClosureBackedAction<PropertyFileRecommendationProvider>(closure));
     }
 }
