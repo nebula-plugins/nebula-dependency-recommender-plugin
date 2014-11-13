@@ -5,7 +5,7 @@ import org.gradle.api.InvalidUserDataException;
 import java.util.Collection;
 import java.util.Map;
 
-public class FixedRecommendationProvider extends AbstractRecommendationProvider {
+public class MapRecommendationProvider extends AbstractRecommendationProvider {
     private Map<String, String> map;
 
     @Override

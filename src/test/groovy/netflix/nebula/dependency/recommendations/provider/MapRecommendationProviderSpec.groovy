@@ -1,15 +1,13 @@
 package netflix.nebula.dependency.recommendations.provider
 
 import org.gradle.api.InvalidUserDataException
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class FixedRecommendationProviderSpec extends Specification {
-    FixedRecommendationProvider provider
+class MapRecommendationProviderSpec extends Specification {
+    MapRecommendationProvider provider
 
     def setup() {
-        provider = new FixedRecommendationProvider()
+        provider = new MapRecommendationProvider()
     }
 
     def 'attempting to access a recommendation when no map was provided throws exception'() {
