@@ -56,10 +56,18 @@ class FileBasedRecommendationProviderSpec extends Specification {
         def sampleFile = new File(sample, 'recommendations-1.0.txt')
         sampleFile << 'test'
 
-        project.repositories { maven { url repo } }
         recommender.project = project
 
-        when:
+        when: // maven based repository
+        project.repositories { maven { url repo } }
+        recommender.setModule('sample:recommendations:1.0@txt')
+
+        then:
+        recommender.input.text == 'test'
+
+        when: // ivy based repository
+        project.repositories.clear()
+        project.repositories { ivy { url repo } }
         recommender.setModule('sample:recommendations:1.0@txt')
 
         then:
