@@ -104,19 +104,9 @@ public abstract class FileBasedRecommendationProvider extends AbstractRecommenda
             @Override
             public InputStream getInputStream() throws Exception {
                 // create a temporary configuration to resolve the file
-                String confName = "recommendations" + UUID.randomUUID();
-                Configuration conf = project.getConfigurations().create(confName);
-                project.getDependencies().add(confName, dependencyNotation);
-
-                File file = project
-                    .getConfigurations().getByName(confName)
-                    .getResolvedConfiguration()
-                    .getResolvedArtifacts()
-                    .iterator().next().getFile();
-
-                project.getConfigurations().remove(conf);
-
-                return new FileInputStream(file);
+                Configuration conf = project.getConfigurations().detachedConfiguration(
+                        project.getDependencies().create(dependencyNotation));
+                return new FileInputStream(conf.resolve().iterator().next());
             }
         };
         return inputProvider;
