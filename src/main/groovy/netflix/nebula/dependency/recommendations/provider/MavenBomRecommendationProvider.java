@@ -22,14 +22,6 @@ public class MavenBomRecommendationProvider extends FileBasedRecommendationProvi
         super(project);
     }
 
-//    def request = new DefaultModelBuildingRequest()
-//    request.setModelSource(new FileModelSource(file))
-//    request.modelResolver = new StandardModelResolver()
-//    def result = modelBuilder.build(request)
-//    result.effectiveModel.dependencyManagement.dependencies.each { dependency ->
-//            versions["$dependency.groupId:$dependency.artifactId" as String] = dependency.version
-//    }
-
     @Override
     public String getVersion(String org, String name) throws Exception {
         if(recommendations == null) {
@@ -60,12 +52,12 @@ public class MavenBomRecommendationProvider extends FileBasedRecommendationProvi
 
     @Override
     protected Collection<String> propertyNames() {
-        return null;
+        throw new UnsupportedOperationException("Maven BOMs do not support recursive references");
     }
 
     @Override
     protected String propertyValue(String name) {
-        return null;
+        throw new UnsupportedOperationException("Maven BOMs do not support recursive references");
     }
 
     private static class ProjectPropertiesModelInterpolator extends StringSearchModelInterpolator {
