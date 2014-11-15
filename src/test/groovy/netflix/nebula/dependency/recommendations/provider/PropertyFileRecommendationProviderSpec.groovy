@@ -1,6 +1,7 @@
 package netflix.nebula.dependency.recommendations.provider
 
-import org.gradle.api.InvalidUserDataException
+import org.gradle.api.Project
+import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -8,28 +9,15 @@ import spock.lang.Specification
 class PropertyFileRecommendationProviderSpec extends Specification {
     @Rule TemporaryFolder projectDir
 
+    Project project
     PropertyFileRecommendationProvider provider
     File propFile
 
     def setup() {
+        project = ProjectBuilder.builder().build()
+        project.apply plugin: 'java'
         propFile = projectDir.newFile('recommendations.properties')
-        provider = new PropertyFileRecommendationProvider()
-    }
-
-    def 'attempting to load from a file that does not exist throws exception'() {
-        when:
-        new PropertyFileRecommendationProvider(file: new File('doesnotexist.properties'))
-
-        then:
-        thrown(InvalidUserDataException)
-    }
-
-    def 'attempting to access a recommendation when no property file was provided throws exception'() {
-        when:
-        provider.getVersion('test', 'test')
-
-        then:
-        thrown(InvalidUserDataException)
+        provider = new PropertyFileRecommendationProvider(null)
     }
 
     def 'exact match recommendations are provided'() {

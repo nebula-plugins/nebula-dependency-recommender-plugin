@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-abstract class AbstractRecommendationProvider implements RecommendationProvider {
+public abstract class AbstractRecommendationProvider implements RecommendationProvider {
     protected String name;
     protected Map<Pattern, String> globs;
 

@@ -1,31 +1,27 @@
 package netflix.nebula.dependency.recommendations.provider;
 
-import org.gradle.api.InvalidUserDataException;
+import org.gradle.api.Project;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collection;
 import java.util.Properties;
 
-public class PropertyFileRecommendationProvider extends AbstractRecommendationProvider {
+public class PropertyFileRecommendationProvider extends FileBasedRecommendationProvider {
     private Properties recommendations;
 
-    @Override
-    public String getVersion(String org, String name) {
-        if(recommendations == null)
-            throw new InvalidUserDataException("No properties file was provided");
-        return resolveVersion(versionOf(org + "/" + name));
+    public PropertyFileRecommendationProvider(Project project) {
+        super(project);
     }
 
-    public void setFile(File file) {
-        recommendations = new Properties();
-        try {
-            recommendations.load(new ColonFilteringReader(new FileReader(file)));
-        } catch (IOException e) {
-            throw new InvalidUserDataException(String.format("Properties file %s does not exist", file.getAbsolutePath()));
+    @Override
+    public String getVersion(String org, String name) throws Exception {
+        if(recommendations == null) {
+            recommendations = new Properties();
+            recommendations.load(new ColonFilteringReader(new InputStreamReader(inputProvider.getInputStream())));
         }
+        return resolveVersion(versionOf(org + "/" + name));
     }
 
     @Override

@@ -16,7 +16,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         project.getPlugins().withType(JavaPlugin.class, new Action<JavaPlugin>() {
             @Override
             public void execute(JavaPlugin javaPlugin) {
-                project.getExtensions().create("recommendationProvider", RecommendationProviderContainer.class);
+                project.getExtensions().create("recommendationProvider", RecommendationProviderContainer.class, project);
                 applyRecommendations();
             }
 
@@ -29,11 +29,16 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             public void execute(DependencyResolveDetails details) {
                                 if (StringUtils.isBlank(details.getRequested().getVersion())) {
                                     for (RecommendationProvider provider : project.getExtensions().getByType(RecommendationProviderContainer.class)) {
-                                        String version = provider.getVersion(details.getRequested().getGroup(),
-                                                details.getRequested().getName());
-                                        if (version != null) {
-                                            details.useVersion(version);
-                                            break;
+                                        String group = details.getRequested().getGroup();
+                                        String name = details.getRequested().getName();
+                                        try {
+                                            String version = provider.getVersion(group, name);
+                                            if (version != null) {
+                                                details.useVersion(version);
+                                                break;
+                                            }
+                                        } catch (Exception e) {
+                                            project.getLogger().error("Unable to provide a recommended version for " + group + ":" + name, e);
                                         }
                                     }
                                 }
