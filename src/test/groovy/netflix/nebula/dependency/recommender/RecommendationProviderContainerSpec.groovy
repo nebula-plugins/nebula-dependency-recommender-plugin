@@ -67,4 +67,20 @@ class RecommendationProviderContainerSpec extends Specification {
         then:
         project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.0']
     }
+
+    def 'recommended versions can be asked of the container directly'() {
+        setup:
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.1']
+        }
+
+        when:
+        project.dependencies {
+            compile 'commons-logging:commons-logging:1.0'
+        }
+
+        then:
+        project.dependencyRecommendations.getRecommendedVersion('commons-logging', 'commons-logging') == '1.1'
+        !project.dependencyRecommendations.getRecommendedVersion('doesnotexist', 'doesnotexist')
+    }
 }

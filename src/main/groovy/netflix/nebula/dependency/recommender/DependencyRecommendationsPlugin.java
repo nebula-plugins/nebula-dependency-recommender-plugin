@@ -27,19 +27,15 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             @Override
                             public void execute(DependencyResolveDetails details) {
                                 if (StringUtils.isBlank(details.getRequested().getVersion())) {
-                                    for (RecommendationProvider provider : project.getExtensions().getByType(RecommendationProviderContainer.class)) {
-                                        String group = details.getRequested().getGroup();
-                                        String name = details.getRequested().getName();
-                                        try {
-                                            String version = provider.getVersion(group, name);
-                                            if (version != null) {
-                                                details.useVersion(version);
-                                                break;
-                                            }
-                                        } catch (Exception e) {
-                                            project.getLogger().error("Unable to provide a recommended version for " + group + ":" + name, e);
-                                        }
-                                    }
+                                    String group = details.getRequested().getGroup();
+                                    String name = details.getRequested().getName();
+                                    String version = project.getExtensions()
+                                            .getByType(RecommendationProviderContainer.class)
+                                            .getRecommendedVersion(group, name);
+
+                                    if (version != null)
+                                        details.useVersion(version);
+                                    project.getLogger().error("Unable to provide a recommended version for " + group + ":" + name);
                                 }
                             }
                         });

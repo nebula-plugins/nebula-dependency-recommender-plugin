@@ -82,4 +82,17 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
             }
         });
     }
+
+    public String getRecommendedVersion(String group, String name) {
+        for (RecommendationProvider provider : this) {
+            try {
+                String version = provider.getVersion(group, name);
+                if(version != null)
+                    return version;
+            } catch(Exception e) {
+                project.getLogger().error("Exception while polling provider " + provider.getName() + " for version", e);
+            }
+        }
+        return null;
+    }
 }
