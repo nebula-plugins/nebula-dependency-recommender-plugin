@@ -9,18 +9,26 @@ import spock.lang.Specification
 class RecommendationProviderContainerSpec extends Specification {
     @Rule TemporaryFolder projectDir
 
-    def 'properties file provider can be added'() {
-        when:
+    def 'version recommendations are given in the order that the providers are specified'() {
+        setup:
         def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
         project.apply plugin: 'nebula-dependency-recommendations'
 
-        def provider
-        project.recommendationProvider {
-            provider = propertiesFile name: 'test', file: projectDir.newFile()
+        project.repositories { mavenCentral() }
+
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.1']
+            map recommendations: ['commons-logging:commons-logging': '1.2', 'com.google.guava:guava': '18.0']
+        }
+
+        when:
+        project.dependencies {
+            compile 'commons-logging:commons-logging'
+            compile 'com.google.guava:guava'
         }
 
         then:
-        provider.class == PropertyFileRecommendationProvider
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '18.0']
     }
 }

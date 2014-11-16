@@ -1,7 +1,7 @@
-package netflix.nebula.dependency.recommendations.provider;
+package netflix.nebula.dependency.recommendations;
 
-import aQute.bnd.maven.support.Maven;
 import groovy.lang.Closure;
+import netflix.nebula.dependency.recommendations.provider.*;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;

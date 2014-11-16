@@ -6,28 +6,28 @@ import java.util.Collection;
 import java.util.Map;
 
 public class MapRecommendationProvider extends AbstractRecommendationProvider {
-    private Map<String, String> map;
+    private Map<String, String> recommendations;
 
     private FuzzyVersionResolver fuzzyResolver = new FuzzyVersionResolver() {
         @Override
         protected Collection<String> propertyNames() {
-            return map.keySet();
+            return recommendations.keySet();
         }
 
         @Override
         protected String propertyValue(String name) {
-            return map.get(name);
+            return recommendations.get(name);
         }
     };
 
     @Override
     public String getVersion(String org, String name) {
-        if(map == null)
-            throw new InvalidUserDataException("No map of dependencies to versions was provided");
+        if(recommendations == null)
+            throw new InvalidUserDataException("No recommendations of dependencies to versions was provided");
         return fuzzyResolver.versionOf(org + ":" + name);
     }
 
-    public void setMap(Map<String, String> map) {
-        this.map = map;
+    public void setRecommendations(Map<String, String> recommendations) {
+        this.recommendations = recommendations;
     }
 }

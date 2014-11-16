@@ -1,7 +1,6 @@
 package netflix.nebula.dependency.recommendations;
 
 import netflix.nebula.dependency.recommendations.provider.RecommendationProvider;
-import netflix.nebula.dependency.recommendations.provider.RecommendationProviderContainer;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
@@ -16,7 +15,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         project.getPlugins().withType(JavaPlugin.class, new Action<JavaPlugin>() {
             @Override
             public void execute(JavaPlugin javaPlugin) {
-                project.getExtensions().create("recommendationProvider", RecommendationProviderContainer.class, project);
+                project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
                 applyRecommendations();
             }
 
