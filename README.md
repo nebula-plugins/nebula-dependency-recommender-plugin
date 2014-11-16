@@ -26,7 +26,7 @@ Dependency recommenders are the source of versions.  If more than one recommende
 
 ```groovy
 dependencyRecommendations {
-   mavenBom module: 'netflix:platform:latest.release@pom'
+   mavenBom module: 'netflix:platform:latest.release'
    propertiesFile uri: 'http://somewhere/extlib.properties'
 }
 ```
