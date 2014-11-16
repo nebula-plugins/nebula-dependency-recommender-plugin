@@ -1,5 +1,6 @@
 package netflix.nebula.dependency.recommendations.provider;
 
+import aQute.bnd.maven.support.Maven;
 import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
@@ -45,5 +46,40 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public PropertyFileRecommendationProvider propertiesFile(Closure closure) {
         return add(new PropertyFileRecommendationProvider(project), new ClosureBackedAction<PropertyFileRecommendationProvider>(closure));
+    }
+
+    public MavenBomRecommendationProvider mavenBom(Map<String, ?> args) {
+        Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
+        return add(new MavenBomRecommendationProvider(project), new ConfigureByMapAction<MavenBomRecommendationProvider>(modifiedArgs));
+    }
+
+    public MavenBomRecommendationProvider mavenBom(Closure closure) {
+        return add(new MavenBomRecommendationProvider(project), new ClosureBackedAction<MavenBomRecommendationProvider>(closure));
+    }
+
+    public DependencyLockProvider dependencyLock(Map<String, ?> args) {
+        Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
+        return add(new DependencyLockProvider(project), new ConfigureByMapAction<DependencyLockProvider>(modifiedArgs));
+    }
+
+    public DependencyLockProvider dependencyLock(Closure closure) {
+        return add(new DependencyLockProvider(project), new ClosureBackedAction<DependencyLockProvider>(closure));
+    }
+
+    public MapRecommendationProvider map(Map<String, ?> args) {
+        Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
+        return add(new MapRecommendationProvider(), new ConfigureByMapAction<MapRecommendationProvider>(modifiedArgs));
+    }
+
+    public MapRecommendationProvider map(Closure closure) {
+        return add(new MapRecommendationProvider(), new ClosureBackedAction<MapRecommendationProvider>(closure));
+    }
+
+    public CustomRecommendationProvider add(Closure closure) {
+        return add(new CustomRecommendationProvider(closure), new Action<CustomRecommendationProvider>() {
+            @Override
+            public void execute(CustomRecommendationProvider customRecommendationProvider) {
+            }
+        });
     }
 }
