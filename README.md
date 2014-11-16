@@ -47,8 +47,7 @@ Several recommendation providers pack with the plugin.  The file-based providers
 The `dependencyRecommendations` container can be queried directly for a recommended version:
 
 ```groovy
-dependencyRecommendations.getRecommendedVersion(
-   'commons-logging', 'commons-logging')
+dependencyRecommendations.getRecommendedVersion('commons-logging', 'commons-logging')
 ```
 
 The `getRecommendedVersion` method returns `null` if no recommendation is found.
