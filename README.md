@@ -41,3 +41,14 @@ Several recommendation providers pack with the plugin.  The file-based providers
 	* [Nebula dependency lock](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Dependency-Lock-Provider)
 * [Map](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Map-Provider)
 * [Custom](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Custom-Provider)
+
+## Accessing recommended versions directly
+
+The `dependencyRecommendations` container can be queried directly for a recommended version:
+
+```groovy
+dependencyRecommendations.getRecommendedVersion(
+   'commons-logging', 'commons-logging')
+```
+
+The `getRecommendedVersion` method returns `null` if no recommendation is found.
