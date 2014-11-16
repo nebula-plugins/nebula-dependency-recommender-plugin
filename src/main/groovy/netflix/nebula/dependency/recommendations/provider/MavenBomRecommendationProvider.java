@@ -13,7 +13,10 @@ import org.gradle.mvn3.org.codehaus.plexus.interpolation.PropertiesBasedValueSou
 import org.gradle.mvn3.org.codehaus.plexus.interpolation.ValueSource;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MavenBomRecommendationProvider extends FileBasedRecommendationProvider {
     private Map<String, String> recommendations;

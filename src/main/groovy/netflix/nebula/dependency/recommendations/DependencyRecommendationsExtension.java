@@ -4,7 +4,6 @@ import netflix.nebula.dependency.recommendations.provider.RecommendationProvider
 import netflix.nebula.dependency.recommendations.provider.RecommendationProviderContainer;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.plugins.DeferredConfigurable;
 
 @DeferredConfigurable

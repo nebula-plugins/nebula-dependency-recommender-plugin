@@ -12,7 +12,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.UUID;
 
 public abstract class FileBasedRecommendationProvider extends AbstractRecommendationProvider {
     protected Project project;
