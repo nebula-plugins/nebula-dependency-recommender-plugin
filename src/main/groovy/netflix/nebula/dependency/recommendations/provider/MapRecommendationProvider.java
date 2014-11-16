@@ -8,20 +8,26 @@ import java.util.Map;
 public class MapRecommendationProvider extends AbstractRecommendationProvider {
     private Map<String, String> map;
 
+    private FuzzyVersionResolver fuzzyResolver = new FuzzyVersionResolver() {
+        @Override
+        protected Collection<String> propertyNames() {
+            return map.keySet();
+        }
+
+        @Override
+        protected String propertyValue(String name) {
+            return map.get(name);
+        }
+    };
+
     @Override
     public String getVersion(String org, String name) {
         if(map == null)
             throw new InvalidUserDataException("No map of dependencies to versions was provided");
-        return resolveVersion(versionOf(org + ":" + name));
+        return fuzzyResolver.versionOf(org + ":" + name);
     }
 
     public void setMap(Map<String, String> map) {
         this.map = map;
     }
-
-    @Override
-    protected Collection<String> propertyNames() { return map.keySet(); }
-
-    @Override
-    protected String propertyValue(String name) { return map.get(name); }
 }

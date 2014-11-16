@@ -50,16 +50,6 @@ public class MavenBomRecommendationProvider extends FileBasedRecommendationProvi
         return super.setModule(dependencyNotation);
     }
 
-    @Override
-    protected Collection<String> propertyNames() {
-        throw new UnsupportedOperationException("Maven BOMs do not support recursive references");
-    }
-
-    @Override
-    protected String propertyValue(String name) {
-        throw new UnsupportedOperationException("Maven BOMs do not support recursive references");
-    }
-
     private static class ProjectPropertiesModelInterpolator extends StringSearchModelInterpolator {
         private final Project project;
 

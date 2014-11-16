@@ -11,6 +11,18 @@ import java.util.Properties;
 public class PropertyFileRecommendationProvider extends FileBasedRecommendationProvider {
     private Properties recommendations;
 
+    private FuzzyVersionResolver fuzzyResolver = new FuzzyVersionResolver() {
+        @Override
+        protected Collection<String> propertyNames() {
+            return recommendations.stringPropertyNames();
+        }
+
+        @Override
+        protected String propertyValue(String name) {
+            return recommendations.getProperty(name);
+        }
+    };
+
     public PropertyFileRecommendationProvider(Project project) {
         super(project);
     }
@@ -21,17 +33,7 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
             recommendations = new Properties();
             recommendations.load(new ColonFilteringReader(new InputStreamReader(inputProvider.getInputStream())));
         }
-        return resolveVersion(versionOf(org + "/" + name));
-    }
-
-    @Override
-    protected Collection<String> propertyNames() {
-        return recommendations.stringPropertyNames();
-    }
-
-    @Override
-    protected String propertyValue(String name) {
-        return recommendations.getProperty(name);
+        return fuzzyResolver.versionOf(org + "/" + name);
     }
 
     /**
