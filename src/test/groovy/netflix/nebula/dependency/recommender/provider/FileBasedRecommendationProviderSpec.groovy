@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider
+package netflix.nebula.dependency.recommender.provider
 
 import org.gradle.api.InvalidUserDataException
 import org.gradle.testfixtures.ProjectBuilder
@@ -46,21 +46,21 @@ class FileBasedRecommendationProviderSpec extends Specification {
         setup:
         def project = ProjectBuilder.builder().build();
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula-dependency-recommendations'
+        project.apply plugin: 'nebula-dependency-recommender'
 
         def repo = projectDir.newFolder('repo')
 
-        def sample = new File(repo, 'sample/recommendations/1.0')
+        def sample = new File(repo, 'sample/recommender/1.0')
         sample.mkdirs()
 
-        def sampleFile = new File(sample, 'recommendations-1.0.txt')
+        def sampleFile = new File(sample, 'recommender-1.0.txt')
         sampleFile << 'test'
 
         recommender.project = project
 
         when: // maven based repository
         project.repositories { maven { url repo } }
-        recommender.setModule('sample:recommendations:1.0@txt')
+        recommender.setModule('sample:recommender:1.0@txt')
 
         then:
         recommender.input.text == 'test'
@@ -68,7 +68,7 @@ class FileBasedRecommendationProviderSpec extends Specification {
         when: // ivy based repository
         project.repositories.clear()
         project.repositories { ivy { url repo } }
-        recommender.setModule('sample:recommendations:1.0@txt')
+        recommender.setModule('sample:recommender:1.0@txt')
 
         then:
         recommender.input.text == 'test'

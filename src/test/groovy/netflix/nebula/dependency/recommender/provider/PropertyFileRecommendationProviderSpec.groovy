@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider
+package netflix.nebula.dependency.recommender.provider
 
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -16,7 +16,7 @@ class PropertyFileRecommendationProviderSpec extends Specification {
     def setup() {
         project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
-        propFile = projectDir.newFile('recommendations.properties')
+        propFile = projectDir.newFile('recommender.properties')
         provider = new PropertyFileRecommendationProvider(null)
     }
 

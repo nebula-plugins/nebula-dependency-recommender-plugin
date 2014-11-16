@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations
+package netflix.nebula.dependency.recommender
 
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -14,7 +14,7 @@ class RecommendationProviderContainerSpec extends Specification {
     def setup() {
         project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula-dependency-recommendations'
+        project.apply plugin: 'nebula-dependency-recommender'
 
         project.repositories { mavenCentral() }
     }

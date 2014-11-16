@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider;
+package netflix.nebula.dependency.recommender.provider;
 
 public abstract class AbstractRecommendationProvider implements RecommendationProvider {
     protected String name;
@@ -7,7 +7,7 @@ public abstract class AbstractRecommendationProvider implements RecommendationPr
 
     @Override
     public String getName() {
-        return name == null ? "recommendations-" + (++providersWithoutNames) : name;
+        return name == null ? "recommender-" + (++providersWithoutNames) : name;
     }
 
     @Override

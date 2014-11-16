@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider;
+package netflix.nebula.dependency.recommender.provider;
 
 import java.util.Collection;
 import java.util.HashMap;

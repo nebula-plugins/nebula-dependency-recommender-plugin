@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider
+package netflix.nebula.dependency.recommender.provider
 
 import groovy.json.JsonSlurper
 import org.gradle.api.Project

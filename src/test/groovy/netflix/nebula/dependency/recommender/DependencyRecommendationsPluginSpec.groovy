@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations
+package netflix.nebula.dependency.recommender
 
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
@@ -12,12 +12,12 @@ class DependencyRecommendationsPluginSpec extends Specification {
         when:
         def project = ProjectBuilder.builder().build();
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula-dependency-recommendations'
+        project.apply plugin: 'nebula-dependency-recommender'
 
         def recommendations = projectDir.newFile()
         recommendations << 'com.google.guava:guava = 18.0'
 
-        project.recommendationProvider {
+        project.dependencyRecommendations {
             propertiesFile name: 'props', file: recommendations
         }
 

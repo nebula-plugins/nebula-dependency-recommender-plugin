@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider
+package netflix.nebula.dependency.recommender.provider
 
 import spock.lang.Shared
 import spock.lang.Specification

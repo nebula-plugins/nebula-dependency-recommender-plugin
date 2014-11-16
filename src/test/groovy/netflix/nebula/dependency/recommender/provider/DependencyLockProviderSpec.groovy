@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider
+package netflix.nebula.dependency.recommender.provider
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder

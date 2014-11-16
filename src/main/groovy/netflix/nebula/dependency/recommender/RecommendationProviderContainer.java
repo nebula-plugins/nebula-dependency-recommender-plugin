@@ -1,7 +1,7 @@
-package netflix.nebula.dependency.recommendations;
+package netflix.nebula.dependency.recommender;
 
 import groovy.lang.Closure;
-import netflix.nebula.dependency.recommendations.provider.*;
+import netflix.nebula.dependency.recommender.provider.*;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;

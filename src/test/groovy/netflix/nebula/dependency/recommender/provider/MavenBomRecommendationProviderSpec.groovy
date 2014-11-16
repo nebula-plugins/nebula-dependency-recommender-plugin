@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider
+package netflix.nebula.dependency.recommender.provider
 
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
@@ -12,18 +12,18 @@ class MavenBomRecommendationProviderSpec extends Specification {
         setup:
         def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula-dependency-recommendations'
+        project.apply plugin: 'nebula-dependency-recommender'
 
         def repo = projectDir.newFolder('repo')
-        def sample = new File(repo, 'sample/recommendations/1.0')
+        def sample = new File(repo, 'sample/recommender/1.0')
         sample.mkdirs()
-        def sampleFile = new File(sample, 'recommendations-1.0.pom')
+        def sampleFile = new File(sample, 'recommender-1.0.pom')
         sampleFile << '''
             <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
               <modelVersion>4.0.0</modelVersion>
               <groupId>sample</groupId>
-              <artifactId>recommendations</artifactId>
+              <artifactId>recommender</artifactId>
               <version>1.0</version>
 
               <dependencyManagement>
@@ -50,7 +50,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
 
         when:
         def recommendations = new MavenBomRecommendationProvider(project)
-        recommendations.setModule('sample:recommendations:1.0')
+        recommendations.setModule('sample:recommender:1.0')
 
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'

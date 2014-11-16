@@ -1,6 +1,6 @@
-package netflix.nebula.dependency.recommendations;
+package netflix.nebula.dependency.recommender;
 
-import netflix.nebula.dependency.recommendations.provider.RecommendationProvider;
+import netflix.nebula.dependency.recommender.provider.RecommendationProvider;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;

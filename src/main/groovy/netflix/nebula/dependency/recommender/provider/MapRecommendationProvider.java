@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider;
+package netflix.nebula.dependency.recommender.provider;
 
 import org.gradle.api.InvalidUserDataException;
 
@@ -23,7 +23,7 @@ public class MapRecommendationProvider extends AbstractRecommendationProvider {
     @Override
     public String getVersion(String org, String name) {
         if(recommendations == null)
-            throw new InvalidUserDataException("No recommendations of dependencies to versions was provided");
+            throw new InvalidUserDataException("No recommender of dependencies to versions was provided");
         return fuzzyResolver.versionOf(org + ":" + name);
     }
 

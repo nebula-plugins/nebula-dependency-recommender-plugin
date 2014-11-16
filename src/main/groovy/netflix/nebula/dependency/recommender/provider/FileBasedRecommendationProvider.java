@@ -1,4 +1,4 @@
-package netflix.nebula.dependency.recommendations.provider;
+package netflix.nebula.dependency.recommender.provider;
 
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
@@ -26,7 +26,7 @@ public abstract class FileBasedRecommendationProvider extends AbstractRecommenda
     protected InputStreamProvider inputProvider = new InputStreamProvider() {
         @Override
         public InputStream getInputStream() throws Exception {
-            throw new InvalidUserDataException("No recommendations input source has been defined");
+            throw new InvalidUserDataException("No recommender input source has been defined");
         }
     };
 
@@ -40,7 +40,7 @@ public abstract class FileBasedRecommendationProvider extends AbstractRecommenda
         try {
             return inputProvider.getInputStream();
         } catch (Exception e) {
-            throw new InvalidUserDataException("Unable to open recommendations input source", e);
+            throw new InvalidUserDataException("Unable to open recommender input source", e);
         }
     }
 
