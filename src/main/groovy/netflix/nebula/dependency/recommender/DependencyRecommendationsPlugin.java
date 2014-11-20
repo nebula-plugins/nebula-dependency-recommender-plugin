@@ -1,6 +1,5 @@
 package netflix.nebula.dependency.recommender;
 
-import netflix.nebula.dependency.recommender.provider.RecommendationProvider;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
@@ -23,15 +22,22 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             public void applyRecommendations() {
                 project.getConfigurations().all(new Action<Configuration>() {
                     @Override
-                    public void execute(Configuration conf) {
+                    public void execute(final Configuration conf) {
                         conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
                             @Override
                             public void execute(DependencyResolveDetails details) {
                                 ModuleVersionSelector requested = details.getRequested();
-                                if (StringUtils.isBlank(requested.getVersion())) {
-                                    String version = getRecommendedVersionRecursive(project, requested);
-                                    if (version != null)
-                                        details.useVersion(version);
+
+                                // don't interfere with the way forces trump everything
+                                for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules())
+                                    if(requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName()))
+                                        return;
+
+                                String version = getRecommendedVersionRecursive(project, requested);
+                                if (version != null) {
+                                    details.useVersion(version);
+                                }
+                                else if (StringUtils.isBlank(requested.getVersion())) {
                                     project.getLogger().error("Unable to provide a recommended version for " + requested.getGroup() + ":" + requested.getName());
                                 }
                             }
@@ -50,7 +56,6 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         String version = project.getExtensions()
                 .getByType(RecommendationProviderContainer.class)
                 .getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
-
         if (version != null)
             return version;
         if (project.getParent() != null)

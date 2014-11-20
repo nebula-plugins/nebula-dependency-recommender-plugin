@@ -129,7 +129,25 @@ class RecommendationProviderContainerSpec extends Specification {
     def 'recommendation is used, even if a fixed version of a module is provided transitively'() {
         setup:
         project.dependencyRecommendations {
-            map recommendations: ['commons-logging:commons-logging': '1.2']
+            map recommendations: ['commons-logging:commons-logging': '1.1']
+        }
+
+        when:
+        project.dependencies {
+            compile 'commons-configuration:commons-configuration:1.6'
+        }
+
+        def commonsConfig = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
+        def commonsLang = commonsConfig.children.find { it.moduleName == 'commons-logging' }
+
+        then:
+        commonsLang.moduleVersion == '1.1'
+    }
+
+    def 'transitive version wins if no recommendation is provided for a module'() {
+        setup:
+        project.dependencyRecommendations {
+            map recommendations: ['some:other-module': '1.2']
         }
 
         when:
@@ -139,6 +157,27 @@ class RecommendationProviderContainerSpec extends Specification {
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.6', '1.2']
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.6', '1.1.1']
+    }
+
+    def 'forces always win over recommendations'() {
+        setup:
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.2']
+        }
+
+        when:
+        project.configurations.all {
+            resolutionStrategy {
+                force 'commons-logging:commons-logging:1.1'
+            }
+        }
+
+        project.dependencies {
+            compile 'commons-logging:commons-logging'
+        }
+
+        then:
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
     }
 }
