@@ -47,10 +47,82 @@ Several recommendation providers pack with the plugin.  The file-based providers
 * [Map](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Map-Provider)
 * [Custom](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Custom-Provider)
 
+## Version selection rules
+
+The hierarchy of preference for versions is:
+
+### 1. Forced dependencies
+
+```groovy
+dependencyRecommendations {
+   map recommendations: ['commons-logging:commons-logging': '1.0']
+}
+
+dependencies {
+   compile 'commons-logging:commons-logging:1.2' // version 1.2 is selected
+}
+```
+
+### 2. Direct dependencies with a version qualifier
+
+Direct dependencies with a version qualifier trump recommendations, even if the version qualifier refers to an older version.
+
+```groovy
+dependencyRecommendations {
+   map recommendations: ['commons-logging:commons-logging': '1.2']
+}
+
+dependencies {
+   compile 'commons-logging:commons-logging:1.0' // version 1.0 is selected
+}
+```
+
+### 3.  Dependency recommendations
+
+This is the basic case described elsewhere in the documentation;
+
+```groovy
+dependencyRecommendations {
+   map recommendations: ['commons-logging:commons-logging': '1.0']
+}
+
+dependencies {
+   compile 'commons-logging:commons-logging' // version 1.0 is selected
+}
+```
+
+### 4.  Transitive dependencies
+
+Whenever a recommendation provider can provide a version recommendation, that recommendation is applied above versions of the module that are provided by transitive dependencies.  
+
+Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  Even though `commons-configuration` indicates that it prefers version `1.1.1`, `1.0` is selected because of the recommendation provider.
+
+```groovy
+dependencyRecommendations {
+   map recommendations: ['commons-logging:commons-logging': '1.0']
+}
+
+dependencies {
+   compile 'commons-configuration:commons-configuration:1.6'
+}
+```
+
+However, if no recommendation can be found for a dependency that has no version, but a version is provided by a transitive the version provided by the transitive is applied.  In this scenario, if several transitives provide versions for the module, normal Gradle conflict resolution applies.
+
+```groovy
+dependencyRecommendations {
+   map recommendations: ['some:other-module': '1.1']
+}
+
+dependencies {
+   compile 'commons-configuration:commons-configuration:1.6'
+   compile 'commons-logging:commons-logging' // version 1.1.1 is selected
+}
+```
+
 ## Conflict resolution and transitive dependencies
 
 * [Resolving differences between recommendation providers](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Resolving-Differences-Between-Recommendation-Providers)
-* [Transitive dependencies](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Transitive-Dependencies)
 
 ## Accessing recommended versions directly
 
