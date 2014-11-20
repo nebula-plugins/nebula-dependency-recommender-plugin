@@ -47,6 +47,11 @@ Several recommendation providers pack with the plugin.  The file-based providers
 * [Map](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Map-Provider)
 * [Custom](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Custom-Provider)
 
+## Conflict resolution and transitive dependencies
+
+* [Resolving differences between recommendation providers](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Resolving-Differences-Between-Recommendation-Providers)
+* [Transitive dependencies](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Transitive-Dependencies)
+
 ## Accessing recommended versions directly
 
 The `dependencyRecommendations` container can be queried directly for a recommended version:
