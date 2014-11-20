@@ -7,6 +7,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencyResolveDetails;
+import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.plugins.JavaPlugin;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
@@ -26,16 +27,12 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                         conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
                             @Override
                             public void execute(DependencyResolveDetails details) {
-                                if (StringUtils.isBlank(details.getRequested().getVersion())) {
-                                    String group = details.getRequested().getGroup();
-                                    String name = details.getRequested().getName();
-                                    String version = project.getExtensions()
-                                            .getByType(RecommendationProviderContainer.class)
-                                            .getRecommendedVersion(group, name);
-
+                                ModuleVersionSelector requested = details.getRequested();
+                                if (StringUtils.isBlank(requested.getVersion())) {
+                                    String version = getRecommendedVersionRecursive(project, requested);
                                     if (version != null)
                                         details.useVersion(version);
-                                    project.getLogger().error("Unable to provide a recommended version for " + group + ":" + name);
+                                    project.getLogger().error("Unable to provide a recommended version for " + requested.getGroup() + ":" + requested.getName());
                                 }
                             }
                         });
@@ -43,5 +40,21 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 });
             }
         });
+    }
+
+    /**
+     * Look for recommended versions in a project and each of its ancestors in order until one is found or the root is reached
+     * @return the recommended version or <code>null</code>
+     */
+    protected String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
+        String version = project.getExtensions()
+                .getByType(RecommendationProviderContainer.class)
+                .getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
+
+        if (version != null)
+            return version;
+        if (project.getParent() != null)
+            return getRecommendedVersionRecursive(project.getParent(), mvSelector);
+        return null;
     }
 }

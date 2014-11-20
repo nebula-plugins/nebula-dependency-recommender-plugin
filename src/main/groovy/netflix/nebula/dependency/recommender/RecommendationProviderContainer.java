@@ -5,6 +5,7 @@ import netflix.nebula.dependency.recommender.provider.*;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
+import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
@@ -36,6 +37,12 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         configureAction.execute(provider);
         assertCanAdd(provider.getName());
         addLastAction.execute(provider);
+        return provider;
+    }
+
+    public <T extends RecommendationProvider> T addFirst(T provider) {
+        remove(provider);
+        super.add(0, provider);
         return provider;
     }
 

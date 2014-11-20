@@ -19,7 +19,7 @@ class RecommendationProviderContainerSpec extends Specification {
         project.repositories { mavenCentral() }
     }
 
-    def 'version recommendations are given in the order that the providers are specified'() {
+    def 'version recommendations are given in LIFO with respect to the order in which providers are specified'() {
         setup:
         project.dependencyRecommendations {
             map recommendations: ['commons-logging:commons-logging': '1.1']
@@ -82,5 +82,63 @@ class RecommendationProviderContainerSpec extends Specification {
         then:
         project.dependencyRecommendations.getRecommendedVersion('commons-logging', 'commons-logging') == '1.1'
         !project.dependencyRecommendations.getRecommendedVersion('doesnotexist', 'doesnotexist')
+    }
+
+    def 'new providers can be inserted before predefined providers'() {
+        setup:
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.1']
+            addFirst map(recommendations: ['commons-logging:commons-logging': '1.2', 'com.google.guava:guava': '18.0'])
+        }
+
+        when:
+        project.dependencies {
+            compile 'commons-logging:commons-logging'
+            compile 'com.google.guava:guava'
+        }
+
+        then:
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.2', '18.0']
+    }
+
+    def 'subprojects inherit providers from parent'() {
+        setup:
+        def subproject = ProjectBuilder.builder()
+                .withName('subproject')
+                .withParent(project)
+                .build()
+        project.subprojects.add(subproject)
+
+        subproject.apply plugin: 'java'
+        subproject.apply plugin: 'nebula-dependency-recommender'
+        subproject.repositories { mavenCentral() }
+
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.1']
+        }
+
+        when:
+        subproject.dependencies {
+            compile 'commons-logging:commons-logging'
+        }
+
+        then:
+        subproject.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
+    }
+
+    def 'recommendation is used, even if a fixed version of a module is provided transitively'() {
+        setup:
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.2']
+        }
+
+        when:
+        project.dependencies {
+            compile 'commons-configuration:commons-configuration:1.6'
+            compile 'commons-logging:commons-logging'
+        }
+
+        then:
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.6', '1.2']
     }
 }
