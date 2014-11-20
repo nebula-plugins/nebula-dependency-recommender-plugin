@@ -29,6 +29,11 @@ dependencyRecommendations {
    mavenBom module: 'netflix:platform:latest.release'
    propertiesFile uri: 'http://somewhere/extlib.properties'
 }
+
+dependencies {
+   compile 'com.google.guava:guava' // no version, version is recommended
+   compile 'commons-lang:commons-lang:2.6' // I know what I want, don't recommend
+}
 ```
 
 ## Built-in recommendation providers
