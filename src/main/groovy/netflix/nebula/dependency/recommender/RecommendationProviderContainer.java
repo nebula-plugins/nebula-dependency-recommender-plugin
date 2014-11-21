@@ -10,6 +10,7 @@ import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -91,13 +92,14 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public String getRecommendedVersion(String group, String name) {
-        for (RecommendationProvider provider : this) {
+        // providers are queried in LIFO order
+        for (int i = size()-1; i >= 0; i--) {
             try {
-                String version = provider.getVersion(group, name);
+                String version = get(i).getVersion(group, name);
                 if(version != null)
                     return version;
             } catch(Exception e) {
-                project.getLogger().error("Exception while polling provider " + provider.getName() + " for version", e);
+                project.getLogger().error("Exception while polling provider " + get(i).getName() + " for version", e);
             }
         }
         return null;

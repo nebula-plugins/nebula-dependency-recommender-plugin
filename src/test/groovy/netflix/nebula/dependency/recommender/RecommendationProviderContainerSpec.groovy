@@ -22,8 +22,8 @@ class RecommendationProviderContainerSpec extends Specification {
     def 'version recommendations are given in LIFO with respect to the order in which providers are specified'() {
         setup:
         project.dependencyRecommendations {
-            map recommendations: ['commons-logging:commons-logging': '1.1']
             map recommendations: ['commons-logging:commons-logging': '1.2', 'com.google.guava:guava': '18.0']
+            map recommendations: ['commons-logging:commons-logging': '1.1']
         }
 
         when:
@@ -98,7 +98,7 @@ class RecommendationProviderContainerSpec extends Specification {
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.2', '18.0']
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '18.0']
     }
 
     def 'subprojects inherit providers from parent'() {

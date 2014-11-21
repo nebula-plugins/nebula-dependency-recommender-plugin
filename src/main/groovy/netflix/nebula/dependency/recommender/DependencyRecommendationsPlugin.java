@@ -4,10 +4,11 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.DependencyResolveDetails;
-import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.artifacts.*;
 import org.gradle.api.plugins.JavaPlugin;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     @Override
@@ -23,22 +24,36 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 project.getConfigurations().all(new Action<Configuration>() {
                     @Override
                     public void execute(final Configuration conf) {
+                        final List<String> firstOrderDepsWithVersions = new ArrayList<>();
+
+                        conf.getIncoming().beforeResolve(new Action<ResolvableDependencies>() {
+                            @Override
+                            public void execute(ResolvableDependencies resolvableDependencies) {
+                                for (Dependency dependency : resolvableDependencies.getDependencies()) {
+                                    if(!StringUtils.isBlank(dependency.getVersion()))
+                                        firstOrderDepsWithVersions.add(dependency.getGroup() + ":" + dependency.getName());
+                                }
+                            }
+                        });
+
                         conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
                             @Override
                             public void execute(DependencyResolveDetails details) {
                                 ModuleVersionSelector requested = details.getRequested();
+                                String coord = requested.getGroup() + ":" + requested.getName();
 
                                 // don't interfere with the way forces trump everything
                                 for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules())
-                                    if(requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName()))
+                                    if(requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName())) {
                                         return;
+                                    }
 
                                 String version = getRecommendedVersionRecursive(project, requested);
-                                if (version != null) {
+                                if (version != null && !firstOrderDepsWithVersions.contains(coord)) {
                                     details.useVersion(version);
                                 }
                                 else if (StringUtils.isBlank(requested.getVersion())) {
-                                    project.getLogger().error("Unable to provide a recommended version for " + requested.getGroup() + ":" + requested.getName());
+                                    project.getLogger().error("Unable to provide a recommended version for " + coord);
                                 }
                             }
                         });
