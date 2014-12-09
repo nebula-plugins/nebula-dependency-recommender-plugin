@@ -12,7 +12,6 @@ apply plugin: 'nebula-plugin'
 apply plugin: 'groovy'
 
 sourceCompatibility = 1.7
-version = '1.12.1-SNAPSHOT'
 
 contacts {
     'joschneider@netflix.com' {
