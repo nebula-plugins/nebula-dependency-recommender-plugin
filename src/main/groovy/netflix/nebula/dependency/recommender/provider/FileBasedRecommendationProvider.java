@@ -3,9 +3,6 @@ package netflix.nebula.dependency.recommender.provider;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ExternalModuleDependency;
-import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
-import org.gradle.internal.typeconversion.NotationConvertResult;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -109,19 +106,5 @@ public abstract class FileBasedRecommendationProvider extends AbstractRecommenda
             }
         };
         return inputProvider;
-    }
-
-    private class ProviderNotationConvertResult implements NotationConvertResult<DefaultExternalModuleDependency> {
-        ExternalModuleDependency dependency;
-
-        @Override
-        public boolean hasResult() {
-            return dependency != null;
-        }
-
-        @Override
-        public void converted(DefaultExternalModuleDependency result) {
-            dependency = result;
-        }
     }
 }

@@ -15,7 +15,7 @@ class DependencyLockProvider extends FileBasedRecommendationProvider {
     @Override
     String getVersion(String org, String name) throws Exception {
         if(!recommendations) {
-            recommendations = new JsonSlurper().parse(input)
+            recommendations = new JsonSlurper().parse(new InputStreamReader(input))
                 .collectEntries { [(it.key) : it.value.locked] }
         }
         recommendations[org + ':' + name]
