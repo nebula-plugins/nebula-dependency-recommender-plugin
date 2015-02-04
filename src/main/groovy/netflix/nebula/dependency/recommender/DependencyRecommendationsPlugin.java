@@ -13,10 +13,11 @@ import java.util.List;
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     @Override
     public void apply(final Project project) {
+        project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
+        
         project.getPlugins().withType(JavaPlugin.class, new Action<JavaPlugin>() {
             @Override
             public void execute(JavaPlugin javaPlugin) {
-                project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
                 applyRecommendations();
             }
 
