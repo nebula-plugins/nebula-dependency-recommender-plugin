@@ -1,6 +1,5 @@
 package netflix.nebula.dependency.recommender;
 
-import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -31,7 +30,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             @Override
                             public void execute(ResolvableDependencies resolvableDependencies) {
                                 for (Dependency dependency : resolvableDependencies.getDependencies()) {
-                                    if(!StringUtils.isBlank(dependency.getVersion()))
+                                    if(dependency.getVersion() != null && !dependency.getVersion().isEmpty())
                                         firstOrderDepsWithVersions.add(dependency.getGroup() + ":" + dependency.getName());
                                 }
                             }
@@ -53,7 +52,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                 if (version != null && !firstOrderDepsWithVersions.contains(coord)) {
                                     details.useVersion(version);
                                 }
-                                else if (StringUtils.isBlank(requested.getVersion())) {
+                                else if (requested.getVersion() != null && !requested.getVersion().isEmpty()) {
                                     project.getLogger().error("Unable to provide a recommended version for " + coord);
                                 }
                             }
