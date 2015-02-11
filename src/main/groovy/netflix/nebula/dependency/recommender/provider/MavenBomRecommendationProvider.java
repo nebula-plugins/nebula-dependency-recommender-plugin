@@ -1,6 +1,5 @@
 package netflix.nebula.dependency.recommender.provider;
 
-import org.apache.commons.io.IOUtils;
 import org.gradle.api.Project;
 import org.gradle.mvn3.org.apache.maven.model.Dependency;
 import org.gradle.mvn3.org.apache.maven.model.Model;
@@ -13,6 +12,8 @@ import org.gradle.mvn3.org.codehaus.plexus.interpolation.PropertiesBasedValueSou
 import org.gradle.mvn3.org.codehaus.plexus.interpolation.ValueSource;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,18 @@ public class MavenBomRecommendationProvider extends FileBasedRecommendationProvi
         if(recommendations == null) {
             recommendations = new HashMap<>();
             DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
-            request.setModelSource(new StringModelSource(IOUtils.toString(getInput(), "UTF-8")));
+
+            request.setModelSource(new ModelSource() {
+                @Override
+                public InputStream getInputStream() throws IOException {
+                    return getInput();
+                }
+
+                @Override
+                public String getLocation() {
+                    return null;
+                }
+            });
 
             DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
             modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
