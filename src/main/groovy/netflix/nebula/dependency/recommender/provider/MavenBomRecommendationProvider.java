@@ -38,13 +38,6 @@ public class MavenBomRecommendationProvider extends FileBasedRecommendationProvi
         super(project);
     }
 
-    public void foo() {
-        DefaultRepositorySystemSession session = new DefaultRepositorySystemSession();
-        DefaultArtifactTypeRegistry stereotypes = new DefaultArtifactTypeRegistry();
-        stereotypes.add(new DefaultArtifactType("pom"));
-        session.setArtifactTypeRegistry(stereotypes);
-    }
-
     private class SimpleModelSource implements ModelSource {
         InputStream in;
 
