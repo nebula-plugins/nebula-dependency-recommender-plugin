@@ -65,6 +65,15 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         return add(new MavenBomRecommendationProvider(project), new ClosureBackedAction<MavenBomRecommendationProvider>(closure));
     }
 
+    public IvyRecommendationProvider ivyXml(Map<String, ?> args) {
+        Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
+        return add(new IvyRecommendationProvider(project), new ConfigureByMapAction<IvyRecommendationProvider>(modifiedArgs));
+    }
+
+    public IvyRecommendationProvider ivyXml(Closure closure) {
+        return add(new IvyRecommendationProvider(project), new ClosureBackedAction<IvyRecommendationProvider>(closure));
+    }
+
     public DependencyLockProvider dependencyLock(Map<String, ?> args) {
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
         return add(new DependencyLockProvider(project), new ConfigureByMapAction<DependencyLockProvider>(modifiedArgs));
