@@ -52,9 +52,6 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                 if (version != null && !firstOrderDepsWithVersions.contains(coord)) {
                                     details.useVersion(version);
                                 }
-                                else if (requested.getVersion() != null && !requested.getVersion().isEmpty()) {
-                                    project.getLogger().error("Unable to provide a recommended version for " + coord);
-                                }
                             }
                         });
                     }
