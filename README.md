@@ -54,12 +54,18 @@ The hierarchy of preference for versions is:
 ### 1. Forced dependencies
 
 ```groovy
+configurations.all {
+    resolutionStrategy {
+        force 'commons-logging:commons-logging:1.2'
+    }
+}
+
 dependencyRecommendations {
-   map recommendations: ['commons-logging:commons-logging': '1.0']
+   map recommendations: ['commons-logging:commons-logging': '1.1']
 }
 
 dependencies {
-   compile 'commons-logging:commons-logging:1.2' // version 1.2 is selected
+   compile 'commons-logging:commons-logging' // version 1.2 is selected
 }
 ```
 
