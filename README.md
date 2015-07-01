@@ -99,7 +99,7 @@ dependencies {
 
 ### 4.  Transitive dependencies
 
-Whenever a recommendation provider can provide a version recommendation, that recommendation is applied above versions of the module that are provided by transitive dependencies.  
+Whenever a recommendation provider can provide a version recommendation for a transitive dependency AND there is a first order dependency on that transitive that has no version specified, the recommendation overrides versions of the module that are provided by transitively.  
 
 Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  Even though `commons-configuration` indicates that it prefers version `1.1.1`, `1.0` is selected because of the recommendation provider.
 
@@ -110,10 +110,11 @@ dependencyRecommendations {
 
 dependencies {
    compile 'commons-configuration:commons-configuration:1.6'
+   compile 'commons-logging:commons-logging'
 }
 ```
 
-However, if no recommendation can be found for a dependency that has no version, but a version is provided by a transitive the version provided by the transitive is applied.  In this scenario, if several transitives provide versions for the module, normal Gradle conflict resolution applies.
+Conversely, if no recommendation can be found for a dependency that has no version, but a version is provided by a transitive the version provided by the transitive is applied.  In this scenario, if several transitives provide versions for the module, normal Gradle conflict resolution applies.
 
 ```groovy
 dependencyRecommendations {
