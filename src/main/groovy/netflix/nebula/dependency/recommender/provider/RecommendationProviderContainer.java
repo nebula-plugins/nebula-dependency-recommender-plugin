@@ -1,16 +1,13 @@
-package netflix.nebula.dependency.recommender;
+package netflix.nebula.dependency.recommender.provider;
 
 import groovy.lang.Closure;
-import netflix.nebula.dependency.recommender.provider.*;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
-import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 

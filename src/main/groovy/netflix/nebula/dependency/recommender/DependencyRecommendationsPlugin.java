@@ -1,5 +1,7 @@
 package netflix.nebula.dependency.recommender;
 
+import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
+import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -13,14 +15,14 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     @Override
     public void apply(final Project project) {
         project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
-        
+        applyRecommendations(project);
+        enhancePublicationsWithBomProducer(project);
+    }
+
+    private void applyRecommendations(final Project project) {
         project.getPlugins().withType(JavaPlugin.class, new Action<JavaPlugin>() {
             @Override
             public void execute(JavaPlugin javaPlugin) {
-                applyRecommendations();
-            }
-
-            public void applyRecommendations() {
                 project.getConfigurations().all(new Action<Configuration>() {
                     @Override
                     public void execute(final Configuration conf) {
@@ -30,7 +32,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             @Override
                             public void execute(ResolvableDependencies resolvableDependencies) {
                                 for (Dependency dependency : resolvableDependencies.getDependencies()) {
-                                    if(dependency.getVersion() != null && !dependency.getVersion().isEmpty())
+                                    if (dependency.getVersion() != null && !dependency.getVersion().isEmpty())
                                         firstOrderDepsWithVersions.add(dependency.getGroup() + ":" + dependency.getName());
                                 }
                             }
@@ -44,7 +46,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
                                 // don't interfere with the way forces trump everything
                                 for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules())
-                                    if(requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName())) {
+                                    if (requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName())) {
                                         return;
                                     }
 
@@ -60,13 +62,16 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         });
     }
 
+    protected void enhancePublicationsWithBomProducer(Project project) {
+        project.getExtensions().create("dependencyManagement", MavenBomXmlGenerator.class, project);
+    }
+
     /**
      * Look for recommended versions in a project and each of its ancestors in order until one is found or the root is reached
      * @return the recommended version or <code>null</code>
      */
     protected String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
-        String version = project.getExtensions()
-                .getByType(RecommendationProviderContainer.class)
+        String version = project.getExtensions().getByType(RecommendationProviderContainer.class)
                 .getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
         if (version != null)
             return version;
