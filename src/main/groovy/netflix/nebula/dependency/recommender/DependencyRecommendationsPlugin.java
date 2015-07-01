@@ -26,14 +26,14 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 project.getConfigurations().all(new Action<Configuration>() {
                     @Override
                     public void execute(final Configuration conf) {
-                        final List<String> firstOrderDepsWithVersions = new ArrayList<>();
+                        final List<String> firstOrderDepsWithoutVersions = new ArrayList<>();
 
                         conf.getIncoming().beforeResolve(new Action<ResolvableDependencies>() {
                             @Override
                             public void execute(ResolvableDependencies resolvableDependencies) {
                                 for (Dependency dependency : resolvableDependencies.getDependencies()) {
-                                    if (dependency.getVersion() != null && !dependency.getVersion().isEmpty())
-                                        firstOrderDepsWithVersions.add(dependency.getGroup() + ":" + dependency.getName());
+                                    if (dependency.getVersion() == null || dependency.getVersion().isEmpty())
+                                        firstOrderDepsWithoutVersions.add(dependency.getGroup() + ":" + dependency.getName());
                                 }
                             }
                         });
@@ -45,13 +45,14 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                 String coord = requested.getGroup() + ":" + requested.getName();
 
                                 // don't interfere with the way forces trump everything
-                                for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules())
+                                for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules()) {
                                     if (requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName())) {
                                         return;
                                     }
+                                }
 
                                 String version = getRecommendedVersionRecursive(project, requested);
-                                if (version != null && !firstOrderDepsWithVersions.contains(coord)) {
+                                if (version != null && firstOrderDepsWithoutVersions.contains(coord)) {
                                     details.useVersion(version);
                                 }
                             }

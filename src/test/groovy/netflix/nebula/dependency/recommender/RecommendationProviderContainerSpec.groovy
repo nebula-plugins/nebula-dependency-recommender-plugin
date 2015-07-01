@@ -68,7 +68,7 @@ class RecommendationProviderContainerSpec extends Specification {
         project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.0']
     }
 
-    def 'recommended versions can be asked of the container directly'() {
+    def 'recommended versions can be asked of the dependencyRecommendations extension container directly'() {
         setup:
         project.dependencyRecommendations {
             map recommendations: ['commons-logging:commons-logging': '1.1']
@@ -126,7 +126,7 @@ class RecommendationProviderContainerSpec extends Specification {
         subproject.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
     }
 
-    def 'recommendation is used, even if a fixed version of a module is provided transitively'() {
+    def 'transitive dependency versions are not overriden by recommendations unless there is a corresponding first order dependency'() {
         setup:
         project.dependencyRecommendations {
             map recommendations: ['commons-logging:commons-logging': '1.1']
@@ -135,16 +135,17 @@ class RecommendationProviderContainerSpec extends Specification {
         when:
         project.dependencies {
             compile 'commons-configuration:commons-configuration:1.6'
+            // no first order dependency on commons-logging, so the recommendation will not be effectual
         }
 
         def commonsConfig = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
         def commonsLang = commonsConfig.children.find { it.moduleName == 'commons-logging' }
 
         then:
-        commonsLang.moduleVersion == '1.1'
+        commonsLang.moduleVersion == '1.1.1'
     }
 
-    def 'transitive version wins if no recommendation is provided for a module'() {
+    def 'transitive dependencies are used as a source of recommendations when no explicit recommendation is provided for a module'() {
         setup:
         project.dependencyRecommendations {
             map recommendations: ['some:other-module': '1.2']
@@ -157,7 +158,25 @@ class RecommendationProviderContainerSpec extends Specification {
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.6', '1.1.1']
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies
+                .collect { it.moduleVersion } == ['1.6', '1.1.1']
+    }
+
+    def 'transitive dependency is trumped if a recommended version is applied to a first order dependency'() {
+        setup:
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.0']
+        }
+
+        when:
+        project.dependencies {
+            compile 'commons-configuration:commons-configuration:1.6' // transitively depends on commons-logging 1.1.1
+            compile 'commons-logging:commons-logging'
+        }
+
+        then:
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies
+                .collect { it.moduleVersion } == ['1.6', '1.0']
     }
 
     def 'forces always win over recommendations'() {
