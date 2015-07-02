@@ -50,7 +50,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             repositories { jcenter() }
 
             dependencies {
-                compile 'com.google.guava:guava:18.0'
+                compile 'commons-configuration:commons-configuration:1.6'
             }
 
             publishing {
@@ -72,6 +72,8 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         runTasksSuccessfully('publish')
 
         def pomText = new File(projectDir, "build/repo/netflix/module-parent/1/module-parent-1.pom").text
+        println pomText
+
 
         def diff = DiffBuilder
                 .compare(Input.fromString(pomText))
@@ -85,9 +87,39 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                       <dependencyManagement>
                         <dependencies>
                           <dependency>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                            <version>18.0</version>
+                            <groupId>commons-digester</groupId>
+                            <artifactId>commons-digester</artifactId>
+                            <version>1.8</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-logging</groupId>
+                            <artifactId>commons-logging</artifactId>
+                            <version>1.1.1</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-lang</groupId>
+                            <artifactId>commons-lang</artifactId>
+                            <version>2.4</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-configuration</groupId>
+                            <artifactId>commons-configuration</artifactId>
+                            <version>1.6</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-beanutils</groupId>
+                            <artifactId>commons-beanutils</artifactId>
+                            <version>1.7.0</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-collections</groupId>
+                            <artifactId>commons-collections</artifactId>
+                            <version>3.2.1</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-beanutils</groupId>
+                            <artifactId>commons-beanutils-core</artifactId>
+                            <version>1.8.0</version>
                           </dependency>
                           <dependency>
                             <groupId>manual</groupId>
