@@ -22,7 +22,7 @@ contacts {
 
 repositories {
     jcenter()
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' } // for xmlunit2
+    maven { url 'https://jitpack.io' } // for xmlunit2
 }
 
 dependencies {
@@ -33,5 +33,5 @@ dependencies {
         exclude module: 'groovy-all'
     }
     testCompile 'com.netflix.nebula:nebula-test:2.2.2'
-    testCompile 'org.xmlunit:xmlunit-core:2.0.0-SNAPSHOT'
+    testCompile 'com.github.xmlunit:xmlunit:7ed02fb294'
 }
