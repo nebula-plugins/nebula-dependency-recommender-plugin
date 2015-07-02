@@ -10,7 +10,7 @@ public class CustomRecommendationProvider extends AbstractRecommendationProvider
     }
 
     @Override
-    public String getVersion(String org, String name) throws Exception {
+    public String getVersion(String org, String name) {
         return (String) versionFunction.call(org, name);
     }
 }

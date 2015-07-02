@@ -36,6 +36,22 @@ class RecommendationProviderContainerSpec extends Specification {
         project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '18.0']
     }
 
+    def 'recommendation providers can be named and recommendations provided by name'() {
+        setup:
+        project.dependencyRecommendations {
+            map recommendations: ['commons-logging:commons-logging': '1.1'], name: 'r1'
+            map recommendations: ['commons-logging:commons-logging': '1.0'], name: 'r2'
+        }
+
+        when:
+        project.dependencies {
+            compile project.recommend('commons-logging:commons-logging', 'r2')
+        }
+
+        then:
+        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.0']
+    }
+
     def 'transitive dependencies of providers are not calculated and therefore have no effect'() {
         setup:
         project.dependencyRecommendations {

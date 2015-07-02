@@ -1,5 +1,6 @@
 package netflix.nebula.dependency.recommender.publisher
 
+import netflix.nebula.dependency.recommender.ModuleNotationParser
 import org.gradle.api.IllegalDependencyNotation
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -40,19 +41,7 @@ class MavenBomXmlGenerator {
         else if(Iterable.class.isAssignableFrom(dependenciesRet.class))
             dependencies = dependenciesRet
 
-        generateDependencyManagementXml(pub, dependencies.collect { d ->
-            String[] moduleNotationParts = d.split(":");
-            if (moduleNotationParts.length < 2 || moduleNotationParts.length > 4) {
-                throw new IllegalDependencyNotation("Supplied String module notation '" + moduleNotation +
-                        "' is invalid. Example notations: 'org.gradle:gradle-core:2.2', 'org.mockito:mockito-core:1.9.5:javadoc'.");
-            }
-
-            return [
-                    getGroup: { GUtil.elvis(moduleNotationParts[0], null) },
-                    getName: { moduleNotationParts[1] },
-                    getVersion: { moduleNotationParts.length == 2 ? null : moduleNotationParts[2] }
-            ] as ModuleVersionIdentifier
-        })
+        generateDependencyManagementXml(pub, dependencies.collect { ModuleNotationParser.parse(it) })
     }
 
     protected generateDependencyManagementXml(MavenPublication pub, Iterable<ModuleVersionIdentifier> deps) {

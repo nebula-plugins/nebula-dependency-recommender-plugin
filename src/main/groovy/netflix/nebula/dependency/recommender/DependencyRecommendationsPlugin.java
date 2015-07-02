@@ -1,11 +1,14 @@
 package netflix.nebula.dependency.recommender;
 
 import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
+import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
+import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
+import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.plugins.JavaPlugin;
 
 import java.util.ArrayList;
@@ -16,6 +19,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public void apply(final Project project) {
         project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
         applyRecommendations(project);
+        enhanceDependenciesWithRecommender(project);
         enhancePublicationsWithBomProducer(project);
     }
 
@@ -61,6 +65,12 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 });
             }
         });
+    }
+
+    protected void enhanceDependenciesWithRecommender(Project project) {
+        RecommendationResolver resolver = new RecommendationResolver(project);
+        project.getExtensions().getByType(ExtraPropertiesExtension.class).set("recommend",
+                new MethodClosure(resolver, "recommend"));
     }
 
     protected void enhancePublicationsWithBomProducer(Project project) {
