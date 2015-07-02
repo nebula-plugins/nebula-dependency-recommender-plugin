@@ -27,12 +27,13 @@ Dependency recommenders are the source of versions.  If more than one recommende
 ```groovy
 dependencyRecommendations {
    mavenBom module: 'netflix:platform:latest.release'
-   propertiesFile uri: 'http://somewhere/extlib.properties'
+   propertiesFile uri: 'http://somewhere/extlib.properties', name: 'myprops'
 }
 
 dependencies {
    compile 'com.google.guava:guava' // no version, version is recommended
    compile 'commons-lang:commons-lang:2.6' // I know what I want, don't recommend
+   compile project.recommend('commmons-logging:commons-logging', 'myprops') // source the recommendation from the provider named myprops'
 }
 ```
 
