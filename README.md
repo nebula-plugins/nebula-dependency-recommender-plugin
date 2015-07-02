@@ -48,6 +48,106 @@ Several recommendation providers pack with the plugin.  The file-based providers
 * [Map](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Map-Provider)
 * [Custom](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Custom-Provider)
 
+## Producing a Maven BOM for use as a dependency recommendation source
+
+Suppose you want to produce a BOM that contains a recommended version for commons-configuration.
+
+```groovy
+apply plugin: 'maven-publish'
+apply plugin: 'nebula-dependency-recommender'
+
+group = 'netflix'
+
+configurations { compile }
+repositories { jcenter() }
+
+dependencies {
+   compile 'commons-configuration:commons-configuration:1.6'
+}
+
+publishing {
+	publications {
+	    parent(MavenPublication) {
+	        // the transitive closure of this configuration will be flattened and added to the dependency management section
+	        dependencyManagement.fromConfigurations { configurations.compile }
+	        
+	        // alternative syntax when you want to explicitly add a dependency with no transitives
+	        dependencyManagement.withDependencies { 'manual:dep:1' }
+	
+		// the bom will be generated with dependency coordinates of netflix:module-parent:1
+	        artifactId = 'module-parent'
+	        version = 1
+	        
+	        // further customization of the POM is allowed if desired
+	        pom.withXml { asNode().appendNode('description', 'A demonstration of maven POM customization') }
+	    }
+	}
+	repositories {
+	    maven { 
+	       url "$buildDir/repo" // point this to your destination repository
+	    }
+	}
+}
+```
+
+The resultant BOM would look like this:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>netflix</groupId>
+  <artifactId>module-parent</artifactId>
+  <version>1</version>
+  <packaging>pom</packaging>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>commons-digester</groupId>
+        <artifactId>commons-digester</artifactId>
+        <version>1.8</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.4</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-configuration</groupId>
+        <artifactId>commons-configuration</artifactId>
+        <version>1.6</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.7.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils-core</artifactId>
+        <version>1.8.0</version>
+      </dependency>
+      <dependency>
+        <groupId>manual</groupId>
+        <artifactId>dep</artifactId>
+        <version>1</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <description>A demonstration of maven POM customization</description>
+</project>
+```
+
 ## Version selection rules
 
 The hierarchy of preference for versions is:
