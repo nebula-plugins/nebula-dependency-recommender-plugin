@@ -2,6 +2,22 @@
 
 A Gradle plugin that allows you to leave off version numbers in your dependencies section and have versions recommended by several possible sources.  The most familiar recommendation provider that is supported is the Maven BOM (i.e. Maven dependency management metadata).  The plugin will control the versions of any dependencies that do not have a version specified.
 
+Table of Contents
+=================
+
+  * [Nebula Dependency Recommender](#nebula-dependency-recommender)
+    * [Usage](#usage)
+    * [Dependency recommender configuration](#dependency-recommender-configuration)
+    * [Built-in recommendation providers](#built-in-recommendation-providers)
+    * [Producing a Maven BOM for use as a dependency recommendation source](#producing-a-maven-bom-for-use-as-a-dependency-recommendation-source)
+    * [Version selection rules](#version-selection-rules)
+      * [1. Forced dependencies](#1-forced-dependencies)
+      * [2. Direct dependencies with a version qualifier](#2-direct-dependencies-with-a-version-qualifier)
+      * [3.  Dependency recommendations](#3--dependency-recommendations)
+      * [4.  Transitive dependencies](#4--transitive-dependencies)
+    * [Conflict resolution and transitive dependencies](#conflict-resolution-and-transitive-dependencies)
+    * [Accessing recommended versions directly](#accessing-recommended-versions-directly)
+
 ## Usage
 
 **NOTE:** This plugin has not yet been released!
