@@ -69,6 +69,14 @@ Several recommendation providers pack with the plugin.  The file-based providers
 Suppose you want to produce a BOM that contains a recommended version for commons-configuration.
 
 ```groovy
+buildscript {
+    repositories { jcenter() }
+
+    dependencies {
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:2.2.+'
+    }
+}
+
 apply plugin: 'maven-publish'
 apply plugin: 'nebula-dependency-recommender'
 
