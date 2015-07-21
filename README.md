@@ -71,10 +71,7 @@ Suppose you want to produce a BOM that contains a recommended version for common
 ```groovy
 buildscript {
     repositories { jcenter() }
-
-    dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:2.2.+'
-    }
+    dependencies { classpath 'com.netflix.nebula:nebula-dependency-recommender:2.2.+' }
 }
 
 apply plugin: 'maven-publish'
