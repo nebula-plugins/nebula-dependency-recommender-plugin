@@ -1,9 +1,9 @@
 # Nebula Dependency Recommender
 
-[![Build Status](https://travis-ci.org/nebula-plugins/projects/nebula-dependency-recommender-plugin.svg?branch=master)](https://travis-ci.org/nebula-plugins/projects/nebula-dependency-recommender-plugin)
-[![Coverage Status](https://coveralls.io/repos/nebula-plugins/projects/nebula-dependency-recommender-plugin/badge.svg?branch=masterservice=github)](https://coveralls.io/github/nebula-plugins/projects/nebula-dependency-recommender-plugin?branch=master)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nebula-plugins/projects/nebula-dependency-recommender-plugin?utm_source=badgeutm_medium=badgeutm_campaign=pr-badge)
-[![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/projects/nebula-dependency-recommender-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Build Status](https://travis-ci.org/nebula-plugins/nebula-dependency-recommender-plugin.svg?branch=master)](https://travis-ci.org/nebula-plugins/projects/nebula-dependency-recommender-plugin)
+[![Coverage Status](https://coveralls.io/repos/nebula-plugins/nebula-dependency-recommender-plugin/badge.svg?branch=masterservice=github)](https://coveralls.io/github/nebula-plugins/projects/nebula-dependency-recommender-plugin?branch=master)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nebula-plugins/nebula-dependency-recommender-plugin?utm_source=badgeutm_medium=badgeutm_campaign=pr-badge)
+[![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/nebula-dependency-recommender-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 A Gradle plugin that allows you to leave off version numbers in your dependencies section and have versions recommended by several possible sources.  The most familiar recommendation provider that is supported is the Maven BOM (i.e. Maven dependency management metadata).  The plugin will control the versions of any dependencies that do not have a version specified.
 
