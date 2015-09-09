@@ -46,7 +46,7 @@ class FileBasedRecommendationProviderSpec extends Specification {
         setup:
         def project = ProjectBuilder.builder().build();
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula-dependency-recommender'
+        project.apply plugin: 'nebula.dependency-recommender'
 
         def repo = projectDir.newFolder('repo')
 

@@ -14,7 +14,7 @@ class RecommendationProviderContainerSpec extends Specification {
     def setup() {
         project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula-dependency-recommender'
+        project.apply plugin: 'nebula.dependency-recommender'
 
         project.repositories { mavenCentral() }
     }
@@ -126,7 +126,7 @@ class RecommendationProviderContainerSpec extends Specification {
         project.subprojects.add(subproject)
 
         subproject.apply plugin: 'java'
-        subproject.apply plugin: 'nebula-dependency-recommender'
+        subproject.apply plugin: 'nebula.dependency-recommender'
         subproject.repositories { mavenCentral() }
 
         project.dependencyRecommendations {

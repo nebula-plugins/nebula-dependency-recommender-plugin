@@ -38,7 +38,7 @@ buildscript {
     }
 }
 
-apply plugin: 'nebula-dependency-recommender'
+apply plugin: 'nebula.dependency-recommender'
 ```
 
 ## Dependency recommender configuration
@@ -80,7 +80,7 @@ buildscript {
 }
 
 apply plugin: 'maven-publish'
-apply plugin: 'nebula-dependency-recommender'
+apply plugin: 'nebula.dependency-recommender'
 
 group = 'netflix'
 

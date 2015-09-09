@@ -10,7 +10,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         when:
         def project = ProjectBuilder.builder().build();
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula-dependency-recommender'
+        project.apply plugin: 'nebula.dependency-recommender'
 
         def recommendations = createFile('recommendations.properties')
         recommendations << 'com.google.guava:guava = 18.0'
@@ -40,7 +40,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         when:
         buildFile << '''
             apply plugin: 'maven-publish'
-            apply plugin: 'nebula-dependency-recommender'
+            apply plugin: 'nebula.dependency-recommender'
 
             group = 'netflix'
             version = '1'
@@ -75,6 +75,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         println pomText
 
 
+        // Looks like the order of these dependencies differs from Java 7 to 8. We'll need to change this assertion when we switch to Java 8
         def diff = DiffBuilder
                 .compare(Input.fromString(pomText))
                 .withTest(Input.fromString('''\
@@ -87,9 +88,14 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                       <dependencyManagement>
                         <dependencies>
                           <dependency>
-                            <groupId>commons-beanutils</groupId>
-                            <artifactId>commons-beanutils</artifactId>
-                            <version>1.7.0</version>
+                            <groupId>commons-digester</groupId>
+                            <artifactId>commons-digester</artifactId>
+                            <version>1.8</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-logging</groupId>
+                            <artifactId>commons-logging</artifactId>
+                            <version>1.1.1</version>
                           </dependency>
                           <dependency>
                             <groupId>commons-lang</groupId>
@@ -97,19 +103,14 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                             <version>2.4</version>
                           </dependency>
                           <dependency>
-                            <groupId>commons-beanutils</groupId>
-                            <artifactId>commons-beanutils-core</artifactId>
-                            <version>1.8.0</version>
-                          </dependency>
-                          <dependency>
                             <groupId>commons-configuration</groupId>
                             <artifactId>commons-configuration</artifactId>
                             <version>1.6</version>
                           </dependency>
                           <dependency>
-                            <groupId>commons-digester</groupId>
-                            <artifactId>commons-digester</artifactId>
-                            <version>1.8</version>
+                            <groupId>commons-beanutils</groupId>
+                            <artifactId>commons-beanutils</artifactId>
+                            <version>1.7.0</version>
                           </dependency>
                           <dependency>
                             <groupId>commons-collections</groupId>
@@ -117,9 +118,9 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                             <version>3.2.1</version>
                           </dependency>
                           <dependency>
-                            <groupId>commons-logging</groupId>
-                            <artifactId>commons-logging</artifactId>
-                            <version>1.1.1</version>
+                            <groupId>commons-beanutils</groupId>
+                            <artifactId>commons-beanutils-core</artifactId>
+                            <version>1.8.0</version>
                           </dependency>
                           <dependency>
                             <groupId>manual</groupId>
