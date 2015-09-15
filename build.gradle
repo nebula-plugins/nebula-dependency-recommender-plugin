@@ -32,6 +32,8 @@ plugins {
     id 'com.github.kt3k.coveralls' version '2.4.0'
 }
 
+description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
+
 contacts {
     'joschneider@netflix.com' {
         moniker 'Jon Schneider'
