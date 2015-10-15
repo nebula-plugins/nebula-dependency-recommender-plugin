@@ -10,7 +10,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         when:
         def project = ProjectBuilder.builder().build();
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula.dependency-recommender'
+        project.apply plugin: DependencyRecommendationsPlugin
 
         def recommendations = createFile('recommendations.properties')
         recommendations << 'com.google.guava:guava = 18.0'
@@ -72,8 +72,6 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         runTasksSuccessfully('publish')
 
         def pomText = new File(projectDir, "build/repo/netflix/module-parent/1/module-parent-1.pom").text
-        println pomText
-
 
         // Looks like the order of these dependencies differs from Java 7 to 8. We'll need to change this assertion when we switch to Java 8
         def diff = DiffBuilder

@@ -1,5 +1,6 @@
 package netflix.nebula.dependency.recommender.provider
 
+import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -12,7 +13,7 @@ class IvyRecommendationProviderSpec extends Specification {
         setup:
         def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
-        project.apply plugin: 'nebula.dependency-recommender'
+        project.apply plugin: DependencyRecommendationsPlugin
 
         def repo = projectDir.newFolder('repo')
         def sample = new File(repo, 'sample/recommender/1.0')

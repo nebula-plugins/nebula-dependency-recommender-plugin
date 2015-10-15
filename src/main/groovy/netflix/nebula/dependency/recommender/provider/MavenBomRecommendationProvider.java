@@ -2,6 +2,7 @@ package netflix.nebula.dependency.recommender.provider;
 
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
 import org.apache.maven.model.Repository;
 import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;

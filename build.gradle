@@ -18,7 +18,6 @@ buildscript { repositories { jcenter() } } // Some plugin dependencies (namely J
 
 plugins {
     id 'groovy'
-    id 'idea'
     id 'jacoco'
     id 'nebula.info' version '2.2.4'
     id 'nebula.contacts' version '2.2.0'
@@ -48,7 +47,9 @@ repositories {
 }
 
 dependencies {
-    testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
+    compile 'org.apache.maven:maven-model-builder:3.3.3'
+
+    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
     testCompile('com.github.xmlunit:xmlunit:7ed02fb294') {
