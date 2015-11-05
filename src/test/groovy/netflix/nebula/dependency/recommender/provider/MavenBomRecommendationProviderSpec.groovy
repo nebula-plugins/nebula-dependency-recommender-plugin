@@ -8,6 +8,7 @@ import spock.lang.Specification
 
 class MavenBomRecommendationProviderSpec extends Specification {
     @Rule TemporaryFolder projectDir
+    static def version = 1.0
 
     def 'recommendations are loaded from the dependencyManagement section of a BOM'() {
         setup:
@@ -51,11 +52,19 @@ class MavenBomRecommendationProviderSpec extends Specification {
 
         when:
         def recommendations = new MavenBomRecommendationProvider(project)
-        recommendations.setModule('sample:recommender:1.0')
+        recommendations.setModule(module)
 
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'
         recommendations.getVersion('commons-configuration', 'commons-configuration') == '1.1.2'
+
+        where:
+        module << [
+            'sample:recommender:1.0',
+            "sample:recommender:$version", // verify GString doesn't cause issues
+            'sample:recommender:1.0@pom',
+            "sample:recommender:$version@pom"
+        ]
     }
 
     def 'bom files that specify a non-relative parent pom are resolvable'() {

@@ -111,10 +111,13 @@ public class MavenBomRecommendationProvider extends FileBasedRecommendationProvi
     @SuppressWarnings("unchecked")
     @Override
     public InputStreamProvider setModule(Object dependencyNotation) {
-        if(dependencyNotation instanceof String && !((String) dependencyNotation).endsWith("@pom"))
-            dependencyNotation = dependencyNotation + "@pom";
-        if(dependencyNotation != null && Map.class.isAssignableFrom(dependencyNotation.getClass()))
+        if(dependencyNotation == null)
+            throw new IllegalArgumentException("Module may not be null");
+
+        if(Map.class.isAssignableFrom(dependencyNotation.getClass()))
             ((Map) dependencyNotation).put("ext", "pom");
+        else if(!dependencyNotation.toString().endsWith("@pom"))
+            dependencyNotation = dependencyNotation.toString() + "@pom";
         return super.setModule(dependencyNotation);
     }
 

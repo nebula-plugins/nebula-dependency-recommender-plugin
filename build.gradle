@@ -49,11 +49,7 @@ repositories {
 dependencies {
     compile 'org.apache.maven:maven-model-builder:3.0.4'
 
-    // a temporary measure while nebula-test is still dependant on 1.0-groovy-2.3
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
-        exclude module: 'groovy-all'
-    }
-
+    testCompile('com.netflix.nebula:nebula-test:4.0.0')
     testCompile('com.github.xmlunit:xmlunit:7ed02fb294') {
         exclude module: 'hamcrest-core'
     }

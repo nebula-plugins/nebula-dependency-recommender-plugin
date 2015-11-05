@@ -8,6 +8,7 @@ import spock.lang.Specification
 
 class IvyRecommendationProviderSpec extends Specification {
     @Rule TemporaryFolder projectDir
+    static def version = '1.0'
 
     def 'recommendations are loaded from the dependencies section of an ivy file'() {
         setup:
@@ -48,9 +49,17 @@ class IvyRecommendationProviderSpec extends Specification {
 
         when:
         def recommendations = new IvyRecommendationProvider(project)
-        recommendations.setModule('sample:recommender:1.0')
+        recommendations.setModule(module)
 
         then:
         recommendations.getVersion('netflix', 'platform-ipc') == '2.1287.0'
+
+        where:
+        module << [
+            'sample:recommender:1.0',
+            "sample:recommender:$version", // verify GString doesn't cause issues
+            'sample:recommender:1.0@ivy',
+            "sample:recommender:$version@ivy"
+        ]
     }
 }

@@ -1,7 +1,5 @@
 package netflix.nebula.dependency.recommender.provider
-
 import org.gradle.api.Project
-import netflix.nebula.dependency.recommender.provider.FileBasedRecommendationProvider.InputStreamProvider
 
 class IvyRecommendationProvider extends FileBasedRecommendationProvider {
     Map<String, String> versionsByCoord
@@ -23,10 +21,13 @@ class IvyRecommendationProvider extends FileBasedRecommendationProvider {
     @SuppressWarnings("unchecked")
     @Override
     public InputStreamProvider setModule(Object dependencyNotation) {
-        if(dependencyNotation instanceof String && !((String) dependencyNotation).endsWith("@ivy"))
-            dependencyNotation = "${dependencyNotation}@ivy"
+        if(dependencyNotation == null)
+            throw new IllegalArgumentException("Module may not be null")
+
         if(dependencyNotation && Map.class.isAssignableFrom(dependencyNotation.getClass()))
-            ((Map) dependencyNotation).put("ext", "pom")
+            ((Map) dependencyNotation).put("ext", "ivy")
+        else if(!dependencyNotation.toString().endsWith("@ivy"))
+            dependencyNotation = "${dependencyNotation}@ivy".toString()
         return super.setModule(dependencyNotation)
     }
 }

@@ -16,13 +16,6 @@ import java.net.URL;
 public abstract class FileBasedRecommendationProvider extends AbstractRecommendationProvider {
     protected Project project;
 
-    /**
-     * We only want to open input streams if a version is actually asked for
-     */
-    public static interface InputStreamProvider {
-        InputStream getInputStream() throws Exception;
-    }
-
     protected InputStreamProvider inputProvider = new InputStreamProvider() {
         @Override
         public InputStream getInputStream() throws Exception {
@@ -40,7 +33,7 @@ public abstract class FileBasedRecommendationProvider extends AbstractRecommenda
         try {
             return inputProvider.getInputStream();
         } catch (Exception e) {
-            throw new InvalidUserDataException("Unable to open recommender input source", e);
+                throw new InvalidUserDataException("Unable to open recommender input source", e);
         }
     }
 
