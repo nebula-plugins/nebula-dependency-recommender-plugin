@@ -1,6 +1,9 @@
 package netflix.nebula.dependency.recommender.provider;
 
 import groovy.lang.Closure;
+import netflix.nebula.dependency.recommender.OnlyReccomendIfFirstOrderWithoutVersionExists;
+import netflix.nebula.dependency.recommender.OnlyReccomendIfNoFirstOrderWithVersionExists;
+import netflix.nebula.dependency.recommender.RecommendationStrategy;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
@@ -12,7 +15,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RecommendationProviderContainer extends DefaultNamedDomainObjectList<RecommendationProvider> {
+
     private Project project;
+    private Class<? extends RecommendationStrategy> recommendationStrategy = OnlyReccomendIfFirstOrderWithoutVersionExists.class;
+    
+    // Make classes available in buildscripts without import
+    public static final Class OnlyReccomendIfFirstOrderWithoutVersionExists = OnlyReccomendIfFirstOrderWithoutVersionExists.class;
+    public static final Class OnlyReccomendIfNoFirstOrderWithVersionExists = OnlyReccomendIfNoFirstOrderWithVersionExists.class;
 
     private final Action<? super RecommendationProvider> addLastAction = new Action<RecommendationProvider>() {
         public void execute(RecommendationProvider r) {
@@ -109,5 +118,13 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
             }
         }
         return null;
+    }
+    
+    public Class<? extends RecommendationStrategy> getRecommendationStrategy() {
+        return recommendationStrategy;
+    }
+    
+    public void setRecommendationStrategy(Class<? extends RecommendationStrategy> recommendationStrategy) {
+        this.recommendationStrategy = recommendationStrategy;
     }
 }

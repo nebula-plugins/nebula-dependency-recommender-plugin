@@ -226,9 +226,10 @@ dependencies {
 
 ### 4.  Transitive dependencies
 
-Whenever a recommendation provider can provide a version recommendation for a transitive dependency AND there is a first order dependency on that transitive that has no version specified, the recommendation overrides versions of the module that are provided by transitively.  
+Whenever a recommendation provider can provide a version recommendation for a transitive dependency AND one of below strategies applies, the recommendation overrides versions of the module that are provided by transitively.  
+* **OnlyReccomendIfFirstOrderWithoutVersionExists** (default): there is a first order dependency with the same group:artifactId on that configuration that has no version specified
 
-Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  Even though `commons-configuration` indicates that it prefers version `1.1.1`, `1.0` is selected because of the recommendation provider.
+  Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  Even though `commons-configuration` indicates that it prefers version `1.1.1`, `1.0` is selected because of the recommendation provider.
 
 ```groovy
 dependencyRecommendations {
@@ -240,6 +241,20 @@ dependencies {
    compile 'commons-logging:commons-logging'
 }
 ```
+* **OnlyReccomendIfNoFirstOrderWithVersionExists**: there is no first order dependency with the same group:artifactId on that configuration that has a version specified
+
+  In the following example version `commons-logging:commons-logging:1.0` is selected even though `commons-logging` is not explicitely mentioned in dependencies. This would not work with the OnlyReccomendIfFirstOrderWithoutVersionExists strategy:
+
+```groovy
+dependencyRecommendations {
+   map recommendations: ['commons-logging:commons-logging': '1.0']
+}
+
+dependencies {
+   compile 'commons-configuration:commons-configuration:1.6'
+}
+```
+
 
 Conversely, if no recommendation can be found for a dependency that has no version, but a version is provided by a transitive the version provided by the transitive is applied.  In this scenario, if several transitives provide versions for the module, normal Gradle conflict resolution applies.
 

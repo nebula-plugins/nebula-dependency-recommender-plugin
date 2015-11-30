@@ -1,3 +1,8 @@
+3.0.4 / 2015-11-30
+==================
+
+* Reintroduce old strategy to recommend for transitive dependencies if there are no first level dependencies with versions
+
 3.0.3 / 2015-11-04
 ==================
 

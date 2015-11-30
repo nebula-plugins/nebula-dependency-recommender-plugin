@@ -11,9 +11,6 @@ import org.gradle.api.artifacts.*;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.plugins.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     @Override
     public void apply(final Project project) {
@@ -30,14 +27,12 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 project.getConfigurations().all(new Action<Configuration>() {
                     @Override
                     public void execute(final Configuration conf) {
-                        final List<String> firstOrderDepsWithoutVersions = new ArrayList<>();
-
+                        final RecommendationStrategyFactory rsFactory = new RecommendationStrategyFactory(project);
                         conf.getIncoming().beforeResolve(new Action<ResolvableDependencies>() {
                             @Override
                             public void execute(ResolvableDependencies resolvableDependencies) {
                                 for (Dependency dependency : resolvableDependencies.getDependencies()) {
-                                    if (dependency.getVersion() == null || dependency.getVersion().isEmpty())
-                                        firstOrderDepsWithoutVersions.add(dependency.getGroup() + ":" + dependency.getName());
+                                    rsFactory.getRecommendationStrategy().inspectDependency(dependency);
                                 }
                             }
                         });
@@ -46,7 +41,6 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             @Override
                             public void execute(DependencyResolveDetails details) {
                                 ModuleVersionSelector requested = details.getRequested();
-                                String coord = requested.getGroup() + ":" + requested.getName();
 
                                 // don't interfere with the way forces trump everything
                                 for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules()) {
@@ -54,11 +48,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                         return;
                                     }
                                 }
-
                                 String version = getRecommendedVersionRecursive(project, requested);
-                                if (version != null && firstOrderDepsWithoutVersions.contains(coord)) {
-                                    details.useVersion(version);
-                                }
+                                rsFactory.getRecommendationStrategy().recommendVersion(details, version);
                             }
                         });
                     }
