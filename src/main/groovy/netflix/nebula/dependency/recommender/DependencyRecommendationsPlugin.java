@@ -8,6 +8,8 @@ import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.plugins.JavaPlugin;
 
@@ -15,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
+    private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
+
     @Override
     public void apply(final Project project) {
         project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
@@ -57,6 +61,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
                                 String version = getRecommendedVersionRecursive(project, requested);
                                 if (version != null && firstOrderDepsWithoutVersions.contains(coord)) {
+                                    logger.info("Recommending version " + version + " for dependency " + requested.getGroup() + ":" + requested.getName());
                                     details.useVersion(version);
                                 }
                             }

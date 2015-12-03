@@ -4,7 +4,10 @@ import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ExternalModuleDependency;
+import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.internal.typeconversion.NotationConvertResult;
 
 import java.io.File;
@@ -15,6 +18,7 @@ import java.net.URL;
 
 public abstract class FileBasedRecommendationProvider extends AbstractRecommendationProvider {
     protected Project project;
+    private Logger logger = Logging.getLogger(FileBasedRecommendationProvider.class);
 
     protected InputStreamProvider inputProvider = new InputStreamProvider() {
         @Override
@@ -98,7 +102,11 @@ public abstract class FileBasedRecommendationProvider extends AbstractRecommenda
                 // create a temporary configuration to resolve the file
                 Configuration conf = project.getConfigurations().detachedConfiguration(
                         project.getDependencies().create(dependencyNotation));
-                return new FileInputStream(conf.resolve().iterator().next());
+
+                ResolvedArtifact artifactId = conf.getResolvedConfiguration().getResolvedArtifacts().iterator().next();
+                logger.info("Selected recommendation source " + artifactId.getId() + ", you requested " + dependencyNotation);
+
+                return new FileInputStream(artifactId.getFile());
             }
         };
         return inputProvider;
