@@ -1,3 +1,10 @@
+3.1.0 / 2015-12-03
+==================
+
+* Offer two strategies for how recommendations interact with transitive dependencies:
+  - `ConflictResolved` - If there is no first order recommend-able dependency, a transitive will conflict resolve with dependencies in the recommendations listing
+  - `OverrideTransitives` - If a recommendation conflicts with a transitive, pick the transitive
+
 3.0.3 / 2015-11-04
 ==================
 

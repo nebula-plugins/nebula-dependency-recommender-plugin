@@ -23,7 +23,7 @@ Table of Contents
     * [Conflict resolution and transitive dependencies](#conflict-resolution-and-transitive-dependencies)
     * [Accessing recommended versions directly](#accessing-recommended-versions-directly)
 
-## Usage
+## 1. Usage
 
 **NOTE:** This plugin has not yet been released!
 
@@ -41,7 +41,7 @@ buildscript {
 apply plugin: 'nebula.dependency-recommender'
 ```
 
-## Dependency recommender configuration
+## 2. Dependency recommender configuration
 
 Dependency recommenders are the source of versions.  If more than one recommender defines a recommended version for a module, the first recommender specified will win.
 
@@ -58,7 +58,7 @@ dependencies {
 }
 ```
 
-## Built-in recommendation providers
+## 3. Built-in recommendation providers
 
 Several recommendation providers pack with the plugin.  The file-based providers all a shared basic configuration that is described separately.
 
@@ -69,7 +69,7 @@ Several recommendation providers pack with the plugin.  The file-based providers
 * [Map](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Map-Provider)
 * [Custom](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Custom-Provider)
 
-## Producing a Maven BOM for use as a dependency recommendation source
+## 4. Producing a Maven BOM for use as a dependency recommendation source
 
 Suppose you want to produce a BOM that contains a recommended version for commons-configuration.
 
@@ -96,20 +96,20 @@ publishing {
 	    parent(MavenPublication) {
 	        // the transitive closure of this configuration will be flattened and added to the dependency management section
 	        dependencyManagement.fromConfigurations { configurations.compile }
-	        
+
 	        // alternative syntax when you want to explicitly add a dependency with no transitives
 	        dependencyManagement.withDependencies { 'manual:dep:1' }
-	
+
 		// the bom will be generated with dependency coordinates of netflix:module-parent:1
 	        artifactId = 'module-parent'
 	        version = 1
-	        
+
 	        // further customization of the POM is allowed if desired
 	        pom.withXml { asNode().appendNode('description', 'A demonstration of maven POM customization') }
 	    }
 	}
 	repositories {
-	    maven { 
+	    maven {
 	       url "$buildDir/repo" // point this to your destination repository
 	    }
 	}
@@ -174,11 +174,11 @@ The resultant BOM would look like this:
 </project>
 ```
 
-## Version selection rules
+## 5. Version selection rules
 
 The hierarchy of preference for versions is:
 
-### 1. Forced dependencies
+### 5.1. Forced dependencies
 
 ```groovy
 configurations.all {
@@ -196,7 +196,7 @@ dependencies {
 }
 ```
 
-### 2. Direct dependencies with a version qualifier
+### 5.2. Direct dependencies with a version qualifier
 
 Direct dependencies with a version qualifier trump recommendations, even if the version qualifier refers to an older version.
 
@@ -210,7 +210,7 @@ dependencies {
 }
 ```
 
-### 3.  Dependency recommendations
+### 5.3.  Dependency recommendations
 
 This is the basic case described elsewhere in the documentation;
 
@@ -224,24 +224,51 @@ dependencies {
 }
 ```
 
-### 4.  Transitive dependencies
+### 5.4.  Transitive dependencies
 
-Whenever a recommendation provider can provide a version recommendation for a transitive dependency AND there is a first order dependency on that transitive that has no version specified, the recommendation overrides versions of the module that are provided by transitively.  
+Transitive dependencies interact with the plugin in different ways depending on which of two available strategies is selected.
 
-Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  Even though `commons-configuration` indicates that it prefers version `1.1.1`, `1.0` is selected because of the recommendation provider.
+#### 5.4.1.  `OverrideTransitives` Strategy (default)
+
+In the following example version `commons-logging:commons-logging:1.0` is selected even though `commons-logging` is not explicitly mentioned in dependencies. This would not work with the ConflictResolved strategy:
 
 ```groovy
 dependencyRecommendations {
+   strategy OverrideTransitives // this is the default, so this line is NOT necessary
    map recommendations: ['commons-logging:commons-logging': '1.0']
 }
 
 dependencies {
    compile 'commons-configuration:commons-configuration:1.6'
-   compile 'commons-logging:commons-logging'
 }
 ```
 
-Conversely, if no recommendation can be found for a dependency that has no version, but a version is provided by a transitive the version provided by the transitive is applied.  In this scenario, if several transitives provide versions for the module, normal Gradle conflict resolution applies.
+#### 5.4.2.  `ConflictResolved` Strategy
+
+Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  In this case, the transitive dependency on `commons-logging` via `commons-configuration` is conflict resolved against the recommended version of 1.0.  Normal Gradle conflict resolution selects 1.1.1.
+
+```groovy
+dependencyRecommendations {
+   strategy ConflictResolved
+   map recommendations: ['commons-logging:commons-logging': '1.0']
+}
+
+dependencies {
+   compile 'commons-configuration:commons-configuration:1.6'
+}
+```
+
+However, if we have a first-order recommendation eligible dependency on `commons-logging`, 1.0 will be selected.
+
+```groovy
+dependencies {
+   compile 'commons-configuration:commons-logging'
+}
+```
+
+#### 5.4.3.  Bubbling up recommendations from transitives
+
+If no recommendation can be found in the recommendation sources for a dependency that has no version, but a version is provided by a transitive, the version provided by the transitive is applied.  In this scenario, if several transitives provide versions for the module, normal Gradle conflict resolution applies.
 
 ```groovy
 dependencyRecommendations {
@@ -254,11 +281,11 @@ dependencies {
 }
 ```
 
-## Conflict resolution and transitive dependencies
+## 6. Conflict resolution and transitive dependencies
 
 * [Resolving differences between recommendation providers](https://github.com/nebula-plugins/nebula-dependency-recommender/wiki/Resolving-Differences-Between-Recommendation-Providers)
 
-## Accessing recommended versions directly
+## 7. Accessing recommended versions directly
 
 The `dependencyRecommendations` container can be queried directly for a recommended version:
 

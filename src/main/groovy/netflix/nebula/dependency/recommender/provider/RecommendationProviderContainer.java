@@ -1,6 +1,7 @@
 package netflix.nebula.dependency.recommender.provider;
 
 import groovy.lang.Closure;
+import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
@@ -12,7 +13,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RecommendationProviderContainer extends DefaultNamedDomainObjectList<RecommendationProvider> {
+
     private Project project;
+    private RecommendationStrategies strategy = RecommendationStrategies.OverrideTransitives;
+    
+    // Make strategies available without import
+    public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
+    public static final RecommendationStrategies ConflictResolved = RecommendationStrategies.ConflictResolved;
 
     private final Action<? super RecommendationProvider> addLastAction = new Action<RecommendationProvider>() {
         public void execute(RecommendationProvider r) {
@@ -109,5 +116,13 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
             }
         }
         return null;
+    }
+
+    public RecommendationStrategies getStrategy() {
+        return strategy;
+    }
+
+    public void setStrategy(RecommendationStrategies strategy) {
+        this.strategy = strategy;
     }
 }

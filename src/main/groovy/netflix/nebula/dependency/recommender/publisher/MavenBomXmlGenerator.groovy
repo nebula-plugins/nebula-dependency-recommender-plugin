@@ -1,13 +1,10 @@
 package netflix.nebula.dependency.recommender.publisher
-
 import netflix.nebula.dependency.recommender.ModuleNotationParser
-import org.gradle.api.IllegalDependencyNotation
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.util.GUtil
 
 class MavenBomXmlGenerator {
     Project project
@@ -44,7 +41,7 @@ class MavenBomXmlGenerator {
         generateDependencyManagementXml(pub, dependencies.collect { ModuleNotationParser.parse(it) })
     }
 
-    protected generateDependencyManagementXml(MavenPublication pub, Iterable<ModuleVersionIdentifier> deps) {
+    protected static generateDependencyManagementXml(MavenPublication pub, Iterable<ModuleVersionIdentifier> deps) {
         pub.pom.withXml {
             Node root = it.asNode()
             def dependencyManagement = root.getByName("dependencyManagement")
