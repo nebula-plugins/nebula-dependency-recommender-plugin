@@ -162,7 +162,7 @@ class RecommendationProviderContainerSpec extends Specification {
         commonsLang.moduleVersion == '1.1.1'
     }
 
-    def 'transitive dependency versions are overriden by recommendations with OnlyReccomendIfNoFirstOrderWithVersionExists strategy'() {
+    def 'transitive dependency versions are overriden by recommendations with OverrideTransitives strategy'() {
         setup:
         project.dependencyRecommendations {
             map recommendations: ['commons-logging:commons-logging': '1.1']
@@ -171,7 +171,7 @@ class RecommendationProviderContainerSpec extends Specification {
         when:
         project.dependencies {
             compile 'commons-configuration:commons-configuration:1.6'
-            // no first order dependency on commons-logging, but still recommend with ONLY_RECOMMNED_IF_NO_FIRST_ORDER_WITH_VERSION_EXISTS strategy
+            // no first order dependency on commons-logging, but still recommend with OverrideTransitives strategy
         }
 
         def commonsConfig = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
