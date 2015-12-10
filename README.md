@@ -25,8 +25,6 @@ Table of Contents
 
 ## 1. Usage
 
-**NOTE:** This plugin has not yet been released!
-
 Apply the nebula-dependency-recommender plugin:
 
 ```groovy
