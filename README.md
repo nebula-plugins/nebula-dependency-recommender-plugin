@@ -41,7 +41,7 @@ apply plugin: 'nebula.dependency-recommender'
 
 ## 2. Dependency recommender configuration
 
-Dependency recommenders are the source of versions.  If more than one recommender defines a recommended version for a module, the first recommender specified will win.
+Dependency recommenders are the source of versions.  If more than one recommender defines a recommended version for a module, the last recommender specified will win.
 
 ```groovy
 dependencyRecommendations {
