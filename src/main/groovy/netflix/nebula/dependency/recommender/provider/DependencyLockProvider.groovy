@@ -15,8 +15,16 @@ class DependencyLockProvider extends FileBasedRecommendationProvider {
     @Override
     String getVersion(String org, String name) throws Exception {
         if(!recommendations) {
-            recommendations = new JsonSlurper().parse(input)
-                .collectEntries { [(it.key) : it.value.locked] }
+            final locks = new JsonSlurper().parse(input)
+            final isDependencyLock4Format = locks.every {
+                it.value.every {
+                    it.value instanceof Map
+                }
+            }
+
+            recommendations = (isDependencyLock4Format ? locks.collectEntries { it.value } : locks).collectEntries {
+                [(it.key) : it.value.locked]
+            }
         }
         recommendations[org + ':' + name]
     }
