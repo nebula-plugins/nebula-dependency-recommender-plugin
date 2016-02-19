@@ -93,10 +93,10 @@ publishing {
 	publications {
 	    parent(MavenPublication) {
 	        // the transitive closure of this configuration will be flattened and added to the dependency management section
-	        dependencyManagement.fromConfigurations { configurations.compile }
+	        bomGenerator.fromConfigurations { configurations.compile }
 
 	        // alternative syntax when you want to explicitly add a dependency with no transitives
-	        dependencyManagement.withDependencies { 'manual:dep:1' }
+	        bomGenerator.withDependencies { 'manual:dep:1' }
 
 		// the bom will be generated with dependency coordinates of netflix:module-parent:1
 	        artifactId = 'module-parent'
