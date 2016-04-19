@@ -74,17 +74,31 @@ class MavenBomRecommendationProviderSpec extends Specification {
         project.apply plugin: DependencyRecommendationsPlugin
 
         def repo = projectDir.newFolder('repo')
+
+        def parent = new File(repo, 'sample/recommender-parent/1.0')
+        parent.mkdirs()
+        new File(parent, 'recommender-parent-1.0.pom') << '''
+            <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>sample</groupId>
+              <artifactId>recommender-parent</artifactId>
+              <version>1.0</version>
+              <packaging>pom</packaging>
+            </project>
+        '''
+
         def sample = new File(repo, 'sample/recommender/1.1.1')
         sample.mkdirs()
-        def sampleFile = new File(sample, 'recommender-1.1.1.pom')
-        sampleFile << '''
+        def samplePom = new File(sample, 'recommender-1.1.1.pom')
+        samplePom << '''
             <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
               <modelVersion>4.0.0</modelVersion>
               <parent>
-                <artifactId>oss-parent</artifactId>
-                <groupId>org.sonatype.oss</groupId>
-                <version>7</version>
+                <artifactId>recommender-parent</artifactId>
+                <groupId>sample</groupId>
+                <version>1.0</version>
               </parent>
               <groupId>sample</groupId>
               <artifactId>recommender</artifactId>
@@ -104,7 +118,6 @@ class MavenBomRecommendationProviderSpec extends Specification {
 
         project.repositories {
             maven { url repo }
-            mavenCentral()
         }
 
         when:
