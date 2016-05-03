@@ -15,7 +15,7 @@ public class MapRecommendationProvider extends AbstractRecommendationProvider {
         }
 
         @Override
-        protected String propertyValue(String name) {
+        protected String propertyValue(String projectName, String name) {
             return recommendations.get(name);
         }
     };
@@ -24,7 +24,7 @@ public class MapRecommendationProvider extends AbstractRecommendationProvider {
     public String getVersion(String org, String name) {
         if(recommendations == null)
             throw new InvalidUserDataException("No recommender of dependencies to versions was provided");
-        return fuzzyResolver.versionOf(org + ":" + name);
+        return fuzzyResolver.versionOf("", org + ":" + name);
     }
 
     public void setRecommendations(Map<String, String> recommendations) {
