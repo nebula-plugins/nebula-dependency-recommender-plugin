@@ -21,7 +21,7 @@ Table of Contents
       * [2. Direct dependencies with a version qualifier](#2-direct-dependencies-with-a-version-qualifier)
       * [3.  Dependency recommendations](#3--dependency-recommendations)
       * [4.  Transitive dependencies](#4--transitive-dependencies)
-    * [Conflict resolution and transitive dependencies](#conflict-resolution-and-transitive-dependencies)
+    * [Conflict resolution and transitive dependencies](#transitive-dependencies)
     * [Accessing recommended versions directly](#accessing-recommended-versions-directly)
 
 ## 1. Usage
