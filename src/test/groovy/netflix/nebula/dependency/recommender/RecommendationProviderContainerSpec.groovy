@@ -165,6 +165,7 @@ class RecommendationProviderContainerSpec extends Specification {
     def 'transitive dependency versions are overriden by recommendations with OverrideTransitives strategy'() {
         setup:
         project.dependencyRecommendations {
+            strategy OverrideTransitives
             map recommendations: ['commons-logging:commons-logging': '1.1']
         }
 

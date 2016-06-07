@@ -15,7 +15,7 @@ import java.util.Map;
 public class RecommendationProviderContainer extends DefaultNamedDomainObjectList<RecommendationProvider> {
 
     private Project project;
-    private RecommendationStrategies strategy = RecommendationStrategies.OverrideTransitives;
+    private RecommendationStrategies strategy = RecommendationStrategies.ConflictResolved;
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;

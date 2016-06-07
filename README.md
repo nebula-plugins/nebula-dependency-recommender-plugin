@@ -33,7 +33,7 @@ buildscript {
     repositories { jcenter() }
 
     dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:3.1.0'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:3.4.0'
     }
 }
 
@@ -227,22 +227,7 @@ dependencies {
 
 Transitive dependencies interact with the plugin in different ways depending on which of two available strategies is selected.
 
-#### 5.4.1.  `OverrideTransitives` Strategy (default)
-
-In the following example version `commons-logging:commons-logging:1.0` is selected even though `commons-logging` is not explicitly mentioned in dependencies. This would not work with the ConflictResolved strategy:
-
-```groovy
-dependencyRecommendations {
-   strategy OverrideTransitives // this is the default, so this line is NOT necessary
-   map recommendations: ['commons-logging:commons-logging': '1.0']
-}
-
-dependencies {
-   compile 'commons-configuration:commons-configuration:1.6'
-}
-```
-
-#### 5.4.2.  `ConflictResolved` Strategy
+#### 5.4.1.  `ConflictResolved` Strategy (default)
 
 Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  In this case, the transitive dependency on `commons-logging` via `commons-configuration` is conflict resolved against the recommended version of 1.0.  Normal Gradle conflict resolution selects 1.1.1.
 
@@ -262,6 +247,21 @@ However, if we have a first-order recommendation eligible dependency on `commons
 ```groovy
 dependencies {
    compile 'commons-configuration:commons-logging'
+}
+```
+
+#### 5.4.2.  `OverrideTransitives` Strategy
+
+In the following example version `commons-logging:commons-logging:1.0` is selected even though `commons-logging` is not explicitly mentioned in dependencies. This would not work with the ConflictResolved strategy:
+
+```groovy
+dependencyRecommendations {
+   strategy OverrideTransitives // this is the default, so this line is NOT necessary
+   map recommendations: ['commons-logging:commons-logging': '1.0']
+}
+
+dependencies {
+   compile 'commons-configuration:commons-configuration:1.6'
 }
 ```
 
