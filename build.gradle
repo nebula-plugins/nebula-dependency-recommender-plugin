@@ -17,7 +17,7 @@
 
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.4'
-    id 'nebula.plugin-plugin' version '4.20.0'
+    id 'nebula.plugin-plugin' version '4.21.0'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
