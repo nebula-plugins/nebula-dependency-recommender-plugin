@@ -34,24 +34,24 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                         for (Dependency dependency : resolvableDependencies.getDependencies()) {
                             rsFactory.getRecommendationStrategy().inspectDependency(dependency);
                         }
-                    }
-                });
 
-                conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
-                    @Override
-                    public void execute(DependencyResolveDetails details) {
-                        ModuleVersionSelector requested = details.getRequested();
+                        conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
+                            @Override
+                            public void execute(DependencyResolveDetails details) {
+                                ModuleVersionSelector requested = details.getRequested();
 
-                        // don't interfere with the way forces trump everything
-                        for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules()) {
-                            if (requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName())) {
-                                return;
+                                // don't interfere with the way forces trump everything
+                                for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules()) {
+                                    if (requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName())) {
+                                        return;
+                                    }
+                                }
+                                String version = getRecommendedVersionRecursive(project, requested);
+                                if(rsFactory.getRecommendationStrategy().recommendVersion(details, version)) {
+                                    logger.info("Recommending version " + version + " for dependency " + requested.getGroup() + ":" + requested.getName());
+                                }
                             }
-                        }
-                        String version = getRecommendedVersionRecursive(project, requested);
-                        if(rsFactory.getRecommendationStrategy().recommendVersion(details, version)) {
-                            logger.info("Recommending version " + version + " for dependency " + requested.getGroup() + ":" + requested.getName());
-                        }
+                        });
                     }
                 });
             }
