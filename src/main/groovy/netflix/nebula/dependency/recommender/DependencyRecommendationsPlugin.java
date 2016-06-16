@@ -65,7 +65,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     }
 
     protected void enhancePublicationsWithBomProducer(Project project) {
-        project.getExtensions().create("dependencyManagement", MavenBomXmlGenerator.class, project);
+        project.getExtensions().create("bomGenerator", MavenBomXmlGenerator.class, project);
     }
 
     /**

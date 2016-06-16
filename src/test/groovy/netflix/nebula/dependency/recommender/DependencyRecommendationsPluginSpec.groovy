@@ -56,8 +56,8 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             publishing {
                 publications {
                     parent(MavenPublication) {
-                        dependencyManagement.fromConfigurations { configurations.compile }
-                        dependencyManagement.withDependencies { 'manual:dep:1' }
+                        bomGenerator.fromConfigurations { configurations.compile }
+                        bomGenerator.withDependencies { 'manual:dep:1' }
 
                         artifactId = 'module-parent'
                         pom.withXml { asNode().appendNode('description', 'A demonstration of maven POM customization') }
