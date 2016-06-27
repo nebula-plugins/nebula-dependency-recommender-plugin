@@ -233,7 +233,7 @@ Consider the following example with dependencies on `commons-configuration` and 
 
 ```groovy
 dependencyRecommendations {
-   strategy ConflictResolved
+   strategy ConflictResolved // this is the default, so this line is NOT necessary
    map recommendations: ['commons-logging:commons-logging': '1.0']
 }
 
@@ -256,7 +256,7 @@ In the following example version `commons-logging:commons-logging:1.0` is select
 
 ```groovy
 dependencyRecommendations {
-   strategy OverrideTransitives // this is the default, so this line is NOT necessary
+   strategy OverrideTransitives
    map recommendations: ['commons-logging:commons-logging': '1.0']
 }
 
