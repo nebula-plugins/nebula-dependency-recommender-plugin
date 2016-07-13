@@ -46,9 +46,12 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                         return;
                                     }
                                 }
-                                String version = getRecommendedVersionRecursive(project, requested);
-                                if(rsFactory.getRecommendationStrategy().recommendVersion(details, version)) {
-                                    logger.info("Recommending version " + version + " for dependency " + requested.getGroup() + ":" + requested.getName());
+                                RecommendationStrategy strategy = rsFactory.getRecommendationStrategy();
+                                if (strategy.canRecommendVersion(requested)) {
+                                    String version = getRecommendedVersionRecursive(project, requested);
+                                    if (strategy.recommendVersion(details, version)) {
+                                        logger.info("Recommending version " + version + " for dependency " + requested.getGroup() + ":" + requested.getName());
+                                    }
                                 }
                             }
                         });

@@ -2,6 +2,7 @@ package netflix.nebula.dependency.recommender;
 
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencyResolveDetails;
+import org.gradle.api.artifacts.ModuleVersionSelector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,11 @@ public class RecommendationsConflictResolvedStrategy extends RecommendationStrat
         if (dependency.getVersion() == null || dependency.getVersion().isEmpty()) {
             firstOrderDepsWithoutVersions.add(dependency.getGroup() + ":" + dependency.getName());
         }
+    }
+
+    @Override
+    public boolean canRecommendVersion(ModuleVersionSelector selector) {
+        return firstOrderDepsWithoutVersions.contains(getCoord(selector));
     }
 
     @Override

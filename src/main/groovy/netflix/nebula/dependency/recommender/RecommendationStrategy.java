@@ -24,11 +24,27 @@ public abstract class RecommendationStrategy {
     public abstract boolean recommendVersion(DependencyResolveDetails details, String version);
 
     /**
+     * Determines whether {@link #recommendVersion(DependencyResolveDetails, String)} will recommend a version,
+     * given a {@link ModuleVersionSelector}
+     * @param selector the selector
+     * @return <code>true</code> if a version will be recommended
+     */
+    public abstract boolean canRecommendVersion(ModuleVersionSelector selector);
+
+    /**
      * @param details the details to get coordinates from
      * @return the coordinates in the form of "<group>:<name>", taken from details.requested.
      */
     protected String getCoord(DependencyResolveDetails details) {
         ModuleVersionSelector requested = details.getRequested();
         return requested.getGroup() + ":" + requested.getName();
+    }
+
+    /**
+     * @param selector the selector to get coordinates from
+     * @return the coordinates in the form of "<group>:<name>"
+     */
+    protected String getCoord(ModuleVersionSelector selector) {
+        return selector.getGroup() + ":" + selector.getName();
     }
 }
