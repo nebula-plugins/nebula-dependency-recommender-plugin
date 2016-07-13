@@ -24,7 +24,7 @@ class MavenBomXmlGenerator {
         else if(Iterable.class.isAssignableFrom(configurationsRet.class))
             configurations = configurationsRet
 
-        generateDependencyManagementXml(pub, configurations.collect { getManagedDependencies(it) }.flatten())
+        generateDependencyManagementXml(pub, { configurations.collect { getManagedDependencies(it) }.flatten() })
     }
 
     void withDependencies(Closure dependenciesClosure) {
@@ -38,10 +38,10 @@ class MavenBomXmlGenerator {
         else if(Iterable.class.isAssignableFrom(dependenciesRet.class))
             dependencies = dependenciesRet
 
-        generateDependencyManagementXml(pub, dependencies.collect { ModuleNotationParser.parse(it) })
+        generateDependencyManagementXml(pub, { dependencies.collect { ModuleNotationParser.parse(it) } })
     }
 
-    protected static generateDependencyManagementXml(MavenPublication pub, Iterable<ModuleVersionIdentifier> deps) {
+    protected static generateDependencyManagementXml(MavenPublication pub, Closure<Iterable<ModuleVersionIdentifier>> deps) {
         pub.pom.withXml {
             Node root = it.asNode()
             def dependencyManagement = root.getByName("dependencyManagement")
@@ -53,7 +53,7 @@ class MavenBomXmlGenerator {
             else
                 dependencies = dependencyManagement[0].getByName("dependencies")[0]
 
-            deps.each { mvid ->
+            deps.call().each { mvid ->
                 Node dep = dependencies.appendNode("dependency")
                 dep.appendNode("groupId").value = mvid.group
                 dep.appendNode("artifactId").value = mvid.name
