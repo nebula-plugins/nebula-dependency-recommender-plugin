@@ -1,3 +1,8 @@
+3.6.3 / 2016-07-19
+==================
+
+* *BUGFIX* handle recommendations across a multiproject where subproject B depends on A which has a dependency it needs to pick up from recommendations
+
 3.2.0 / 2016-01-11
 ==================
 

@@ -12,6 +12,9 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
 
@@ -23,6 +26,20 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         enhancePublicationsWithBomProducer(project);
     }
 
+    private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited) {
+        if (dependency instanceof ExternalModuleDependency) {
+            factory.getRecommendationStrategy().inspectDependency(dependency);
+        } else if (dependency instanceof ProjectDependency) {
+            if (!visited.contains(dependency)) {
+                visited.add((ProjectDependency)dependency);
+                DependencySet dependencies = ((ProjectDependency) dependency).getProjectConfiguration().getAllDependencies();
+                for (Dependency dep : dependencies) {
+                    applyRecommendationToDependency(factory, dep, visited);
+                }
+            }
+        }
+    }
+
     private void applyRecommendations(final Project project) {
         project.getConfigurations().all(new Action<Configuration>() {
             @Override
@@ -32,7 +49,10 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     @Override
                     public void execute(ResolvableDependencies resolvableDependencies) {
                         for (Dependency dependency : resolvableDependencies.getDependencies()) {
-                            rsFactory.getRecommendationStrategy().inspectDependency(dependency);
+                            applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>());
+
+                            // if project dependency, pull all first orders and apply recomendations if missing dependency versions
+                            // dependency.getProjectConfiguration().allDependencies iterate and inspect them as well
                         }
 
                         conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
