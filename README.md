@@ -33,7 +33,7 @@ buildscript {
     repositories { jcenter() }
 
     dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:3.4.0'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:3.6.3'
     }
 }
 
