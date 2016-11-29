@@ -236,4 +236,12 @@ class RecommendationProviderContainerSpec extends Specification {
         then:
         project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
     }
+
+    def 'choose provider when passed in via configuration'() {
+        setup:
+
+        project.dependencies {
+
+        }
+    }
 }
