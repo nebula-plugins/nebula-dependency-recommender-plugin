@@ -1,10 +1,12 @@
 package netflix.nebula.dependency.recommender.provider;
 
 import groovy.lang.Closure;
+import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.Action;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
@@ -16,6 +18,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     private Project project;
     private RecommendationStrategies strategy = RecommendationStrategies.ConflictResolved;
+    private MavenBomRecommendationProvider mavenBomProvider;
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
@@ -30,6 +33,8 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     public RecommendationProviderContainer(Project project) {
         super(RecommendationProvider.class, null, new RecommendationProviderNamer());
         this.project = project;
+        this.mavenBomProvider = new MavenBomRecommendationProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM);
+        this.add(this.mavenBomProvider);
     }
 
     private static class RecommendationProviderNamer implements Namer<RecommendationProvider> {
@@ -61,12 +66,19 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public MavenBomRecommendationProvider mavenBom(Map<String, ?> args) {
-        Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
-        return add(new MavenBomRecommendationProvider(project), new ConfigureByMapAction<MavenBomRecommendationProvider>(modifiedArgs));
-    }
+        Object dependencyNotation = args.get("module");
+        if(dependencyNotation == null) {
+            throw new IllegalArgumentException("Module may not be null");
+        }
 
-    public MavenBomRecommendationProvider mavenBom(Closure closure) {
-        return add(new MavenBomRecommendationProvider(project), new ClosureBackedAction<MavenBomRecommendationProvider>(closure));
+        if(Map.class.isAssignableFrom(dependencyNotation.getClass())) {
+            ((Map) dependencyNotation).put("ext", "pom");
+        } else if(!dependencyNotation.toString().endsWith("@pom")) {
+            dependencyNotation = dependencyNotation.toString() + "@pom";
+        }
+        project.getDependencies().add(DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, dependencyNotation);
+
+        return mavenBomProvider;
     }
 
     public IvyRecommendationProvider ivyXml(Map<String, ?> args) {

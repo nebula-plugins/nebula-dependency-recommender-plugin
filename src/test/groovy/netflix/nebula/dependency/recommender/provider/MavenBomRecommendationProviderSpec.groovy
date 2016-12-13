@@ -50,9 +50,12 @@ class MavenBomRecommendationProviderSpec extends Specification {
         // demonstrates maven property interpolation from gradle project properties
         project.getExtensions().add("commons.version", "1.1.2")
 
+        project.dependencyRecommendations {
+            mavenBom module: module
+        }
+
         when:
-        def recommendations = new MavenBomRecommendationProvider(project)
-        recommendations.setModule(module)
+        def recommendations = new MavenBomRecommendationProvider(project, 'nebulaRecommenderBom')
 
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'
@@ -120,9 +123,12 @@ class MavenBomRecommendationProviderSpec extends Specification {
             maven { url repo }
         }
 
+        project.dependencies {
+            nebulaRecommenderBom 'sample:recommender:1.1.1@pom'
+        }
+
         when:
-        def recommendations = new MavenBomRecommendationProvider(project)
-        recommendations.setModule('sample:recommender:1.1.1')
+        def recommendations = new MavenBomRecommendationProvider(project, 'nebulaRecommenderBom')
 
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'

@@ -38,7 +38,7 @@ repositories {
 dependencies {
     compile 'org.apache.maven:maven-model-builder:3.0.4'
 
-    testCompile('com.netflix.nebula:nebula-test:4.0.0')
+    testCompile('com.netflix.nebula:nebula-test:4.4.2')
     testCompile('com.github.xmlunit:xmlunit:7ed02fb294') {
         exclude module: 'hamcrest-core'
     }
