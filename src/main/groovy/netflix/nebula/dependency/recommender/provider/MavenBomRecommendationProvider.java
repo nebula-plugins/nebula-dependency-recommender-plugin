@@ -18,20 +18,18 @@ import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class MavenBomRecommendationProvider extends FileBasedRecommendationProvider {
+public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
     private Map<String, String> recommendations;
 
-    public MavenBomRecommendationProvider(Project project) {
-        super(project);
+    public MavenBomRecommendationProvider(Project project, String configName) {
+        super(project, configName);
     }
 
     private class SimpleModelSource implements ModelSource {
@@ -57,68 +55,62 @@ public class MavenBomRecommendationProvider extends FileBasedRecommendationProvi
         if(recommendations == null) {
             recommendations = new HashMap<>();
 
-            DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
+            Set<File> recommendationFiles = getFilesOnConfiguration();
+            for (File recommendation : recommendationFiles) {
+                if (!recommendation.getName().endsWith("pom")) {
+                    break;
+                }
 
-            request.setModelResolver(new ModelResolver() {
-                @Override
-                public ModelSource resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
-                    String relativeUrl = "";
-                    for(String groupIdPart : groupId.split("\\."))
-                        relativeUrl += groupIdPart + "/";
-                    relativeUrl += artifactId + "/" + version + "/" + artifactId + "-" + version + ".pom";
-                    try {
-                        // try to find the parent pom in each maven repository specified in the gradle file
-                        for(ArtifactRepository repo : project.getRepositories()) {
-                            if(!(repo instanceof MavenArtifactRepository))
-                                continue;
-                            URL url = new URL(((MavenArtifactRepository) repo).getUrl().toString() + "/" + relativeUrl);
-                            try {
-                                return new SimpleModelSource(url.openStream());
-                            } catch (IOException e) {
-                                // try the next repo
+                DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
+
+                request.setModelResolver(new ModelResolver() {
+                    @Override
+                    public ModelSource resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
+                        String relativeUrl = "";
+                        for (String groupIdPart : groupId.split("\\."))
+                            relativeUrl += groupIdPart + "/";
+                        relativeUrl += artifactId + "/" + version + "/" + artifactId + "-" + version + ".pom";
+                        try {
+                            // try to find the parent pom in each maven repository specified in the gradle file
+                            for (ArtifactRepository repo : project.getRepositories()) {
+                                if (!(repo instanceof MavenArtifactRepository))
+                                    continue;
+                                URL url = new URL(((MavenArtifactRepository) repo).getUrl().toString() + "/" + relativeUrl);
+                                try {
+                                    return new SimpleModelSource(url.openStream());
+                                } catch (IOException e) {
+                                    // try the next repo
+                                }
                             }
+                        } catch (MalformedURLException e) {
+                            throw new RuntimeException(e); // should never happen
                         }
-                    } catch (MalformedURLException e) {
-                        throw new RuntimeException(e); // should never happen
+                        return null;
                     }
-                    return null;
+
+                    @Override
+                    public void addRepository(Repository repository) throws InvalidRepositoryException {
+                        // do nothing
+                    }
+
+                    @Override
+                    public ModelResolver newCopy() {
+                        return this; // do nothing
+                    }
+                });
+
+                request.setModelSource(new SimpleModelSource(new FileInputStream(recommendation)));
+
+                DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
+                modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
+
+                ModelBuildingResult result = modelBuilder.build(request);
+                for (Dependency d : result.getEffectiveModel().getDependencyManagement().getDependencies()) {
+                    recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion());
                 }
-
-                @Override
-                public void addRepository(Repository repository) throws InvalidRepositoryException {
-                    // do nothing
-                }
-
-                @Override
-                public ModelResolver newCopy() {
-                    return this; // do nothing
-                }
-            });
-
-            request.setModelSource(new SimpleModelSource(getInput()));
-
-            DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
-            modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
-
-            ModelBuildingResult result = modelBuilder.build(request);
-            for (Dependency d : result.getEffectiveModel().getDependencyManagement().getDependencies()) {
-                recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion());
             }
         }
         return recommendations.get(org + ":" + name);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public InputStreamProvider setModule(Object dependencyNotation) {
-        if(dependencyNotation == null)
-            throw new IllegalArgumentException("Module may not be null");
-
-        if(Map.class.isAssignableFrom(dependencyNotation.getClass()))
-            ((Map) dependencyNotation).put("ext", "pom");
-        else if(!dependencyNotation.toString().endsWith("@pom"))
-            dependencyNotation = dependencyNotation.toString() + "@pom";
-        return super.setModule(dependencyNotation);
     }
 
     private static class ProjectPropertiesModelInterpolator extends StringSearchModelInterpolator {

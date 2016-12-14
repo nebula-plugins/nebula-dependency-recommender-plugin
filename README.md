@@ -46,16 +46,23 @@ Dependency recommenders are the source of versions.  If more than one recommende
 
 ```groovy
 dependencyRecommendations {
-   mavenBom module: 'netflix:platform:latest.release'
-   propertiesFile uri: 'http://somewhere/extlib.properties', name: 'myprops'
+  mavenBom module: 'netflix:platform:latest.release'
+  propertiesFile uri: 'http://somewhere/extlib.properties', name: 'myprops'
 }
 
 dependencies {
-   compile 'com.google.guava:guava' // no version, version is recommended
-   compile 'commons-lang:commons-lang:2.6' // I know what I want, don't recommend
-   compile project.recommend('commmons-logging:commons-logging', 'myprops') // source the recommendation from the provider named myprops'
+  compile 'com.google.guava:guava' // no version, version is recommended
+  compile 'commons-lang:commons-lang:2.6' // I know what I want, don't recommend
+  compile project.recommend('commmons-logging:commons-logging', 'myprops') // source the recommendation from the provider named myprops'
 }
 ```
+
+You can also specify bom lookup via a configuration
+ ```groovy
+ dependencies {
+   nebulaRecommenderBom 'test.nebula:bom:1.0.0'
+ }
+ ```
 
 ## 3. Built-in recommendation providers
 
@@ -91,27 +98,27 @@ dependencies {
 }
 
 publishing {
-	publications {
-	    parent(MavenPublication) {
-	        // the transitive closure of this configuration will be flattened and added to the dependency management section
-	        dependencyManagement.fromConfigurations { configurations.compile }
+    publications {
+        parent(MavenPublication) {
+            // the transitive closure of this configuration will be flattened and added to the dependency management section
+            dependencyManagement.fromConfigurations { configurations.compile }
 
-	        // alternative syntax when you want to explicitly add a dependency with no transitives
-	        dependencyManagement.withDependencies { 'manual:dep:1' }
+            // alternative syntax when you want to explicitly add a dependency with no transitives
+            dependencyManagement.withDependencies { 'manual:dep:1' }
 
-		// the bom will be generated with dependency coordinates of netflix:module-parent:1
-	        artifactId = 'module-parent'
-	        version = 1
+            // the bom will be generated with dependency coordinates of netflix:module-parent:1
+            artifactId = 'module-parent'
+            version = 1
 
-	        // further customization of the POM is allowed if desired
-	        pom.withXml { asNode().appendNode('description', 'A demonstration of maven POM customization') }
-	    }
-	}
-	repositories {
-	    maven {
-	       url "$buildDir/repo" // point this to your destination repository
-	    }
-	}
+            // further customization of the POM is allowed if desired
+            pom.withXml { asNode().appendNode('description', 'A demonstration of maven POM customization') }
+        }
+    }
+    repositories {
+        maven {
+           url "$buildDir/repo" // point this to your destination repository
+        }
+    }
 }
 ```
 

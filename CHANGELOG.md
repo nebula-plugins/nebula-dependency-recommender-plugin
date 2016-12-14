@@ -1,3 +1,8 @@
+3.7.0 / 2016-12-13
+==================
+
+* Add `nebulaRecommenderBom` configuration as an alternative to the extension method `mavenBom`
+
 3.6.3 / 2016-07-19
 ==================
 
