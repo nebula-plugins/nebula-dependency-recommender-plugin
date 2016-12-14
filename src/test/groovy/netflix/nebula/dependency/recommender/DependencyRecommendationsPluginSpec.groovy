@@ -73,7 +73,59 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
 
         then:
-        println result.standardOutput
+        result.standardOutput.contains 'test.nebula:foo: -> 1.0.0'
+    }
+
+    def 'can lock boms'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('test.nebula', 'foo', '1.0.0')
+        repo.poms.add(pom)
+        def newPom = new Pom('test.nebula.bom', 'testbom', '1.1.0', ArtifactType.POM)
+        newPom.addManagementDependency('test.nebula', 'foo', '1.0.1')
+        repo.poms.add(newPom)
+        repo.generate()
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.nebula:foo:1.0.0')
+                .addModule('test.nebula:foo:1.0.1')
+                .build()
+        def generator = new GradleDependencyGenerator(graph)
+        generator.generateTestMavenRepo()
+
+        buildFile << """\
+            plugins {
+                id 'nebula.dependency-lock' version '4.3.2'
+            }
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'java'
+            
+            repositories {
+                maven { url '${repo.root.absolutePath}' }
+                ${generator.mavenRepositoryBlock}
+            }
+            
+            dependencies {
+                nebulaRecommenderBom 'test.nebula.bom:testbom:latest.release@pom'
+                compile 'test.nebula:foo'
+            }
+            """.stripIndent()
+
+        new File(projectDir, 'dependencies.lock').text = '''\
+            {
+                "nebulaRecommenderBom": {
+                    "test.nebula.bom:testbom": {
+                        "locked": "1.0.0",
+                        "requested": "latest.release"
+                    }
+                }
+            }
+            '''.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
+
+        then:
         result.standardOutput.contains 'test.nebula:foo: -> 1.0.0'
     }
 
