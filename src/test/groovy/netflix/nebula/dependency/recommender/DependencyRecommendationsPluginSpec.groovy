@@ -90,7 +90,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                 .addModule('test.nebula:foo:1.1.0')
                 .addModule(new ModuleBuilder('test.nebula:bar:1.0.0').addDependency('test.nebula:foo:1.1.0').build())
                 .build()
-        def generator = new GradleDependencyGenerator(graph)
+        def generator = new GradleDependencyGenerator(graph, "$projectDir/build/testrepo")
         generator.generateTestMavenRepo()
 
         buildFile << """\
@@ -128,7 +128,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                 .addModule('test.nebula:foo:1.1.0')
                 .addModule(new ModuleBuilder('test.nebula:bar:1.0.0').addDependency('test.nebula:foo:1.0.0').build())
                 .build()
-        def generator = new GradleDependencyGenerator(graph)
+        def generator = new GradleDependencyGenerator(graph, "$projectDir/build/testrepo")
         generator.generateTestMavenRepo()
 
         buildFile << """\
