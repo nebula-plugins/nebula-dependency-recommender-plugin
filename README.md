@@ -249,14 +249,6 @@ dependencies {
 }
 ```
 
-However, if we have a first-order recommendation eligible dependency on `commons-logging`, 1.0 will be selected.
-
-```groovy
-dependencies {
-   compile 'commons-configuration:commons-logging'
-}
-```
-
 #### 5.4.2.  `OverrideTransitives` Strategy
 
 In the following example version `commons-logging:commons-logging:1.0` is selected even though `commons-logging` is not explicitly mentioned in dependencies. This would not work with the ConflictResolved strategy:

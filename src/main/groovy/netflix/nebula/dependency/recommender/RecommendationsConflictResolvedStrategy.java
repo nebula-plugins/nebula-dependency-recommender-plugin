@@ -18,7 +18,7 @@ public class RecommendationsConflictResolvedStrategy extends RecommendationStrat
 
     @Override
     public void inspectDependency(Dependency dependency) {
-        if (dependency.getVersion() == null || dependency.getVersion().isEmpty()) {
+        if (isVersionMissing(dependency.getVersion())) {
             firstOrderDepsWithoutVersions.add(dependency.getGroup() + ":" + dependency.getName());
         }
     }
@@ -30,10 +30,21 @@ public class RecommendationsConflictResolvedStrategy extends RecommendationStrat
 
     @Override
     public boolean recommendVersion(DependencyResolveDetails details, String version) {
-        if (version != null && firstOrderDepsWithoutVersions.contains(getCoord(details))) {
+        boolean recommenderHasValidVersion = (version != null);
+        if (recommenderHasValidVersion && isFirstOrderMissingVersion(details)) {
             details.useVersion(version);
             return true;
         }
         return false;
+    }
+
+    private boolean isVersionMissing(String version) {
+        return (version == null || version.isEmpty());
+    }
+
+    private boolean isFirstOrderMissingVersion(DependencyResolveDetails details) {
+        boolean dependencyInFirstOrderList = firstOrderDepsWithoutVersions.contains(getCoord(details));
+        boolean versionMissing = isVersionMissing(details.getRequested().getVersion());
+        return dependencyInFirstOrderList && versionMissing;
     }
 }
