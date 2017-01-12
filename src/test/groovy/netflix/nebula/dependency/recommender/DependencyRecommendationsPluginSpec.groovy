@@ -2,7 +2,9 @@ package netflix.nebula.dependency.recommender
 
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
+import nebula.test.dependencies.DependencyGraphNode
 import nebula.test.dependencies.GradleDependencyGenerator
+import nebula.test.dependencies.ModuleBuilder
 import nebula.test.dependencies.maven.ArtifactType
 import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
@@ -74,6 +76,83 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
         then:
         result.standardOutput.contains 'test.nebula:foo: -> 1.0.0'
+    }
+
+    def 'conflict resolved respects higher transitive'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('test.nebula', 'foo', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.nebula:foo:1.0.0')
+                .addModule('test.nebula:foo:1.1.0')
+                .addModule(new ModuleBuilder('test.nebula:bar:1.0.0').addDependency('test.nebula:foo:1.1.0').build())
+                .build()
+        def generator = new GradleDependencyGenerator(graph)
+        generator.generateTestMavenRepo()
+
+        buildFile << """\
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'java'
+            
+            repositories {
+                maven { url '${repo.root.absolutePath}' }
+                ${generator.mavenRepositoryBlock}
+            }
+            
+            dependencies {
+                nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
+                compile 'test.nebula:foo'
+                compile 'test.nebula:bar:1.0.0'
+            }
+            """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
+
+        then:
+        result.standardOutput.contains 'test.nebula:foo: -> 1.1.0'
+    }
+
+    def 'conflict resolved respects higher recommendation'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('test.nebula', 'foo', '1.1.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.nebula:foo:1.0.0')
+                .addModule('test.nebula:foo:1.1.0')
+                .addModule(new ModuleBuilder('test.nebula:bar:1.0.0').addDependency('test.nebula:foo:1.0.0').build())
+                .build()
+        def generator = new GradleDependencyGenerator(graph)
+        generator.generateTestMavenRepo()
+
+        buildFile << """\
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'java'
+            
+            repositories {
+                maven { url '${repo.root.absolutePath}' }
+                ${generator.mavenRepositoryBlock}
+            }
+            
+            dependencies {
+                nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
+                compile 'test.nebula:foo'
+                compile 'test.nebula:bar:1.0.0'
+            }
+            """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
+
+        then:
+        result.standardOutput.contains 'test.nebula:foo: -> 1.1.0'
+        result.standardOutput.contains '\\--- test.nebula:foo:1.0.0 -> 1.1.0'
     }
 
     def 'can lock boms'() {
