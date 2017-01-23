@@ -33,7 +33,7 @@ public abstract class RecommendationStrategy {
 
     /**
      * @param details the details to get coordinates from
-     * @return the coordinates in the form of "<group>:<name>", taken from details.requested.
+     * @return the coordinates in the form of "&lt;group&gt;:&lt;name&gt;", taken from details.requested.
      */
     protected String getCoord(DependencyResolveDetails details) {
         ModuleVersionSelector requested = details.getRequested();
@@ -42,7 +42,7 @@ public abstract class RecommendationStrategy {
 
     /**
      * @param selector the selector to get coordinates from
-     * @return the coordinates in the form of "<group>:<name>"
+     * @return the coordinates in the form of "&lt;group&gt;:&lt;name&gt;"
      */
     protected String getCoord(ModuleVersionSelector selector) {
         return selector.getGroup() + ":" + selector.getName();
