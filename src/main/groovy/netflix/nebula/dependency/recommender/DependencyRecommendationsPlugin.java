@@ -32,9 +32,19 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         if (dependency instanceof ExternalModuleDependency) {
             factory.getRecommendationStrategy().inspectDependency(dependency);
         } else if (dependency instanceof ProjectDependency) {
-            if (!visited.contains(dependency)) {
-                visited.add((ProjectDependency)dependency);
-                DependencySet dependencies = ((ProjectDependency) dependency).getProjectConfiguration().getAllDependencies();
+            ProjectDependency projectDependency = (ProjectDependency) dependency;
+            if (!visited.contains(projectDependency)) {
+                visited.add(projectDependency);
+                Configuration configuration;
+                try {
+                    ProjectDependency.class.getMethod("getTargetConfiguration");
+                    String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
+                    configuration = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
+                } catch (NoSuchMethodException e) {
+                    //noinspection deprecation
+                    configuration = projectDependency.getProjectConfiguration();
+                }
+                DependencySet dependencies = configuration.getAllDependencies();
                 for (Dependency dep : dependencies) {
                     applyRecommendationToDependency(factory, dep, visited);
                 }
@@ -97,6 +107,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
     /**
      * Look for recommended versions in a project and each of its ancestors in order until one is found or the root is reached
+     *
      * @return the recommended version or <code>null</code>
      */
     protected String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
