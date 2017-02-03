@@ -1,4 +1,5 @@
 package netflix.nebula.dependency.recommender.provider
+
 import org.gradle.api.Project
 
 class IvyRecommendationProvider extends FileBasedRecommendationProvider {
@@ -8,11 +9,13 @@ class IvyRecommendationProvider extends FileBasedRecommendationProvider {
 
     @Override
     String getVersion(String org, String name) throws Exception {
-        if(versionsByCoord == null) {
+        if (versionsByCoord == null) {
             versionsByCoord = [:]
-            def ivy = new XmlSlurper().parse(getInput())
-            ivy.dependencies.dependency.each { d ->
-                versionsByCoord.put("${d.@org.text()}:${d.@name.text()}".toString(), "${d.@rev.text()}")
+            getInput().withCloseable {
+                def ivy = new XmlSlurper().parse(it)
+                ivy.dependencies.dependency.each { d ->
+                    versionsByCoord.put("${d.@org.text()}:${d.@name.text()}".toString(), "${d.@rev.text()}")
+                }
             }
         }
         return versionsByCoord["$org:$name".toString()]
@@ -21,12 +24,12 @@ class IvyRecommendationProvider extends FileBasedRecommendationProvider {
     @SuppressWarnings("unchecked")
     @Override
     public InputStreamProvider setModule(Object dependencyNotation) {
-        if(dependencyNotation == null)
+        if (dependencyNotation == null)
             throw new IllegalArgumentException("Module may not be null")
 
-        if(dependencyNotation && Map.class.isAssignableFrom(dependencyNotation.getClass()))
+        if (dependencyNotation && Map.class.isAssignableFrom(dependencyNotation.getClass()))
             ((Map) dependencyNotation).put("ext", "ivy")
-        else if(!dependencyNotation.toString().endsWith("@ivy"))
+        else if (!dependencyNotation.toString().endsWith("@ivy"))
             dependencyNotation = "${dependencyNotation}@ivy".toString()
         return super.setModule(dependencyNotation)
     }
