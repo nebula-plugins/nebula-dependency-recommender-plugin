@@ -1,12 +1,13 @@
 package netflix.nebula.dependency.recommender.provider;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class FuzzyVersionResolver {
-    private Map<Pattern, String> globs;
+    private List<Glob> globs;
 
     abstract protected Collection<String> propertyNames();
     abstract protected String propertyValue(String name);
@@ -23,18 +24,63 @@ public abstract class FuzzyVersionResolver {
 
         if(globs == null) {
             // initialize glob cache
-            globs = new HashMap<>();
+            globs = new ArrayList<>();
             for (String name : propertyNames()) {
                 if(name.contains("*")) {
-                    globs.put(Pattern.compile(name.replaceAll("\\*", ".*?")), propertyValue(name));
+                    globs.add(Glob.compile(name, propertyValue(name)));
                 }
+            }
+            Collections.sort(globs);
+        }
+
+        for (Glob glob : globs) {
+            if (glob.matches(key)) {
+                return resolveVersion(glob.version);
             }
         }
 
-        for (Map.Entry<Pattern, String> glob: globs.entrySet())
-            if(glob.getKey().matcher(key).matches())
-                return resolveVersion(glob.getValue());
-
         return null;
+    }
+
+    private static class Glob implements Comparable<Glob> {
+        private final Pattern pattern;
+        private final String version;
+        private final int weight;
+
+        private Glob(Pattern pattern, String version, int weight) {
+            this.pattern = pattern;
+            this.version = version;
+            this.weight = weight;
+        }
+
+        private static Glob compile(String glob, String version) {
+            StringBuilder patternBuilder = new StringBuilder();
+            boolean first = true;
+            int weight = 0;
+
+            for (String token : glob.split("\\*", -1)) {
+                if (first) {
+                    first = false;
+                } else {
+                    patternBuilder.append(".*?");
+                }
+
+                weight += token.length();
+                patternBuilder.append(Pattern.quote(token));
+            }
+
+            Pattern pattern = Pattern.compile(patternBuilder.toString());
+
+            return new Glob(pattern, version, weight);
+        }
+
+        private boolean matches(String key) {
+            return pattern.matcher(key).matches();
+        }
+
+        @Override
+        public int compareTo(Glob o) {
+            return Integer.compare(o.weight, weight);
+        }
     }
 }
