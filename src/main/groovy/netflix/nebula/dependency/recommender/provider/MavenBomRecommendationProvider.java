@@ -45,6 +45,11 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
     private Map<String, String> recommendations;
     private DependencyManagement insight;
 
+    public MavenBomRecommendationProvider(Project project, String configName) {
+        super(project, configName);
+        this.insight = new DependencyManagement();
+    }
+
     public MavenBomRecommendationProvider(Project project, String configName, DependencyManagement insight) {
         super(project, configName);
         this.insight = insight;
