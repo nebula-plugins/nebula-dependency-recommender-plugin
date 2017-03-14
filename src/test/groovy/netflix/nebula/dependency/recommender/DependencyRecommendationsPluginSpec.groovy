@@ -78,6 +78,42 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         result.standardOutput.contains 'test.nebula:foo: -> 1.0.0'
     }
 
+    def 'dependencyInsightEnhanced from recommendation via configuration'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('test.nebula', 'foo', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.nebula:foo:1.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(graph)
+        generator.generateTestMavenRepo()
+
+        buildFile << """\
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'java'
+            
+            repositories {
+                maven { url '${repo.root.absolutePath}' }
+                ${generator.mavenRepositoryBlock}
+            }
+            
+            dependencies {
+                nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
+                compile 'test.nebula:foo'
+            }
+            """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('dependencyInsightEnhanced', '--configuration', 'compile', '--dependency' , 'foo')
+
+        then:
+        result.standardOutput.contains 'test.nebula:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'
+        result.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:testbom:pom:1.0.0'
+    }
+
     def 'conflict resolved respects higher transitive'() {
         def repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')

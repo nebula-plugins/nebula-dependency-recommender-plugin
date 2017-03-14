@@ -1,5 +1,7 @@
 package netflix.nebula.dependency.recommender;
 
+import com.netflix.nebula.dependencybase.DependencyBasePlugin;
+import com.netflix.nebula.dependencybase.DependencyManagement;
 import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
 import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
@@ -18,11 +20,14 @@ import java.util.List;
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
+    private DependencyManagement dependencyInsight;
 
     @Override
     public void apply(final Project project) {
+        project.getPlugins().apply(DependencyBasePlugin.class);
+        dependencyInsight = (DependencyManagement) project.getExtensions().getExtraProperties().get("nebulaDependencyBase");
         project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
-        project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
+        project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project, dependencyInsight);
         applyRecommendations(project);
         enhanceDependenciesWithRecommender(project);
         enhancePublicationsWithBomProducer(project);
@@ -83,7 +88,9 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                     if (strategy.canRecommendVersion(requested)) {
                                         String version = getRecommendedVersionRecursive(project, requested);
                                         if (strategy.recommendVersion(details, version)) {
-                                            logger.info("Recommending version " + version + " for dependency " + requested.getGroup() + ":" + requested.getName());
+                                            String coordinate = requested.getGroup() + ":" + requested.getName();
+                                            dependencyInsight.addRecommendation(conf.getName(), coordinate, version, whichStrategy(strategy), "nebula.dependency-recommender");
+                                            logger.info("Recommending version " + version + " for dependency " + coordinate);
                                         }
                                     }
                                 }
@@ -93,6 +100,16 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 }
             }
         });
+    }
+
+    protected String whichStrategy(RecommendationStrategy strategy) {
+        if (strategy instanceof RecommendationsConflictResolvedStrategy) {
+            return "conflict resolution recommendation";
+        } else if (strategy instanceof RecommendationsOverrideTransitivesStrategy) {
+            return "override transitive recommendation";
+        } else {
+            return "nebula.dependency-recommender";
+        }
     }
 
     protected void enhanceDependenciesWithRecommender(Project project) {

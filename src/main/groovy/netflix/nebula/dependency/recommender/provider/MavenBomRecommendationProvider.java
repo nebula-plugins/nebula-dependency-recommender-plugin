@@ -1,5 +1,6 @@
 package netflix.nebula.dependency.recommender.provider;
 
+import com.netflix.nebula.dependencybase.DependencyManagement;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Repository;
@@ -27,9 +28,11 @@ import java.util.*;
 
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
     private Map<String, String> recommendations;
+    private DependencyManagement insight;
 
-    public MavenBomRecommendationProvider(Project project, String configName) {
+    public MavenBomRecommendationProvider(Project project, String configName, DependencyManagement insight) {
         super(project, configName);
+        this.insight = insight;
     }
 
     private class SimpleModelSource implements ModelSource {
@@ -105,6 +108,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                 modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
 
                 ModelBuildingResult result = modelBuilder.build(request);
+                insight.addPluginMessage("nebula.dependency-recommender uses mavenBom: " + result.getEffectiveModel().getId());
                 for (Dependency d : result.getEffectiveModel().getDependencyManagement().getDependencies()) {
                     recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion());
                 }
