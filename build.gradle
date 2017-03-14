@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 Netflix, Inc.
+ * Copyright 2014-2017 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.7'
-    id 'nebula.plugin-plugin' version '5.1.0'
+    id 'nebula.plugin-plugin' version '5.1.1'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
@@ -37,7 +35,7 @@ repositories {
 
 dependencies {
     compile 'org.apache.maven:maven-model-builder:3.0.4'
-
+    compile 'com.netflix.nebula:nebula-dependency-base-plugin:0.1.0'
     testCompile('com.netflix.nebula:nebula-test:4.4.2')
     testCompile('com.github.xmlunit:xmlunit:7ed02fb294') {
         exclude module: 'hamcrest-core'

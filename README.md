@@ -33,7 +33,7 @@ buildscript {
     repositories { jcenter() }
 
     dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:3.6.3'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.1.0'
     }
 }
 
@@ -46,11 +46,11 @@ Dependency recommenders are the source of versions.  If more than one recommende
 
 ```groovy
 dependencyRecommendations {
-  mavenBom module: 'netflix:platform:latest.release'
   propertiesFile uri: 'http://somewhere/extlib.properties', name: 'myprops'
 }
 
 dependencies {
+  nebulaRecommenderBom 'netflix:platform:latest.release@pom'
   compile 'com.google.guava:guava' // no version, version is recommended
   compile 'commons-lang:commons-lang:2.6' // I know what I want, don't recommend
   compile project.recommend('commmons-logging:commons-logging', 'myprops') // source the recommendation from the provider named myprops'
@@ -60,7 +60,7 @@ dependencies {
 You can also specify bom lookup via a configuration
  ```groovy
  dependencies {
-   nebulaRecommenderBom 'test.nebula:bom:1.0.0'
+   nebulaRecommenderBom 'test.nebula:bom:1.0.0@pom'
  }
  ```
 

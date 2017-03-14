@@ -1,8 +1,22 @@
+/*
+ * Copyright 2016-2017 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package netflix.nebula.dependency.recommender
 
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
-import nebula.test.dependencies.DependencyGraphNode
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
 import nebula.test.dependencies.maven.ArtifactType
@@ -76,6 +90,42 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
         then:
         result.standardOutput.contains 'test.nebula:foo: -> 1.0.0'
+    }
+
+    def 'dependencyInsightEnhanced from recommendation via configuration'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('test.nebula', 'foo', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.nebula:foo:1.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(graph)
+        generator.generateTestMavenRepo()
+
+        buildFile << """\
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'java'
+            
+            repositories {
+                maven { url '${repo.root.absolutePath}' }
+                ${generator.mavenRepositoryBlock}
+            }
+            
+            dependencies {
+                nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
+                compile 'test.nebula:foo'
+            }
+            """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('dependencyInsightEnhanced', '--configuration', 'compile', '--dependency' , 'foo')
+
+        then:
+        result.standardOutput.contains 'test.nebula:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'
+        result.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:testbom:pom:1.0.0'
     }
 
     def 'conflict resolved respects higher transitive'() {

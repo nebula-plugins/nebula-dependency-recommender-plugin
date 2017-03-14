@@ -1,3 +1,24 @@
+4.1.0 / 2017-03-14
+=======================
+
+* Begin using `nebula.dependency-base` plugin.
+    * Gives us `dependencyInsightEnhanced` task to show what was recommended instead of `selected by rule` in reasons
+
+4.0.2 / 2017-02-03
+==================
+
+* Remove `getProjectConfiguration` deprecation warning on Gradle 3.4
+
+4.0.1 / 2017-02-02
+==================
+
+* Close `InputStream` for properties and file based providers to avoid file locking issues on Windows
+
+4.0.0 / 2017-02-01
+==================
+
+* BREAKING: Change to `ConflictResolvedStrategy`. First order recommendations will not auto-win, they will go through conflict resolution.
+
 3.7.0 / 2016-12-13
 ==================
 

@@ -1,8 +1,26 @@
+/*
+ * Copyright 2016-2017 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package netflix.nebula.dependency.recommender
 
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
+import nebula.test.dependencies.maven.ArtifactType
+import nebula.test.dependencies.maven.Pom
+import nebula.test.dependencies.repositories.MavenRepo
 
 class DependencyRecommendationsMultiprojectPluginSpec extends IntegrationSpec {
     def 'can use recommender across a multiproject'() {
@@ -48,5 +66,57 @@ class DependencyRecommendationsMultiprojectPluginSpec extends IntegrationSpec {
         results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo\n' +
                 '\\--- project :a\n' +
                 '     \\--- example:foo: -> 1.0.0'
+    }
+
+    def 'can use recommender with dependencyInsightEnhanced across a multiproject'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'multiprojectbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('example', 'foo', '1.0.0')
+        pom.addManagementDependency('example', 'bar', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def depGraph = new DependencyGraphBuilder()
+                .addModule('example:foo:1.0.0')
+                .addModule('example:bar:1.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(depGraph)
+        generator.generateTestMavenRepo()
+
+        def a = addSubproject('a', '''\
+                dependencies {
+                    compile 'example:foo'
+                }
+            '''.stripIndent())
+        writeHelloWorld('a', a)
+        def b = addSubproject('b', '''\
+                dependencies {
+                    compile project(':a')
+                }
+            '''.stripIndent())
+        writeHelloWorld('b', b)
+        buildFile << """\
+            allprojects {
+                apply plugin: 'nebula.dependency-recommender'
+            }
+            subprojects {
+                apply plugin: 'java'
+
+                repositories {
+                    maven { url '${repo.root.absolutePath}' }
+                    ${generator.mavenRepositoryBlock}
+                }
+
+                dependencies {
+                    nebulaRecommenderBom 'test.nebula.bom:multiprojectbom:1.0.0@pom'
+                }
+            }
+            """.stripIndent()
+        when:
+        def results = runTasksSuccessfully(':a:dependencyInsightEnhanced', '--configuration', 'compile', '--dependency', 'foo')
+
+        then:
+        results.standardOutput.contains 'example:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'
+        results.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:multiprojectbom:pom:1.0.0'
     }
 }
