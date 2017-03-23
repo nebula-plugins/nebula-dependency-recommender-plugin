@@ -22,9 +22,12 @@ import nebula.test.dependencies.ModuleBuilder
 import nebula.test.dependencies.maven.ArtifactType
 import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
+import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.testfixtures.ProjectBuilder
 import org.xmlunit.builder.DiffBuilder
 import org.xmlunit.builder.Input
+import spock.lang.Issue
 
 class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
     def 'applies recommendations to dependencies with no version'() {
@@ -357,5 +360,44 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
         then:
         !diff.hasDifferences()
+    }
+
+    @Issue('#49')
+    def 'substituted dependencies do not have recommendations applied'() {
+        when:
+        def project = ProjectBuilder.builder().build();
+        project.apply plugin: 'java'
+        project.apply plugin: DependencyRecommendationsPlugin
+
+        def recommendations = createFile('recommendations.properties')
+        recommendations << 'com.google.collections:google-collections = 1.0'
+
+        project.dependencyRecommendations {
+            propertiesFile name: 'props', file: recommendations
+        }
+
+        project.repositories {
+            mavenCentral()
+        }
+
+        project.configurations.all {
+            resolutionStrategy.dependencySubstitution {
+                substitute module('com.google.collections:google-collections') with module ('com.google.guava:guava:12.0')
+            }
+        }
+
+        project.dependencies {
+            compile 'com.google.collections:google-collections'
+        }
+
+        def resolutionResult = project.configurations.compile.incoming.resolutionResult
+        def guava = resolutionResult.allDependencies.first()
+
+        then:
+        guava instanceof ResolvedDependencyResult
+        def moduleVersion = (guava as ResolvedDependencyResult).selected.moduleVersion
+        moduleVersion.group == 'com.google.guava'
+        moduleVersion.name == 'guava'
+        moduleVersion.version == '12.0'
     }
 }

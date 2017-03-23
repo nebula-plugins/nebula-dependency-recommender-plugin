@@ -48,30 +48,6 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         enhancePublicationsWithBomProducer(project);
     }
 
-    private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited) {
-        if (dependency instanceof ExternalModuleDependency) {
-            factory.getRecommendationStrategy().inspectDependency(dependency);
-        } else if (dependency instanceof ProjectDependency) {
-            ProjectDependency projectDependency = (ProjectDependency) dependency;
-            if (!visited.contains(projectDependency)) {
-                visited.add(projectDependency);
-                Configuration configuration;
-                try {
-                    ProjectDependency.class.getMethod("getTargetConfiguration");
-                    String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
-                    configuration = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
-                } catch (NoSuchMethodException e) {
-                    //noinspection deprecation
-                    configuration = projectDependency.getProjectConfiguration();
-                }
-                DependencySet dependencies = configuration.getAllDependencies();
-                for (Dependency dep : dependencies) {
-                    applyRecommendationToDependency(factory, dep, visited);
-                }
-            }
-        }
-    }
-
     private void applyRecommendations(final Project project) {
         project.getConfigurations().all(new Action<Configuration>() {
             @Override
@@ -91,7 +67,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
                                 @Override
                                 public void execute(DependencyResolveDetails details) {
-                                    ModuleVersionSelector requested = details.getRequested();
+                                    ModuleVersionSelector requested = details.getTarget();
 
                                     // don't interfere with the way forces trump everything
                                     for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules()) {
@@ -115,6 +91,30 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 }
             }
         });
+    }
+
+    private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited) {
+        if (dependency instanceof ExternalModuleDependency) {
+            factory.getRecommendationStrategy().inspectDependency(dependency);
+        } else if (dependency instanceof ProjectDependency) {
+            ProjectDependency projectDependency = (ProjectDependency) dependency;
+            if (!visited.contains(projectDependency)) {
+                visited.add(projectDependency);
+                Configuration configuration;
+                try {
+                    ProjectDependency.class.getMethod("getTargetConfiguration");
+                    String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
+                    configuration = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
+                } catch (NoSuchMethodException e) {
+                    //noinspection deprecation
+                    configuration = projectDependency.getProjectConfiguration();
+                }
+                DependencySet dependencies = configuration.getAllDependencies();
+                for (Dependency dep : dependencies) {
+                    applyRecommendationToDependency(factory, dep, visited);
+                }
+            }
+        }
     }
 
     protected String whichStrategy(RecommendationStrategy strategy) {
