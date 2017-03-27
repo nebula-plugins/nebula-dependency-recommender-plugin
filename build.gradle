@@ -34,6 +34,7 @@ repositories {
 }
 
 dependencies {
+    compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     compile 'org.apache.maven:maven-model-builder:3.0.4'
     compile 'com.netflix.nebula:nebula-dependency-base-plugin:0.1.0'
     testCompile('com.netflix.nebula:nebula-test:4.4.2')

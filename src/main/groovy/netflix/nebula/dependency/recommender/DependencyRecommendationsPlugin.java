@@ -17,6 +17,9 @@ package netflix.nebula.dependency.recommender;
 
 import com.netflix.nebula.dependencybase.DependencyBasePlugin;
 import com.netflix.nebula.dependencybase.DependencyManagement;
+import com.netflix.nebula.interop.ConfigurationsKt;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
 import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
@@ -54,13 +57,13 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             public void execute(final Configuration conf) {
                 final RecommendationStrategyFactory rsFactory = new RecommendationStrategyFactory(project);
                 if (conf.getState() == Configuration.State.UNRESOLVED) {
-                    conf.getIncoming().beforeResolve(new Action<ResolvableDependencies>() {
+                    ConfigurationsKt.onResolve(conf, new Function1<ResolvableDependencies, Unit>() {
                         @Override
-                        public void execute(ResolvableDependencies resolvableDependencies) {
+                        public Unit invoke(ResolvableDependencies resolvableDependencies) {
                             for (Dependency dependency : resolvableDependencies.getDependencies()) {
                                 applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>());
 
-                                // if project dependency, pull all first orders and apply recomendations if missing dependency versions
+                                // if project dependency, pull all first orders and apply recommendations if missing dependency versions
                                 // dependency.getProjectConfiguration().allDependencies iterate and inspect them as well
                             }
 
@@ -86,6 +89,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                     }
                                 }
                             });
+                            return Unit.INSTANCE;
                         }
                     });
                 }
