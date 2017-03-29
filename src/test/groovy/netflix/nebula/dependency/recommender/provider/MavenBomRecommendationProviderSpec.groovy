@@ -133,4 +133,25 @@ class MavenBomRecommendationProviderSpec extends Specification {
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'
     }
+
+    def 'spring boot/cloud BOMs'() {
+        setup:
+        def project = ProjectBuilder.builder().build()
+        project.apply plugin: 'java'
+        project.apply plugin: DependencyRecommendationsPlugin
+
+        project.repositories {
+            jcenter()
+        }
+
+        project.dependencies {
+            nebulaRecommenderBom 'org.springframework.boot:spring-boot-starter-parent:1.5.2.RELEASE@pom'
+            nebulaRecommenderBom 'org.springframework.cloud:spring-cloud-netflix:1.2.6.RELEASE@pom'
+
+            compile 'org.springframework.boot:spring-boot-starter-websocket'
+            compile 'org.springframework.cloud:spring-cloud-starter-feign'
+        }
+
+        project.configurations.compile.resolve()
+    }
 }
