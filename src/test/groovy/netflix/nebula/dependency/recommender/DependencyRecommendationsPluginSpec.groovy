@@ -302,58 +302,58 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         def diff = DiffBuilder
                 .compare(Input.fromString(pomText))
                 .withTest(Input.fromString('''\
-                    <project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                      <modelVersion>4.0.0</modelVersion>
-                      <groupId>netflix</groupId>
-                      <artifactId>module-parent</artifactId>
-                      <version>1</version>
-                      <packaging>pom</packaging>
-                      <dependencyManagement>
-                        <dependencies>
-                          <dependency>
-                            <groupId>commons-digester</groupId>
-                            <artifactId>commons-digester</artifactId>
-                            <version>1.8</version>
-                          </dependency>
-                          <dependency>
-                            <groupId>commons-logging</groupId>
-                            <artifactId>commons-logging</artifactId>
-                            <version>1.1.1</version>
-                          </dependency>
-                          <dependency>
-                            <groupId>commons-lang</groupId>
-                            <artifactId>commons-lang</artifactId>
-                            <version>2.4</version>
-                          </dependency>
-                          <dependency>
-                            <groupId>commons-configuration</groupId>
-                            <artifactId>commons-configuration</artifactId>
-                            <version>1.6</version>
-                          </dependency>
-                          <dependency>
-                            <groupId>commons-beanutils</groupId>
-                            <artifactId>commons-beanutils</artifactId>
-                            <version>1.7.0</version>
-                          </dependency>
-                          <dependency>
-                            <groupId>commons-collections</groupId>
-                            <artifactId>commons-collections</artifactId>
-                            <version>3.2.1</version>
-                          </dependency>
-                          <dependency>
-                            <groupId>commons-beanutils</groupId>
-                            <artifactId>commons-beanutils-core</artifactId>
-                            <version>1.8.0</version>
-                          </dependency>
-                          <dependency>
-                            <groupId>manual</groupId>
-                            <artifactId>dep</artifactId>
-                            <version>1</version>
-                          </dependency>
-                        </dependencies>
-                      </dependencyManagement>
-                      <description>A demonstration of maven POM customization</description>
-                    </project>
+                        <project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                          <modelVersion>4.0.0</modelVersion>
+                          <groupId>netflix</groupId>
+                          <artifactId>module-parent</artifactId>
+                          <version>1</version>
+                          <packaging>pom</packaging>
+                          <dependencyManagement>
+                            <dependencies>
+                              <dependency>
+                                <groupId>commons-beanutils</groupId>
+                                <artifactId>commons-beanutils</artifactId>
+                                <version>1.7.0</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-collections</groupId>
+                                <artifactId>commons-collections</artifactId>
+                                <version>3.2.1</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-configuration</groupId>
+                                <artifactId>commons-configuration</artifactId>
+                                <version>1.6</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-digester</groupId>
+                                <artifactId>commons-digester</artifactId>
+                                <version>1.8</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-lang</groupId>
+                                <artifactId>commons-lang</artifactId>
+                                <version>2.4</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-logging</groupId>
+                                <artifactId>commons-logging</artifactId>
+                                <version>1.1.1</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-beanutils</groupId>
+                                <artifactId>commons-beanutils-core</artifactId>
+                                <version>1.8.0</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>manual</groupId>
+                                <artifactId>dep</artifactId>
+                                <version>1</version>
+                              </dependency>
+                            </dependencies>
+                          </dependencyManagement>
+                          <description>A demonstration of maven POM customization</description>
+                        </project>
                 '''))
                 .ignoreWhitespace()
                 .build()
