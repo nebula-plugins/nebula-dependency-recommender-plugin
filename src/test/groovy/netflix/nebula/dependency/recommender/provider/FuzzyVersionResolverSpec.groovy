@@ -8,7 +8,7 @@ class FuzzyVersionResolverSpec extends Specification {
 
     def resolver = [
         'propertyNames': { recommendations.keySet() },
-        'propertyValue': { name -> recommendations[name] }
+        'propertyValue': { projectName, name -> recommendations[name] }
     ] as FuzzyVersionResolver
 
     def 'resolve versions recursively'() {
@@ -20,8 +20,8 @@ class FuzzyVersionResolverSpec extends Specification {
         ]
 
         then:
-        resolver.versionOf('com.google.guava:guava') == '18.0'
-        resolver.versionOf('some:other') == '18.0'
+        resolver.versionOf('', 'com.google.guava:guava') == '18.0'
+        resolver.versionOf('', 'some:other') == '18.0'
     }
 
     def 'resolve globbed versions'() {
@@ -29,6 +29,6 @@ class FuzzyVersionResolverSpec extends Specification {
         recommendations = ['com.sun.jersey:*': '1.23']
 
         then:
-        resolver.versionOf('com.sun.jersey:jersey-core') == '1.23'
+        resolver.versionOf('', 'com.sun.jersey:jersey-core') == '1.23'
     }
 }

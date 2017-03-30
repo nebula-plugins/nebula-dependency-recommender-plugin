@@ -143,10 +143,15 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public String getRecommendedVersion(String group, String name) {
+        RecommendationProviderContainer ext = project
+                .getRootProject()
+                .getExtensions()
+                .getByType(RecommendationProviderContainer.class);
+
         // providers are queried in LIFO order
-        for (int i = size()-1; i >= 0; i--) {
+        for (int i = ext.size()-1; i >= 0; i--) {
             try {
-                String version = get(i).getVersion(group, name);
+                String version = ext.get(i).getVersion(project.getName(), group, name);
                 if(version != null)
                     return version;
             } catch(Exception e) {

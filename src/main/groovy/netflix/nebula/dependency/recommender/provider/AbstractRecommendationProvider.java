@@ -12,4 +12,10 @@ public abstract class AbstractRecommendationProvider implements RecommendationPr
 
     @Override
     public void setName(String name) { this.name = name; }
+
+    @Override
+    public String getVersion(String projectName, String org, String name) throws Exception {
+        // default version ignores project name
+        return getVersion(org, name);
+    }
 }

@@ -19,8 +19,13 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
         }
 
         @Override
-        protected String propertyValue(String name) {
-            return recommendations.getProperty(name);
+        protected String propertyValue(String projectName, String name) {
+            String projectSpecificName = projectName + PROJECT_DELIM + name;
+            String value = recommendations.getProperty(projectSpecificName);
+            if (value == null) {
+                value = recommendations.getProperty(name);
+            }
+            return value;
         }
     };
 
@@ -30,13 +35,18 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
 
     @Override
     public String getVersion(String org, String name) throws Exception {
+        return getVersion("", org, name);
+    }
+
+    @Override
+    public String getVersion(String projectName, String org, String name) throws Exception {
         if(recommendations == null) {
             recommendations = new Properties();
             try (InputStream inputStream = inputProvider.getInputStream()) {
                 recommendations.load(new ColonFilteringReader(new InputStreamReader(inputStream)));
             }
         }
-        return fuzzyResolver.versionOf(org + "/" + name);
+        return fuzzyResolver.versionOf(projectName, org + "/" + name);
     }
 
     /**
