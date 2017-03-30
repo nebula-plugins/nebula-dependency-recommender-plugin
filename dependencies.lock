@@ -1,0 +1,258 @@
+{
+    "compile": {
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "compileClasspath": {
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "default": {
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "integTestCompile": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "integTestCompileClasspath": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "integTestRuntime": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "integTestRuntimeClasspath": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "jacocoAgent": {
+        "org.jacoco:org.jacoco.agent": {
+            "locked": "0.7.8"
+        }
+    },
+    "jacocoAnt": {
+        "org.jacoco:org.jacoco.ant": {
+            "locked": "0.7.8"
+        }
+    },
+    "runtime": {
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "runtimeClasspath": {
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "testCompile": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "testCompileClasspath": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "testRuntime": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    },
+    "testRuntimeClasspath": {
+        "com.github.xmlunit:xmlunit": {
+            "locked": "7ed02fb294",
+            "requested": "7ed02fb294"
+        },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.4.2"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.0.4",
+            "requested": "3.0.4"
+        }
+    }
+}
