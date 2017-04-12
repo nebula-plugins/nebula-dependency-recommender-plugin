@@ -29,11 +29,19 @@ Table of Contents
 Apply the nebula-dependency-recommender plugin:
 
 ```groovy
+plugins {
+  id "nebula.dependency-recommender" version "4.1.2"
+}
+```
+
+If you have an old Gradle version (<2.1), you need to do this:
+
+```groovy
 buildscript {
     repositories { jcenter() }
 
     dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.1.0'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.1.2'
     }
 }
 
