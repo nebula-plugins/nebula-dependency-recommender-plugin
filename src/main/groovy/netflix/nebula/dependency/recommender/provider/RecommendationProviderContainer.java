@@ -20,6 +20,7 @@ import groovy.lang.Closure;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.Action;
+import org.gradle.api.GradleException;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
 import org.gradle.api.internal.ClosureBackedAction;
@@ -35,6 +36,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     private RecommendationStrategies strategy = RecommendationStrategies.ConflictResolved;
     private MavenBomRecommendationProvider mavenBomProvider;
     private DependencyManagement insight;
+    private Boolean strictMode = false;
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
@@ -147,8 +149,9 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         for (int i = size()-1; i >= 0; i--) {
             try {
                 String version = get(i).getVersion(group, name);
-                if(version != null)
+                if (version != null) {
                     return version;
+                }
             } catch(Exception e) {
                 project.getLogger().error("Exception while polling provider " + get(i).getName() + " for version", e);
             }
@@ -162,5 +165,13 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public void setStrategy(RecommendationStrategies strategy) {
         this.strategy = strategy;
+    }
+
+    public Boolean isStrictMode() {
+        return strictMode;
+    }
+
+    public void setStrictMode(Boolean strict) {
+        strictMode = strict;
     }
 }
