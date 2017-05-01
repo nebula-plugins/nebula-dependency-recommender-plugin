@@ -18,6 +18,7 @@ package netflix.nebula.dependency.recommender
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
+import nebula.test.dependencies.ModuleBuilder
 import nebula.test.dependencies.maven.ArtifactType
 import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
@@ -118,5 +119,59 @@ class DependencyRecommendationsMultiprojectPluginSpec extends IntegrationSpec {
         then:
         results.standardOutput.contains 'example:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'
         results.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:multiprojectbom:pom:1.0.0'
+    }
+
+    def 'produce usable error on a multiproject when a subproject depends on another that uses recommendations'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'multiprojectbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('example', 'foo', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def depGraph = new DependencyGraphBuilder()
+                .addModule('example:foo:1.0.0')
+                .addModule(new ModuleBuilder('example:bar:1.0.0').addDependency('example:foo:1.0.0').build())
+                .build()
+        def generator = new GradleDependencyGenerator(depGraph)
+        generator.generateTestMavenRepo()
+
+        def a = addSubproject('a', '''\
+                dependencies {
+                    nebulaRecommenderBom 'test.nebula.bom:multiprojectbom:1.0.0@pom'
+                    compile 'example:foo'
+                }
+            '''.stripIndent())
+        writeHelloWorld('a', a)
+        def b = addSubproject('b', '''\
+                dependencies {
+                    compile project(':a')
+                    compile 'example:bar:1.0.0'
+                }
+            '''.stripIndent())
+        writeHelloWorld('b', b)
+        buildFile << """\
+            allprojects {
+                apply plugin: 'nebula.dependency-recommender'
+            }
+            subprojects {
+                apply plugin: 'java'
+                
+                dependencyRecommendations {
+                    strictMode = true
+                }
+
+                repositories {
+                    maven { url '${repo.root.absolutePath}' }
+                    ${generator.mavenRepositoryBlock}
+                }
+            }
+            """.stripIndent()
+        when:
+        def results = runTasks(':b:dependencyInsight', '--configuration', 'compile', '--dependency', 'foo', '--info', 'build')
+
+        then:
+        println results?.standardOutput
+        println results?.standardError
+        results.standardError.contains 'Dependency example:foo omitted version with no recommended version'
     }
 }

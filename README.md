@@ -30,7 +30,7 @@ Apply the nebula-dependency-recommender plugin:
 
 ```groovy
 plugins {
-  id "nebula.dependency-recommender" version "4.1.2"
+  id "nebula.dependency-recommender" version "4.2.0"
 }
 ```
 
@@ -41,7 +41,7 @@ buildscript {
     repositories { jcenter() }
 
     dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.1.2'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.2.0'
     }
 }
 
@@ -90,7 +90,7 @@ Suppose you want to produce a BOM that contains a recommended version for common
 ```groovy
 buildscript {
     repositories { jcenter() }
-    dependencies { classpath 'com.netflix.nebula:nebula-dependency-recommender:3.+' }
+    dependencies { classpath 'com.netflix.nebula:nebula-dependency-recommender:4.+' }
 }
 
 apply plugin: 'maven-publish'
@@ -300,3 +300,13 @@ dependencyRecommendations.getRecommendedVersion('commons-logging', 'commons-logg
 ```
 
 The `getRecommendedVersion` method returns `null` if no recommendation is found.
+
+## 8. Strict Mode
+
+```groovy
+dependencyRecommendations {
+    strictMode = true
+}
+```
+
+Strict mode will cause the plugin to fail if a dependency version is omitted and not found in a recommendation source.

@@ -1,5 +1,10 @@
+4.2.0 / 2017-05-01
+==================
+
+* Add a `strictMode` flag - this will fail builds that have omitted versions that are not found in one of the recommendation sources
+
 4.1.0 / 2017-03-14
-=======================
+==================
 
 * Begin using `nebula.dependency-base` plugin.
     * Gives us `dependencyInsightEnhanced` task to show what was recommended instead of `selected by rule` in reasons

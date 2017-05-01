@@ -25,6 +25,7 @@ import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
@@ -39,13 +40,14 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
     private DependencyManagement dependencyInsight;
+    private RecommendationProviderContainer recommendationProviderContainer;
 
     @Override
     public void apply(final Project project) {
         project.getPlugins().apply(DependencyBasePlugin.class);
         dependencyInsight = (DependencyManagement) project.getExtensions().getExtraProperties().get("nebulaDependencyBase");
         project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
-        project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project, dependencyInsight);
+        recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project, dependencyInsight);
         applyRecommendations(project);
         enhanceDependenciesWithRecommender(project);
         enhancePublicationsWithBomProducer(project);
@@ -85,6 +87,12 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                             String coordinate = requested.getGroup() + ":" + requested.getName();
                                             dependencyInsight.addRecommendation(conf.getName(), coordinate, version, whichStrategy(strategy), "nebula.dependency-recommender");
                                             logger.info("Recommending version " + version + " for dependency " + coordinate);
+                                        } else {
+                                            if (recommendationProviderContainer.isStrictMode()) {
+                                                String errorMessage = "Dependency " + details.getRequested().getGroup() + ":" + details.getRequested().getName() + " omitted version with no recommended version. General causes include a dependency being removed from the recommendation source or not applying a recommendation source to a project that depends on another project using a recommender.";
+                                                project.getLogger().error(errorMessage);
+                                                throw new GradleException(errorMessage);
+                                            }
                                         }
                                     }
                                 }
