@@ -33,6 +33,8 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,9 +119,13 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     ProjectDependency.class.getMethod("getTargetConfiguration");
                     String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
                     configuration = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
-                } catch (NoSuchMethodException e) {
-                    //noinspection deprecation
-                    configuration = projectDependency.getProjectConfiguration();
+                } catch (NoSuchMethodException ignore) {
+                    try {
+                        Method method = ProjectDependency.class.getMethod("getProjectConfiguration");
+                        configuration = (Configuration) method.invoke(dependency);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Unable to retrieve configuration for project dependency", e);
+                    }
                 }
                 DependencySet dependencies = configuration.getAllDependencies();
                 for (Dependency dep : dependencies) {
