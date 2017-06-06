@@ -18,6 +18,7 @@ package netflix.nebula.dependency.recommender.provider;
 import com.netflix.nebula.dependencybase.DependencyManagement;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
 import org.apache.maven.model.Repository;
 import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
@@ -38,6 +39,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
@@ -55,7 +57,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
         this.insight = insight;
     }
 
-    private class SimpleModelSource implements ModelSource {
+    private class SimpleModelSource implements ModelSource2 {
         InputStream in;
 
         public SimpleModelSource(InputStream in) {
@@ -69,6 +71,16 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
 
         @Override
         public String getLocation() {
+            return null;
+        }
+
+        @Override
+        public ModelSource2 getRelatedSource(String relPath) {
+            return null;
+        }
+
+        @Override
+        public URI getLocationURI() {
             return null;
         }
     }
@@ -88,7 +100,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
 
                 request.setModelResolver(new ModelResolver() {
                     @Override
-                    public ModelSource resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
+                    public ModelSource2 resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
                         String relativeUrl = "";
                         for (String groupIdPart : groupId.split("\\."))
                             relativeUrl += groupIdPart + "/";
@@ -112,7 +124,22 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                     }
 
                     @Override
+                    public ModelSource2 resolveModel(Dependency dependency) throws UnresolvableModelException {
+                        return resolveModel(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
+                    }
+
+                    @Override
+                    public ModelSource2 resolveModel(Parent parent) throws UnresolvableModelException {
+                        return resolveModel(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
+                    }
+
+                    @Override
                     public void addRepository(Repository repository) throws InvalidRepositoryException {
+                        // do nothing
+                    }
+
+                    @Override
+                    public void addRepository(Repository repository, boolean bool) throws InvalidRepositoryException {
                         // do nothing
                     }
 
@@ -123,6 +150,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                 });
 
                 request.setModelSource(new SimpleModelSource(new FileInputStream(recommendation)));
+                request.setSystemProperties(System.getProperties());
 
                 DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
                 modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));

@@ -1,3 +1,8 @@
+4.2.1 / 2017-06-06
+==================
+
+* *BUGFIX* handle boms with profiles and other things by passing in System.properties 
+
 4.2.0 / 2017-05-01
 ==================
 
