@@ -1,10 +1,31 @@
+/*
+ * Copyright 2014-2017 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package netflix.nebula.dependency.recommender;
 
+import com.netflix.nebula.dependencybase.DependencyBasePlugin;
+import com.netflix.nebula.dependencybase.DependencyManagement;
+import com.netflix.nebula.interop.ConfigurationsKt;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
 import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
@@ -12,34 +33,26 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
+    private DependencyManagement dependencyInsight;
+    private RecommendationProviderContainer recommendationProviderContainer;
 
     @Override
     public void apply(final Project project) {
+        project.getPlugins().apply(DependencyBasePlugin.class);
+        dependencyInsight = (DependencyManagement) project.getExtensions().getExtraProperties().get("nebulaDependencyBase");
         project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
-        project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
+        recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project, dependencyInsight);
         applyRecommendations(project);
         enhanceDependenciesWithRecommender(project);
         enhancePublicationsWithBomProducer(project);
-    }
-
-    private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited) {
-        if (dependency instanceof ExternalModuleDependency) {
-            factory.getRecommendationStrategy().inspectDependency(dependency);
-        } else if (dependency instanceof ProjectDependency) {
-            if (!visited.contains(dependency)) {
-                visited.add((ProjectDependency)dependency);
-                DependencySet dependencies = ((ProjectDependency) dependency).getProjectConfiguration().getAllDependencies();
-                for (Dependency dep : dependencies) {
-                    applyRecommendationToDependency(factory, dep, visited);
-                }
-            }
-        }
     }
 
     private void applyRecommendations(final Project project) {
@@ -48,20 +61,20 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             public void execute(final Configuration conf) {
                 final RecommendationStrategyFactory rsFactory = new RecommendationStrategyFactory(project);
                 if (conf.getState() == Configuration.State.UNRESOLVED) {
-                    conf.getIncoming().beforeResolve(new Action<ResolvableDependencies>() {
+                    ConfigurationsKt.onResolve(conf, new Function1<ResolvableDependencies, Unit>() {
                         @Override
-                        public void execute(ResolvableDependencies resolvableDependencies) {
+                        public Unit invoke(ResolvableDependencies resolvableDependencies) {
                             for (Dependency dependency : resolvableDependencies.getDependencies()) {
                                 applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>());
 
-                                // if project dependency, pull all first orders and apply recomendations if missing dependency versions
+                                // if project dependency, pull all first orders and apply recommendations if missing dependency versions
                                 // dependency.getProjectConfiguration().allDependencies iterate and inspect them as well
                             }
 
                             conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
                                 @Override
                                 public void execute(DependencyResolveDetails details) {
-                                    ModuleVersionSelector requested = details.getRequested();
+                                    ModuleVersionSelector requested = details.getTarget();
 
                                     // don't interfere with the way forces trump everything
                                     for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules()) {
@@ -73,16 +86,63 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                     if (strategy.canRecommendVersion(requested)) {
                                         String version = getRecommendedVersionRecursive(project, requested);
                                         if (strategy.recommendVersion(details, version)) {
-                                            logger.info("Recommending version " + version + " for dependency " + requested.getGroup() + ":" + requested.getName());
+                                            String coordinate = requested.getGroup() + ":" + requested.getName();
+                                            dependencyInsight.addRecommendation(conf.getName(), coordinate, version, whichStrategy(strategy), "nebula.dependency-recommender");
+                                            logger.info("Recommending version " + version + " for dependency " + coordinate);
+                                        } else {
+                                            if (recommendationProviderContainer.isStrictMode()) {
+                                                String errorMessage = "Dependency " + details.getRequested().getGroup() + ":" + details.getRequested().getName() + " omitted version with no recommended version. General causes include a dependency being removed from the recommendation source or not applying a recommendation source to a project that depends on another project using a recommender.";
+                                                project.getLogger().error(errorMessage);
+                                                throw new GradleException(errorMessage);
+                                            }
                                         }
                                     }
                                 }
                             });
+                            return Unit.INSTANCE;
                         }
                     });
                 }
             }
         });
+    }
+
+    private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited) {
+        if (dependency instanceof ExternalModuleDependency) {
+            factory.getRecommendationStrategy().inspectDependency(dependency);
+        } else if (dependency instanceof ProjectDependency) {
+            ProjectDependency projectDependency = (ProjectDependency) dependency;
+            if (!visited.contains(projectDependency)) {
+                visited.add(projectDependency);
+                Configuration configuration;
+                try {
+                    ProjectDependency.class.getMethod("getTargetConfiguration");
+                    String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
+                    configuration = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
+                } catch (NoSuchMethodException ignore) {
+                    try {
+                        Method method = ProjectDependency.class.getMethod("getProjectConfiguration");
+                        configuration = (Configuration) method.invoke(dependency);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Unable to retrieve configuration for project dependency", e);
+                    }
+                }
+                DependencySet dependencies = configuration.getAllDependencies();
+                for (Dependency dep : dependencies) {
+                    applyRecommendationToDependency(factory, dep, visited);
+                }
+            }
+        }
+    }
+
+    protected String whichStrategy(RecommendationStrategy strategy) {
+        if (strategy instanceof RecommendationsConflictResolvedStrategy) {
+            return "conflict resolution recommendation";
+        } else if (strategy instanceof RecommendationsOverrideTransitivesStrategy) {
+            return "override transitive recommendation";
+        } else {
+            return "nebula.dependency-recommender";
+        }
     }
 
     protected void enhanceDependenciesWithRecommender(Project project) {
@@ -97,6 +157,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
     /**
      * Look for recommended versions in a project and each of its ancestors in order until one is found or the root is reached
+     *
      * @return the recommended version or <code>null</code>
      */
     protected String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {

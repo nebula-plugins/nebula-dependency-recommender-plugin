@@ -3,6 +3,7 @@ package netflix.nebula.dependency.recommender.provider;
 import org.gradle.api.Project;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collection;
@@ -31,7 +32,9 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
     public String getVersion(String org, String name) throws Exception {
         if(recommendations == null) {
             recommendations = new Properties();
-            recommendations.load(new ColonFilteringReader(new InputStreamReader(inputProvider.getInputStream())));
+            try (InputStream inputStream = inputProvider.getInputStream()) {
+                recommendations.load(new ColonFilteringReader(new InputStreamReader(inputStream)));
+            }
         }
         return fuzzyResolver.versionOf(org + "/" + name);
     }

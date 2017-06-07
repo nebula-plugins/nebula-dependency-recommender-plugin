@@ -31,4 +31,34 @@ class FuzzyVersionResolverSpec extends Specification {
         then:
         resolver.versionOf('com.sun.jersey:jersey-core') == '1.23'
     }
+
+    def 'prefer specific versions'() {
+        when:
+        recommendations = [
+            'com.sun.jersey:*': '1.20',
+            'com.sun.jersey:jersey-core': '1.23',
+        ]
+
+        then:
+        resolver.versionOf('com.sun.jersey:jersey-core') == '1.23'
+    }
+
+    def 'prefer more specific globs'() {
+        when:
+        recommendations = [
+            'com.sun.jersey:*': '1.20',
+            'com.sun.jersey:jersey-*': '1.23',
+        ]
+
+        then:
+        resolver.versionOf('com.sun.jersey:jersey-core') == '1.23'
+    }
+
+    def 'quote non-wildcard characters in globs'() {
+        when:
+        recommendations = ['com.sun.jersey:jersey.co*': '1.23']
+
+        then:
+        resolver.versionOf('com.sun.jersey:jersey-core') == null
+    }
 }
