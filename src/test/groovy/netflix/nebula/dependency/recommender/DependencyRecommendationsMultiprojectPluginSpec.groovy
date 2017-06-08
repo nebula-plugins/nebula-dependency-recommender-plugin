@@ -64,7 +64,7 @@ class DependencyRecommendationsMultiprojectPluginSpec extends IntegrationSpec {
 
         then:
         noExceptionThrown()
-        results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo\n' +
+        results.standardOutput.normalize().contains 'Recommending version 1.0.0 for dependency example:foo\n' +
                 '\\--- project :a\n' +
                 '     \\--- example:foo: -> 1.0.0'
     }
@@ -104,7 +104,7 @@ class DependencyRecommendationsMultiprojectPluginSpec extends IntegrationSpec {
                 apply plugin: 'java'
 
                 repositories {
-                    maven { url '${repo.root.absolutePath}' }
+                    maven { url '${repo.root.absoluteFile.toURI()}' }
                     ${generator.mavenRepositoryBlock}
                 }
 
@@ -161,7 +161,7 @@ class DependencyRecommendationsMultiprojectPluginSpec extends IntegrationSpec {
                 }
 
                 repositories {
-                    maven { url '${repo.root.absolutePath}' }
+                    maven { url '${repo.root.absoluteFile.toURI()}' }
                     ${generator.mavenRepositoryBlock}
                 }
             }

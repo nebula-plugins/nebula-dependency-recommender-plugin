@@ -27,13 +27,13 @@ import org.apache.maven.model.path.DefaultUrlNormalizer;
 import org.apache.maven.model.resolution.InvalidRepositoryException;
 import org.apache.maven.model.resolution.ModelResolver;
 import org.apache.maven.model.resolution.UnresolvableModelException;
+import org.codehaus.groovy.runtime.EncodingGroovyMethods;
 import org.codehaus.plexus.interpolation.MapBasedValueSource;
 import org.codehaus.plexus.interpolation.PropertiesBasedValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.apache.commons.codec.binary.Base64;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -165,7 +165,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                         PasswordCredentials credentials = repository.getCredentials();
                         if (null != credentials.getUsername() && !"".equals(credentials.getUsername())) {
                             String authString = credentials.getUsername() + ":" + credentials.getPassword();
-                            conn.setRequestProperty("Authorization", "Basic " + new String(Base64.encodeBase64(authString.getBytes())));
+                            conn.setRequestProperty("Authorization", "Basic " + EncodingGroovyMethods.encodeBase64(authString.getBytes()).toString());
                         }
                         return conn.getInputStream();
                     }

@@ -22,11 +22,11 @@ import nebula.test.dependencies.ModuleBuilder
 import nebula.test.dependencies.maven.ArtifactType
 import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
-import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.testfixtures.ProjectBuilder
 import org.xmlunit.builder.DiffBuilder
 import org.xmlunit.builder.Input
+import spock.lang.Ignore
 import spock.lang.Issue
 
 class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
@@ -78,7 +78,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
             
             repositories {
-                maven { url '${repo.root.absolutePath}' }
+                maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
             
@@ -113,7 +113,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
             
             repositories {
-                maven { url '${repo.root.absolutePath}' }
+                maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
             
@@ -151,7 +151,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
             
             repositories {
-                maven { url '${repo.root.absolutePath}' }
+                maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
             
@@ -189,7 +189,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
             
             repositories {
-                maven { url '${repo.root.absolutePath}' }
+                maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
             
@@ -233,7 +233,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
             
             repositories {
-                maven { url '${repo.root.absolutePath}' }
+                maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
             
