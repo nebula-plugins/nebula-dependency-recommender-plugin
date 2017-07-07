@@ -31,7 +31,7 @@ Apply the nebula-dependency-recommender plugin:
 
 ```groovy
 plugins {
-  id "nebula.dependency-recommender" version "4.2.1"
+  id "nebula.dependency-recommender" version "4.3.0"
 }
 ```
 
@@ -42,7 +42,7 @@ buildscript {
     repositories { jcenter() }
 
     dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.2.1'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.3.0'
     }
 }
 

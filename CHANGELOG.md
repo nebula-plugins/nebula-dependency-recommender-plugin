@@ -1,3 +1,10 @@
+4.3.0 / 2017-07-07
+==================
+
+* Allow configurations to be ignored via Jarek Lewandowski/jotel
+* Handle maven repos that require credentials via Tomasz Jędrzejewski zyxist and Stephan Pauxberger/pauxus
+* *BUGFIX* remove possible infinite loop on creation of a bom
+
 4.2.1 / 2017-06-06
 ==================
 
