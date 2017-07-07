@@ -20,15 +20,17 @@ import groovy.lang.Closure;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.Action;
-import org.gradle.api.GradleException;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
 import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class RecommendationProviderContainer extends DefaultNamedDomainObjectList<RecommendationProvider> {
 
@@ -37,6 +39,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     private MavenBomRecommendationProvider mavenBomProvider;
     private DependencyManagement insight;
     private Boolean strictMode = false;
+    private Set<String> excludedConfigurations = new HashSet<>();
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
@@ -173,5 +176,13 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public void setStrictMode(Boolean strict) {
         strictMode = strict;
+    }
+    
+    public void excludeConfigurations(String ... names) {
+        excludedConfigurations.addAll(Arrays.asList(names));
+    }
+
+    public Set<String> getExcludedConfigurations() {
+        return excludedConfigurations;
     }
 }

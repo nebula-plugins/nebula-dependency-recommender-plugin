@@ -64,6 +64,10 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     ConfigurationsKt.onResolve(conf, new Function1<ResolvableDependencies, Unit>() {
                         @Override
                         public Unit invoke(ResolvableDependencies resolvableDependencies) {
+                            if(recommendationProviderContainer.getExcludedConfigurations().contains(conf.getName())) {
+                                return Unit.INSTANCE;
+                            }
+                                    
                             for (Dependency dependency : resolvableDependencies.getDependencies()) {
                                 applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>());
 
