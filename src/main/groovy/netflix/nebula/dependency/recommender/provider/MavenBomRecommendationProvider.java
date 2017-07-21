@@ -32,19 +32,21 @@ import org.codehaus.plexus.interpolation.MapBasedValueSource;
 import org.codehaus.plexus.interpolation.PropertiesBasedValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
+import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
+import org.gradle.internal.impldep.com.google.common.base.Throwables;
 
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
     private Map<String, String> recommendations;
@@ -108,27 +110,15 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                 request.setModelResolver(new ModelResolver() {
                     @Override
                     public ModelSource2 resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
-                        String relativeUrl = buildRelativeUrl(groupId, artifactId, version);
-                        List<String> repositoryErrors = new LinkedList<>();
+                        String notation = groupId + ":" + artifactId + ":" + version + "@pom";
+                        org.gradle.api.artifacts.Dependency dependency = project.getDependencies().create(notation);
+                        Configuration configuration = project.getConfigurations().detachedConfiguration(dependency);
                         try {
-                            // try to find the parent pom in each maven repository specified in the gradle file
-                            for (ArtifactRepository repo : project.getRepositories()) {
-                                if (!(repo instanceof MavenArtifactRepository)) {
-                                    continue;
-                                }
-                                URL url = new URL(((MavenArtifactRepository) repo).getUrl().toString() + "/" + relativeUrl);
-                                try {
-                                    return new SimpleModelSource(askRepository(url, (MavenArtifactRepository) repo));
-                                } catch (IOException e) {
-                                    // record the error information - it will be used to build the exception, if the dependency
-                                    // is not found in any of the Maven repositories.
-                                    repositoryErrors.add(((MavenArtifactRepository) repo).getUrl().toString() + ": " + e.getMessage());
-                                }
-                            }
-                        } catch (MalformedURLException e) {
-                            throw new RuntimeException(e); // should never happen
+                            File file = configuration.getFiles().iterator().next();
+                            return new SimpleModelSource(new FileInputStream(file));
+                        } catch (Exception e) {
+                            throw new UnresolvableModelException(e, groupId, artifactId, version);
                         }
-                        throw buildError(groupId, artifactId, version, repositoryErrors);
                     }
 
                     @Override
@@ -154,33 +144,6 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                     @Override
                     public ModelResolver newCopy() {
                         return this; // do nothing
-                    }
-
-                    private String buildRelativeUrl(String groupId, String artifactId, String version) {
-                        String relativeUrl = "";
-                        for (String groupIdPart : groupId.split("\\.")) {
-                            relativeUrl += groupIdPart + "/";
-                        }
-                        return relativeUrl + artifactId + "/" + version + "/" + artifactId + "-" + version + ".pom";
-                    }
-
-                    private InputStream askRepository(URL url, MavenArtifactRepository repository) throws IOException {
-                        URLConnection conn = url.openConnection();
-                        PasswordCredentials credentials = repository.getCredentials();
-                        if (null != credentials.getUsername() && !"".equals(credentials.getUsername())) {
-                            String authString = credentials.getUsername() + ":" + credentials.getPassword();
-                            conn.setRequestProperty("Authorization", "Basic " + EncodingGroovyMethods.encodeBase64(authString.getBytes()).toString());
-                        }
-                        return conn.getInputStream();
-                    }
-
-                    private UnresolvableModelException buildError(String groupId, String artifactId, String version, List<String> repositoryErrors) {
-                        String relativeUrl = buildRelativeUrl(groupId, artifactId, version);
-                        String combinedErrorMessages = "";
-                        for (String errMsg: repositoryErrors) {
-                            combinedErrorMessages += errMsg + ",\n";
-                        }
-                        return new UnresolvableModelException("Unable to locate the artifact '" + relativeUrl + "' in the following repositories:\n" + combinedErrorMessages, groupId, artifactId, version);
                     }
                 });
                 request.setModelSource(new SimpleModelSource(new FileInputStream(recommendation)));
