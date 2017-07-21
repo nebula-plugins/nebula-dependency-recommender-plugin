@@ -147,6 +147,10 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         });
     }
 
+    public MavenBomRecommendationProvider getMavenBomProvider() {
+        return mavenBomProvider;
+    }
+
     public String getRecommendedVersion(String group, String name) {
         // providers are queried in LIFO order
         for (int i = size()-1; i >= 0; i--) {

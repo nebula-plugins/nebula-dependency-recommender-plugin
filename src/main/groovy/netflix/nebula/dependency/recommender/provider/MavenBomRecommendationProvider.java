@@ -90,6 +90,10 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
 
     @Override
     public String getVersion(String org, String name) throws Exception {
+        return getRecommendations().get(org + ":" + name);
+    }
+
+    public Map<String, String> getRecommendations() throws Exception {
         if(recommendations == null) {
             recommendations = new HashMap<>();
 
@@ -192,7 +196,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                 }
             }
         }
-        return recommendations.get(org + ":" + name);
+        return recommendations;
     }
 
     private static class ProjectPropertiesModelInterpolator extends StringSearchModelInterpolator {
