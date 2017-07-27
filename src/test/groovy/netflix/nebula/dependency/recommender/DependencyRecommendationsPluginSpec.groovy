@@ -316,14 +316,9 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                                 <version>1.7.0</version>
                               </dependency>
                               <dependency>
-                                <groupId>commons-collections</groupId>
-                                <artifactId>commons-collections</artifactId>
-                                <version>3.2.1</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>commons-configuration</groupId>
-                                <artifactId>commons-configuration</artifactId>
-                                <version>1.6</version>
+                                <groupId>commons-lang</groupId>
+                                <artifactId>commons-lang</artifactId>
+                                <version>2.4</version>
                               </dependency>
                               <dependency>
                                 <groupId>commons-digester</groupId>
@@ -331,14 +326,19 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                                 <version>1.8</version>
                               </dependency>
                               <dependency>
-                                <groupId>commons-lang</groupId>
-                                <artifactId>commons-lang</artifactId>
-                                <version>2.4</version>
-                              </dependency>
-                              <dependency>
                                 <groupId>commons-logging</groupId>
                                 <artifactId>commons-logging</artifactId>
                                 <version>1.1.1</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-configuration</groupId>
+                                <artifactId>commons-configuration</artifactId>
+                                <version>1.6</version>
+                              </dependency>
+                              <dependency>
+                                <groupId>commons-collections</groupId>
+                                <artifactId>commons-collections</artifactId>
+                                <version>3.2.1</version>
                               </dependency>
                               <dependency>
                                 <groupId>commons-beanutils</groupId>
