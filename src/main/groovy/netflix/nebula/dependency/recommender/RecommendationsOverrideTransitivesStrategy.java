@@ -20,15 +20,17 @@ public class RecommendationsOverrideTransitivesStrategy extends RecommendationSt
 
     @Override
     public boolean canRecommendVersion(ModuleVersionSelector selector) {
-        return !firstOrderDepsWithVersions.contains(getCoord(selector));
+        String version = selector.getVersion();
+        boolean versionMissing = version == null || version.isEmpty();
+        return versionMissing || !firstOrderDepsWithVersions.contains(getCoord(selector));
     }
 
     @Override
     public boolean recommendVersion(DependencyResolveDetails details, String version) {
-        if (version != null && !firstOrderDepsWithVersions.contains(getCoord(details))) {
-            details.useVersion(version);
-            return true;
+        if (version == null) {
+            return false;
         }
-        return false;
+        details.useVersion(version);
+        return true;
     }
 }

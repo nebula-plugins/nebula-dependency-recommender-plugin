@@ -23,7 +23,7 @@ import nebula.test.dependencies.maven.ArtifactType
 import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
 
-class DependencyRecommendationsMultiprojectPluginSpec extends IntegrationSpec {
+class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
     def 'can use recommender across a multiproject'() {
         def depGraph = new DependencyGraphBuilder()
                 .addModule('example:foo:1.0.0')
