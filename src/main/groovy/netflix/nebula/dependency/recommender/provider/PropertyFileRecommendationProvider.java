@@ -20,7 +20,7 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
 
         @Override
         protected String propertyValue(String name) {
-            return recommendations.getProperty(name);
+            return recommendations.getProperty(name).trim();
         }
     };
 

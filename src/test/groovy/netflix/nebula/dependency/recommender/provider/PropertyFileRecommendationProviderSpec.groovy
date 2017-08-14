@@ -29,6 +29,15 @@ class PropertyFileRecommendationProviderSpec extends Specification {
         provider.getVersion('com.google.guava', 'guava') == '18.0'
     }
 
+    def 'supports trailing spaces'() {
+        when:
+        propFile << 'com.google.guava:guava = 18.0 '
+        provider.setFile(propFile)
+
+        then:
+        provider.getVersion('com.google.guava', 'guava') == '18.0'
+    }
+
     def 'value references are resolved'() {
         when:
         propFile << '''
