@@ -67,7 +67,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             if(recommendationProviderContainer.getExcludedConfigurations().contains(conf.getName())) {
                                 return Unit.INSTANCE;
                             }
-                                    
+
                             for (Dependency dependency : resolvableDependencies.getDependencies()) {
                                 applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>());
 
@@ -92,7 +92,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                         if (strategy.recommendVersion(details, version)) {
                                             String coordinate = requested.getGroup() + ":" + requested.getName();
                                             dependencyInsight.addRecommendation(conf.getName(), coordinate, version, whichStrategy(strategy), "nebula.dependency-recommender");
-                                            logger.info("Recommending version " + version + " for dependency " + coordinate);
+                                            logger.debug("Recommending version " + version + " for dependency " + coordinate);
                                         } else {
                                             if (recommendationProviderContainer.isStrictMode()) {
                                                 String errorMessage = "Dependency " + details.getRequested().getGroup() + ":" + details.getRequested().getName() + " omitted version with no recommended version. General causes include a dependency being removed from the recommendation source or not applying a recommendation source to a project that depends on another project using a recommender.";

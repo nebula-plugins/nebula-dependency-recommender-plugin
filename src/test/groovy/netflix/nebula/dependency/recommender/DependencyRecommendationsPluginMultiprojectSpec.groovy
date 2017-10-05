@@ -60,13 +60,16 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasksSuccessfully(':a:dependencies', ':b:dependencies', 'build')
+        def results = runTasksSuccessfully(':a:dependencies', ':b:dependencies', 'build', '--debug')
+        def debugOutputPrefix = /^\d{2}:\d{2}:\d{2}.\d{3} \[[^\]]+\] \[[^\]]+\] /
+        def normalizedOutput = results.standardOutput.normalize().readLines().collect { it.replaceAll(debugOutputPrefix, '') }.join('\n')
 
         then:
         noExceptionThrown()
-        results.standardOutput.normalize().contains 'Recommending version 1.0.0 for dependency example:foo\n' +
-                '\\--- project :a\n' +
+        normalizedOutput.contains 'Recommending version 1.0.0 for dependency example:foo\n'
+        normalizedOutput.contains '\\--- project :a\n' +
                 '     \\--- example:foo: -> 1.0.0'
+
     }
 
     def 'can use recommender with dependencyInsightEnhanced across a multiproject'() {
