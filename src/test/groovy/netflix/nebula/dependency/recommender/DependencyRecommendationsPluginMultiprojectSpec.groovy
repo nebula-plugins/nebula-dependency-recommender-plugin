@@ -60,7 +60,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasksSuccessfully(':a:dependencies', ':b:dependencies', 'build')
+        def results = runTasksSuccessfully(':a:dependencies', ':b:dependencies', 'build', '--debug')
 
         then:
         noExceptionThrown()
