@@ -23,14 +23,12 @@ public abstract class FuzzyVersionResolver {
         if(version != null) return resolveVersion(version);
 
         if(globs == null) {
-            // initialize glob cache
-            globs = new ArrayList<>();
-            for (String name : propertyNames()) {
-                if(name.contains("*")) {
-                    globs.add(Glob.compile(name, propertyValue(name)));
+            // thread safety for parallel builds
+            synchronized (this) {
+                if(globs == null) {
+                    initializeGlobCache();
                 }
             }
-            Collections.sort(globs);
         }
 
         for (Glob glob : globs) {
@@ -40,6 +38,16 @@ public abstract class FuzzyVersionResolver {
         }
 
         return null;
+    }
+
+    private void initializeGlobCache() {
+        globs = new ArrayList<>();
+        for (String name : propertyNames()) {
+            if(name.contains("*")) {
+                globs.add(Glob.compile(name, propertyValue(name)));
+            }
+        }
+        Collections.sort(globs);
     }
 
     private static class Glob implements Comparable<Glob> {
