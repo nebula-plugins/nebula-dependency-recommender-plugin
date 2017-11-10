@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class FuzzyVersionResolver {
-    private List<Glob> globs;
+    private volatile List<Glob> globs;
 
     abstract protected Collection<String> propertyNames();
     abstract protected String propertyValue(String name);
@@ -26,7 +26,7 @@ public abstract class FuzzyVersionResolver {
             // thread safety for parallel builds
             synchronized (this) {
                 if(globs == null) {
-                    initializeGlobCache();
+                    globs = createGlobCache();
                 }
             }
         }
@@ -40,14 +40,15 @@ public abstract class FuzzyVersionResolver {
         return null;
     }
 
-    private void initializeGlobCache() {
-        globs = new ArrayList<>();
+    private List<Glob> createGlobCache() {
+        List<Glob> cache = new ArrayList<>();
         for (String name : propertyNames()) {
             if(name.contains("*")) {
-                globs.add(Glob.compile(name, propertyValue(name)));
+                cache.add(Glob.compile(name, propertyValue(name)));
             }
         }
-        Collections.sort(globs);
+        Collections.sort(cache);
+        return cache;
     }
 
     private static class Glob implements Comparable<Glob> {
