@@ -9,7 +9,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -23,7 +23,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -37,7 +37,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -59,7 +59,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -81,7 +81,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -103,7 +103,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -125,18 +125,20 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
     "jacocoAgent": {
         "org.jacoco:org.jacoco.agent": {
-            "locked": "0.7.8"
+            "locked": "0.7.9",
+            "requested": "0.7.9"
         }
     },
     "jacocoAnt": {
         "org.jacoco:org.jacoco.ant": {
-            "locked": "0.7.8"
+            "locked": "0.7.9",
+            "requested": "0.7.9"
         }
     },
     "runtime": {
@@ -149,7 +151,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -163,7 +165,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -185,7 +187,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -207,7 +209,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -229,7 +231,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     },
@@ -251,7 +253,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.0",
+            "locked": "3.5.2",
             "requested": "3.+"
         }
     }
