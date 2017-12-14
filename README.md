@@ -27,7 +27,7 @@ Table of Contents
 
 ## 1. Usage
 
-Apply the nebula-dependency-recommender plugin:
+Apply the nebula-dependency-recommender plugin (must be applied to the root project as well):
 
 ```groovy
 plugins {
