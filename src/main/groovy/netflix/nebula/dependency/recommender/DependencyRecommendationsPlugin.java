@@ -162,6 +162,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     /**
      * Look for recommended versions in a project and each of its ancestors in order until one is found or the root is reached
      *
+     * @param project the gradle <code>Project</code>
+     * @param mvSelector the module to lookup
      * @return the recommended version or <code>null</code>
      */
     protected String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {

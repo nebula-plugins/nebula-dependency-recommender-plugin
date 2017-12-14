@@ -1,10 +1,14 @@
 package netflix.nebula.dependency.recommender.provider
 
+import nebula.test.dependencies.DependencyGraphBuilder
+import nebula.test.dependencies.GradleDependencyGenerator
+import nebula.test.dependencies.maven.Pom
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class MavenBomRecommendationProviderSpec extends Specification {
     @Rule TemporaryFolder projectDir
@@ -200,5 +204,55 @@ class MavenBomRecommendationProviderSpec extends Specification {
                 'sample:recommender:1.0@pom',
                 "sample:recommender:$version@pom"
         ]
+    }
+
+    @Unroll('when #bomLast overrides #bomFirst expect version #expectedVersion')
+    def 'last bom overrides earlier boms'() {
+        setup:
+        def graph = new DependencyGraphBuilder()
+                .addModule('example:foo:1.0.0')
+                .addModule('example:foo:1.1.0')
+                .build()
+        def repo = projectDir.newFolder('repo')
+        def generator = new GradleDependencyGenerator(graph, repo.path)
+        println repo.path
+        generator.generateTestMavenRepo()
+
+        def pom100 = new Pom('test', 'nebula-bom', '0.1.0')
+        pom100.addManagementDependency('example', 'foo', '1.0.0')
+        def pom100Dir = new File(repo, 'test/nebula-bom/0.1.0')
+        pom100Dir.mkdirs()
+        new File(pom100Dir, 'nebula-bom-0.1.0.pom').text = pom100.generate()
+        def pom110 = new Pom('test', 'nebula-bom-snapshot', '0.1.0')
+        pom110.addManagementDependency('example', 'foo', '1.1.0')
+        def pom110Dir = new File(repo, 'test/nebula-bom-snapshot/0.1.0')
+        pom110Dir.mkdirs()
+        new File(pom110Dir, 'nebula-bom-snapshot-0.1.0.pom').text = pom110.generate()
+
+        def project = ProjectBuilder.builder().build()
+        project.apply plugin: 'java'
+        project.apply plugin: DependencyRecommendationsPlugin
+        project.repositories {
+            maven { url repo }
+        }
+
+        project.dependencyRecommendations {
+            mavenBom module: bomFirst
+            mavenBom module: bomLast
+        }
+
+        project.dependencies {
+            compile 'example:foo'
+        }
+
+        def recommendations = new MavenBomRecommendationProvider(project, 'nebulaRecommenderBom')
+
+        expect:
+        recommendations.getVersion('example','foo') == expectedVersion
+
+        where:
+        bomFirst                         | bomLast                          | expectedVersion
+        'test:nebula-bom:0.1.0'          | 'test:nebula-bom-snapshot:0.1.0' | '1.1.0'
+        'test:nebula-bom-snapshot:0.1.0' | 'test:nebula-bom:0.1.0'          | '1.0.0'
     }
 }

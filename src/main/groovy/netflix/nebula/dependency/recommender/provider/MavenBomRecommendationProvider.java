@@ -154,7 +154,15 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
 
                 ModelBuildingResult result = modelBuilder.build(request);
                 insight.addPluginMessage("nebula.dependency-recommender uses mavenBom: " + result.getEffectiveModel().getId());
-                for (Dependency d : result.getEffectiveModel().getDependencyManagement().getDependencies()) {
+                Model model = result.getEffectiveModel();
+                if (model == null) {
+                    break;
+                }
+                org.apache.maven.model.DependencyManagement dependencyManagement = model.getDependencyManagement();
+                if (dependencyManagement == null) {
+                    break;
+                }
+                for (Dependency d : dependencyManagement.getDependencies()) {
                     recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion());
                 }
             }
