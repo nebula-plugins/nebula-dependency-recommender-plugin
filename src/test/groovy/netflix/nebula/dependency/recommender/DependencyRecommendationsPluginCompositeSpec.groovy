@@ -91,7 +91,7 @@ class DependencyRecommendationsPluginCompositeSpec extends IntegrationSpec {
         writeHelloWorld('c')
 
         when:
-        def results = runTasksSuccessfully(':dependencies', 'build')
+        def results = runTasksSuccessfully(':dependencies', 'build', '--debug')
 
         then:
         noExceptionThrown()
