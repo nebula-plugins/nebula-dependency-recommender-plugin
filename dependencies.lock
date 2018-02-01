@@ -55,7 +55,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
@@ -77,7 +77,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
@@ -99,7 +99,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
@@ -121,7 +121,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
@@ -183,7 +183,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
@@ -205,7 +205,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
@@ -227,7 +227,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
@@ -249,7 +249,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.3.0",
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
