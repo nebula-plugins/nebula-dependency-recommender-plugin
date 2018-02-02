@@ -253,7 +253,7 @@ Transitive dependencies interact with the plugin in different ways depending on 
 
 #### 5.4.1.  `ConflictResolved` Strategy (default)
 
-Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  In this case, the transitive dependency on `commons-logging` via `commons-configuration` is conflict resolved against the recommended version of 1.0.  Normal Gradle conflict resolution selects 1.1.1.
+Consider the following example with dependencies on `commons-configuration` and `commons-logging`.  `commons-configuration:1.6` depends on `commons-logging:1.1.1`.  In this case, the transitive dependency on `commons-logging` via `commons-configuration` is conflict resolved against the recommended version of 1.0 if we have a direct on `commons-logging`.  Normal Gradle conflict resolution selects 1.1.1.
 
 ```groovy
 dependencyRecommendations {
@@ -262,6 +262,7 @@ dependencyRecommendations {
 }
 
 dependencies {
+   compile 'commons-logging:commons-logging'
    compile 'commons-configuration:commons-configuration:1.6'
 }
 ```
