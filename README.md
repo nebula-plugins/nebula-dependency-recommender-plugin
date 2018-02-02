@@ -1,6 +1,14 @@
+## Deprecated
+
+Much of the functionality of this project can be replicated by a new feature coming in `Gradle 4.6` and the default in `Gradle 5.0`q
+
+`org.gradle.advancedpomsupport=true` set in your `gradle.properties`
+
+[Bom Feature Preview](https://github.com/gradle/gradle/blob/master/subprojects/dependency-management/preview-features.adoc#maven-bom-files-and-dependencymanagement)
+
 # Nebula Dependency Recommender
 
-![Support Status](https://img.shields.io/badge/nebula-supported-brightgreen.svg)
+![Support Status](https://img.shields.io/badge/nebula-deprecated-yellow.svg)
 [![Build Status](https://travis-ci.org/nebula-plugins/nebula-dependency-recommender-plugin.svg?branch=master)](https://travis-ci.org/nebula-plugins/nebula-dependency-recommender-plugin)
 [![Coverage Status](https://coveralls.io/repos/nebula-plugins/nebula-dependency-recommender-plugin/badge.svg?branch=master&service=github)](https://coveralls.io/github/nebula-plugins/nebula-dependency-recommender-plugin?branch=master)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nebula-plugins/nebula-dependency-recommender-plugin?utm_source=badgeutm_medium=badgeutm_campaign=pr-badge)
@@ -31,7 +39,7 @@ Apply the nebula-dependency-recommender plugin (must be applied to the root proj
 
 ```groovy
 plugins {
-  id "nebula.dependency-recommender" version "4.3.0"
+  id "nebula.dependency-recommender" version "5.1.0"
 }
 ```
 
@@ -42,7 +50,7 @@ buildscript {
     repositories { jcenter() }
 
     dependencies {
-        classpath 'com.netflix.nebula:nebula-dependency-recommender:4.3.0'
+        classpath 'com.netflix.nebula:nebula-dependency-recommender:5.1.0'
     }
 }
 

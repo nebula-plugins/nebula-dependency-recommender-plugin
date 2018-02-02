@@ -401,4 +401,49 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         moduleVersion.name == 'guava'
         moduleVersion.version == '12.0'
     }
+
+    def 'check that a circular dependency on ourself does not break recommender'() {
+        given:
+        def graph = new DependencyGraphBuilder()
+                .addModule(new ModuleBuilder('test.nebula:foo:1.0.0').addDependency('example.nebula:self:1.0.0').build())
+                .build()
+        def dependencies = new GradleDependencyGenerator(graph, "${projectDir}/repo")
+        dependencies.generateTestMavenRepo()
+
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
+                .addManagementDependency('test.nebula', 'foo', '1.0.0')
+                .addManagementDependency('example.nebula', 'self', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+
+        settingsFile << '''\
+            rootProject.name = 'self'
+            '''.stripIndent()
+
+        buildFile << """\
+            apply plugin: 'java'
+            apply plugin: 'nebula.dependency-recommender'
+            
+            group = 'example.nebula'
+            version = '1.0.0'
+            
+            repositories {
+                maven { url '${repo.root.absoluteFile.toURI()}' }
+                ${dependencies.mavenRepositoryBlock}
+            }
+
+            dependencies {
+                nebulaRecommenderBom 'test.nebula.bom:testbom:latest.release@pom'
+                implementation 'test.nebula:foo'
+            }
+            """.stripIndent()
+
+        when:
+        def result = runTasks('dependencies')
+
+        then:
+        noExceptionThrown()
+    }
 }
