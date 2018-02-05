@@ -7,7 +7,8 @@ import java.util.Collection;
 import java.util.Properties;
 
 public class PropertyFileRecommendationProvider extends FileBasedRecommendationProvider {
-    private Properties recommendations;
+    
+    private volatile Properties recommendations;
 
     private FuzzyVersionResolver fuzzyResolver = new FuzzyVersionResolver() {
         @Override
@@ -31,12 +32,20 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
 
     @Override
     public String getVersion(String org, String name) throws Exception {
-        if(recommendations == null) {
-            recommendations = new Properties();
-            try (InputStream inputStream = inputProvider.getInputStream()) {
-                recommendations.load(
-                        new EolCommentFilteringReader(
-                                new ColonFilteringReader(new InputStreamReader(inputStream))));
+        
+        Properties tmpResult = recommendations;
+        
+        if(tmpResult == null) {
+            synchronized (this) {
+                if (tmpResult == null) {
+                    tmpResult = new Properties();
+                    try (InputStream inputStream = inputProvider.getInputStream()) {
+                        tmpResult.load(
+                                new EolCommentFilteringReader(
+                                        new ColonFilteringReader(new InputStreamReader(inputStream))));
+                    }
+                    recommendations = tmpResult;
+                }
             }
         }
         return fuzzyResolver.versionOf(org + "/" + name);
