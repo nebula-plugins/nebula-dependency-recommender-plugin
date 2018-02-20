@@ -26,13 +26,12 @@ import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.testfixtures.ProjectBuilder
 import org.xmlunit.builder.DiffBuilder
 import org.xmlunit.builder.Input
-import spock.lang.Ignore
 import spock.lang.Issue
 
 class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
     def 'applies recommendations to dependencies with no version'() {
         when:
-        def project = ProjectBuilder.builder().build();
+        def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
         project.apply plugin: DependencyRecommendationsPlugin
 
@@ -92,7 +91,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
 
         then:
-        result.standardOutput.contains 'test.nebula:foo: -> 1.0.0'
+        result.standardOutput.contains 'test.nebula:foo -> 1.0.0'
     }
 
     def 'dependencyInsightEnhanced from recommendation via configuration'() {
@@ -166,7 +165,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
 
         then:
-        result.standardOutput.contains 'test.nebula:foo: -> 1.1.0'
+        result.standardOutput.contains 'test.nebula:foo -> 1.1.0'
     }
 
     def 'conflict resolved respects higher recommendation'() {
@@ -204,7 +203,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
 
         then:
-        result.standardOutput.contains 'test.nebula:foo: -> 1.1.0'
+        result.standardOutput.contains 'test.nebula:foo -> 1.1.0'
         result.standardOutput.contains '\\--- test.nebula:foo:1.0.0 -> 1.1.0'
     }
 
@@ -258,7 +257,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
 
         then:
-        result.standardOutput.contains 'test.nebula:foo: -> 1.0.0'
+        result.standardOutput.contains 'test.nebula:foo -> 1.0.0'
     }
 
     def 'configures the maven-publish plugin to publish a BOM'() {
@@ -366,7 +365,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
     @Issue('#49')
     def 'substituted dependencies do not have recommendations applied'() {
         when:
-        def project = ProjectBuilder.builder().build();
+        def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
         project.apply plugin: DependencyRecommendationsPlugin
 
@@ -441,7 +440,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             """.stripIndent()
 
         when:
-        def result = runTasks('dependencies')
+        runTasks('dependencies')
 
         then:
         noExceptionThrown()

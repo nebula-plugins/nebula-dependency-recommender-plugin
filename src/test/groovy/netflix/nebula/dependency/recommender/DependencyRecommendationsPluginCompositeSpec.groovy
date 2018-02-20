@@ -98,6 +98,6 @@ class DependencyRecommendationsPluginCompositeSpec extends IntegrationSpec {
         results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo'
         results.standardOutput.contains '\\--- example:b:1.0.0 -> project :can-use-recommender-in-a-composite:b'
         results.standardOutput.contains '\\--- project :can-use-recommender-in-a-composite:a'
-        results.standardOutput.contains '\\--- example:foo: -> 1.0.0'
+        results.standardOutput.contains '\\--- example:foo -> 1.0.0'
     }
 }
