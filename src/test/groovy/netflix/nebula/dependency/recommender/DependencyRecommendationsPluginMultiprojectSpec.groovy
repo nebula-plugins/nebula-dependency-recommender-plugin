@@ -68,7 +68,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         noExceptionThrown()
         normalizedOutput.contains 'Recommending version 1.0.0 for dependency example:foo\n'
         normalizedOutput.contains '\\--- project :a\n' +
-                '     \\--- example:foo: -> 1.0.0'
+                '     \\--- example:foo -> 1.0.0'
 
     }
 
