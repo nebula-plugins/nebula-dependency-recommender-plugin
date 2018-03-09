@@ -15,6 +15,8 @@
  */
 package netflix.nebula.dependency.recommender.provider;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.netflix.nebula.dependencybase.DependencyManagement;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
@@ -27,29 +29,30 @@ import org.apache.maven.model.path.DefaultUrlNormalizer;
 import org.apache.maven.model.resolution.InvalidRepositoryException;
 import org.apache.maven.model.resolution.ModelResolver;
 import org.apache.maven.model.resolution.UnresolvableModelException;
-import org.codehaus.groovy.runtime.EncodingGroovyMethods;
 import org.codehaus.plexus.interpolation.MapBasedValueSource;
 import org.codehaus.plexus.interpolation.PropertiesBasedValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.artifacts.ResolvedConfiguration;
-import org.gradle.api.artifacts.repositories.ArtifactRepository;
-import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 
-import java.io.*;
-import java.net.MalformedURLException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.*;
-import org.gradle.api.artifacts.repositories.PasswordCredentials;
-import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
-import org.gradle.internal.impldep.com.google.common.base.Throwables;
 
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
-    private Map<String, String> recommendations;
+    private Supplier<Map<String, String>> recommendations = Suppliers.memoize(new Supplier<Map<String, String>>() {
+        @Override
+        public Map<String, String> get() {
+            try {
+                return getMavenRecommendations();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    });
     private DependencyManagement insight;
 
     public MavenBomRecommendationProvider(Project project, String configName) {
@@ -95,76 +98,78 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
         return getRecommendations().get(org + ":" + name);
     }
 
-    public Map<String, String> getRecommendations() throws Exception {
-        if(recommendations == null) {
-            recommendations = new HashMap<>();
+    public Map<String, String> getRecommendations() {
+        return recommendations.get();
+    }
 
-            Set<File> recommendationFiles = getFilesOnConfiguration();
-            for (File recommendation : recommendationFiles) {
-                if (!recommendation.getName().endsWith("pom")) {
-                    break;
+    public Map<String, String> getMavenRecommendations() throws Exception {
+        Map<String, String> recommendations = new HashMap<>();
+
+        Set<File> recommendationFiles = getFilesOnConfiguration();
+        for (File recommendation : recommendationFiles) {
+            if (!recommendation.getName().endsWith("pom")) {
+                break;
+            }
+
+            DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
+
+            request.setModelResolver(new ModelResolver() {
+                @Override
+                public ModelSource2 resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
+                    String notation = groupId + ":" + artifactId + ":" + version + "@pom";
+                    org.gradle.api.artifacts.Dependency dependency = project.getDependencies().create(notation);
+                    Configuration configuration = project.getConfigurations().detachedConfiguration(dependency);
+                    try {
+                        File file = configuration.getFiles().iterator().next();
+                        return new SimpleModelSource(new FileInputStream(file));
+                    } catch (Exception e) {
+                        throw new UnresolvableModelException(e, groupId, artifactId, version);
+                    }
                 }
 
-                DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
-
-                request.setModelResolver(new ModelResolver() {
-                    @Override
-                    public ModelSource2 resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
-                        String notation = groupId + ":" + artifactId + ":" + version + "@pom";
-                        org.gradle.api.artifacts.Dependency dependency = project.getDependencies().create(notation);
-                        Configuration configuration = project.getConfigurations().detachedConfiguration(dependency);
-                        try {
-                            File file = configuration.getFiles().iterator().next();
-                            return new SimpleModelSource(new FileInputStream(file));
-                        } catch (Exception e) {
-                            throw new UnresolvableModelException(e, groupId, artifactId, version);
-                        }
-                    }
-
-                    @Override
-                    public ModelSource2 resolveModel(Dependency dependency) throws UnresolvableModelException {
-                        return resolveModel(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
-                    }
-
-                    @Override
-                    public ModelSource2 resolveModel(Parent parent) throws UnresolvableModelException {
-                        return resolveModel(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
-                    }
-
-                    @Override
-                    public void addRepository(Repository repository) throws InvalidRepositoryException {
-                        // do nothing
-                    }
-
-                    @Override
-                    public void addRepository(Repository repository, boolean bool) throws InvalidRepositoryException {
-                        // do nothing
-                    }
-
-                    @Override
-                    public ModelResolver newCopy() {
-                        return this; // do nothing
-                    }
-                });
-                request.setModelSource(new SimpleModelSource(new FileInputStream(recommendation)));
-                request.setSystemProperties(System.getProperties());
-
-                DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
-                modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
-
-                ModelBuildingResult result = modelBuilder.build(request);
-                insight.addPluginMessage("nebula.dependency-recommender uses mavenBom: " + result.getEffectiveModel().getId());
-                Model model = result.getEffectiveModel();
-                if (model == null) {
-                    break;
+                @Override
+                public ModelSource2 resolveModel(Dependency dependency) throws UnresolvableModelException {
+                    return resolveModel(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
                 }
-                org.apache.maven.model.DependencyManagement dependencyManagement = model.getDependencyManagement();
-                if (dependencyManagement == null) {
-                    break;
+
+                @Override
+                public ModelSource2 resolveModel(Parent parent) throws UnresolvableModelException {
+                    return resolveModel(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
                 }
-                for (Dependency d : dependencyManagement.getDependencies()) {
-                    recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion());
+
+                @Override
+                public void addRepository(Repository repository) throws InvalidRepositoryException {
+                    // do nothing
                 }
+
+                @Override
+                public void addRepository(Repository repository, boolean bool) throws InvalidRepositoryException {
+                    // do nothing
+                }
+
+                @Override
+                public ModelResolver newCopy() {
+                    return this; // do nothing
+                }
+            });
+            request.setModelSource(new SimpleModelSource(new FileInputStream(recommendation)));
+            request.setSystemProperties(System.getProperties());
+
+            DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
+            modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
+
+            ModelBuildingResult result = modelBuilder.build(request);
+            insight.addPluginMessage("nebula.dependency-recommender uses mavenBom: " + result.getEffectiveModel().getId());
+            Model model = result.getEffectiveModel();
+            if (model == null) {
+                break;
+            }
+            org.apache.maven.model.DependencyManagement dependencyManagement = model.getDependencyManagement();
+            if (dependencyManagement == null) {
+                break;
+            }
+            for (Dependency d : dependencyManagement.getDependencies()) {
+                recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion());
             }
         }
         return recommendations;
