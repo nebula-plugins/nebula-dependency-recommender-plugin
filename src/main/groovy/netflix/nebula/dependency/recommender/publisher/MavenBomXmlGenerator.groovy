@@ -78,7 +78,7 @@ class MavenBomXmlGenerator {
     }
 
     protected static Set<ModuleVersionIdentifier> getManagedDependencies(Configuration configuration) {
-        getManagedDependenciesRecursive(configuration.resolvedConfiguration.firstLevelModuleDependencies,
+        getManagedDependenciesRecursive(configuration.resolvedConfiguration.lenientConfiguration.firstLevelModuleDependencies,
                 new HashSet<ModuleVersionIdentifier>())
     }
 

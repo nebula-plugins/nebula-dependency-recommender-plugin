@@ -64,11 +64,63 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
             """.stripIndent()
 
         when:
-        def results = runTasks('generatePomFileForRecommenderPublication')
+        def results = runTasksSuccessfully('generatePomFileForRecommenderPublication')
 
         then:
         def xml = new File(projectDir, 'build/publications/recommender/pom-default.xml')
         def reader = new XmlSlurper().parse(xml)
+        reader.dependencyManagement.dependencies.dependency.size() == 1
+        reader.dependencyManagement.dependencies.dependency.groupId.text() == 'test0'
+        reader.dependencyManagement.dependencies.dependency.artifactId.text() == 'test0'
+        reader.dependencyManagement.dependencies.dependency.version.text() == '1.0.0'
+    }
+
+    def 'pom created when dependency is missing'() {
+        def graph = new DependencyGraphBuilder().addModule('test0:test0:1.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(graph, "$projectDir/mytestrepo")
+        generator.generateTestMavenRepo()
+        buildFile << """\
+            plugins {
+                id 'nebula.maven-publish' version '5.1.0'
+            }
+            
+            apply plugin: 'nebula.dependency-recommender'
+            
+            group = 'test.nebula'
+            version = '0.1.0'
+            
+            repositories {
+                ${generator.mavenRepositoryBlock}
+            }
+            
+            configurations {
+                recommendation
+            }
+            
+            dependencies {
+                recommendation 'test0:test0:1.0.0'
+                recommendation 'test1:test1:1.0.0'
+            }
+            
+            publishing {
+                publications {
+                    recommender(MavenPublication) {
+                        project.nebulaDependencyManagement.fromConfigurations {
+                            project.configurations.recommendation
+                        }
+                    }
+                }
+            }
+            """.stripIndent()
+
+        when:
+        def results = runTasksSuccessfully('generatePomFileForRecommenderPublication')
+
+        then:
+        def xml = new File(projectDir, 'build/publications/recommender/pom-default.xml')
+        def reader = new XmlSlurper().parse(xml)
+        reader.dependencyManagement.dependencies.size() == 1
         reader.dependencyManagement.dependencies.dependency.size() == 1
         reader.dependencyManagement.dependencies.dependency.groupId.text() == 'test0'
         reader.dependencyManagement.dependencies.dependency.artifactId.text() == 'test0'
@@ -117,7 +169,7 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
             """.stripIndent()
 
         when:
-        def results = runTasks('generatePomFileForRecommenderPublication')
+        def results = runTasksSuccessfully('generatePomFileForRecommenderPublication')
 
         then:
         def xml = new File(projectDir, 'build/publications/recommender/pom-default.xml')
@@ -171,7 +223,7 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
             """.stripIndent()
 
         when:
-        def results = runTasks('generatePomFileForRecommenderPublication')
+        def results = runTasksSuccessfully('generatePomFileForRecommenderPublication')
 
         then:
         def xml = new File(projectDir, 'build/publications/recommender/pom-default.xml')
