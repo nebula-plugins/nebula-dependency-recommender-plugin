@@ -117,7 +117,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasksSuccessfully(':a:dependencyInsightEnhanced', '--configuration', 'compile', '--dependency', 'foo')
+        def results = runTasksSuccessfully(':a:dependencyInsight', '--configuration', 'compile', '--dependency', 'foo')
 
         then:
         results.standardOutput.contains 'example:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'

@@ -123,7 +123,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully('dependencyInsightEnhanced', '--configuration', 'compile', '--dependency' , 'foo')
+        def result = runTasksSuccessfully('dependencyInsight', '--configuration', 'compile', '--dependency' , 'foo')
 
         then:
         result.standardOutput.contains 'test.nebula:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'
