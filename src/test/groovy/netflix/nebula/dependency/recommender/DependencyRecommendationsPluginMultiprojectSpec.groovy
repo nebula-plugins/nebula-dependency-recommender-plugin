@@ -173,8 +173,8 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         def results = runTasks(':b:dependencyInsight', '--configuration', 'compile', '--dependency', 'foo', '--info', 'build')
 
         then:
-        println results?.standardOutput
-        println results?.standardError
-        results.standardError.contains 'Dependency example:foo omitted version with no recommended version'
+        def expectedMessage = 'Dependency example:foo omitted version with no recommended version'
+        //output where message is printed is different between Gradle 4.7 and 4.8 while we are testing Gradle 4.8 we need to check both
+        results.standardError.contains(expectedMessage) || results.standardOutput.contains(expectedMessage)
     }
 }
