@@ -40,6 +40,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     private DependencyManagement insight;
     private Boolean strictMode = false;
     private Set<String> excludedConfigurations = new HashSet<>();
+    private Set<String> reasons = new HashSet<>();
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
@@ -55,7 +56,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         super(RecommendationProvider.class, null, new RecommendationProviderNamer());
         this.project = project;
         this.insight = dependencyInsight;
-        this.mavenBomProvider = new MavenBomRecommendationProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.insight);
+        this.mavenBomProvider = new MavenBomRecommendationProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.insight, this.reasons);
         this.add(this.mavenBomProvider);
     }
 
@@ -65,7 +66,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         }
     }
 
-    public <T extends RecommendationProvider> T add(T provider, Action<? super T> configureAction) {
+    public <T extends RecommendationProvider> T addProvider(T provider, Action<? super T> configureAction) {
         configureAction.execute(provider);
         assertCanAdd(provider.getName());
         addLastAction.execute(provider);
@@ -79,14 +80,18 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public PropertyFileRecommendationProvider propertiesFile(Map<String, ?> args) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a properties file: " + args.get("file"));
+        String message = "nebula.dependency-recommender uses a properties file: " + args.get("file");
+//        insight.addPluginMessage(message);
+        reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
-        return add(new PropertyFileRecommendationProvider(project), new ConfigureByMapAction<PropertyFileRecommendationProvider>(modifiedArgs));
+        return addProvider(new PropertyFileRecommendationProvider(project), new ConfigureByMapAction<PropertyFileRecommendationProvider>(modifiedArgs));
     }
 
     public PropertyFileRecommendationProvider propertiesFile(Closure closure) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a properties file");
-        return add(new PropertyFileRecommendationProvider(project), new ClosureBackedAction<PropertyFileRecommendationProvider>(closure));
+        String message = "nebula.dependency-recommender uses a properties file";
+//        insight.addPluginMessage(message);
+        reasons.add(message);
+        return addProvider(new PropertyFileRecommendationProvider(project), new ClosureBackedAction<PropertyFileRecommendationProvider>(closure));
     }
 
     public MavenBomRecommendationProvider mavenBom(Map<String, ?> args) {
@@ -106,41 +111,55 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public IvyRecommendationProvider ivyXml(Map<String, ?> args) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a ivyXml: " + args.get("module"));
+        String message = "nebula.dependency-recommender uses a ivyXml: " + args.get("module");
+//        insight.addPluginMessage(message);
+        reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
-        return add(new IvyRecommendationProvider(project), new ConfigureByMapAction<IvyRecommendationProvider>(modifiedArgs));
+        return addProvider(new IvyRecommendationProvider(project), new ConfigureByMapAction<IvyRecommendationProvider>(modifiedArgs));
     }
 
     public IvyRecommendationProvider ivyXml(Closure closure) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a ivyXml");
-        return add(new IvyRecommendationProvider(project), new ClosureBackedAction<IvyRecommendationProvider>(closure));
+        String message = "nebula.dependency-recommender uses a ivyXml";
+//        insight.addPluginMessage(message);
+        reasons.add(message);
+        return addProvider(new IvyRecommendationProvider(project), new ClosureBackedAction<IvyRecommendationProvider>(closure));
     }
 
     public DependencyLockProvider dependencyLock(Map<String, ?> args) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a dependency lock: " + args.get("module"));
+        String message = "nebula.dependency-recommender uses a dependency lock: " + args.get("module");
+//        insight.addPluginMessage(message);
+        reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
-        return add(new DependencyLockProvider(project), new ConfigureByMapAction<DependencyLockProvider>(modifiedArgs));
+        return addProvider(new DependencyLockProvider(project), new ConfigureByMapAction<DependencyLockProvider>(modifiedArgs));
     }
 
     public DependencyLockProvider dependencyLock(Closure closure) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a dependency lock for recommendations");
-        return add(new DependencyLockProvider(project), new ClosureBackedAction<DependencyLockProvider>(closure));
+        String message = "nebula.dependency-recommender uses a dependency lock for recommendations";
+//        insight.addPluginMessage(message);
+        reasons.add(message);
+        return addProvider(new DependencyLockProvider(project), new ClosureBackedAction<DependencyLockProvider>(closure));
     }
 
     public MapRecommendationProvider map(Map<String, ?> args) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a provided map for recommendations");
+        String message = "nebula.dependency-recommender uses a provided map for recommendations";
+//        insight.addPluginMessage(message);
+        reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
-        return add(new MapRecommendationProvider(), new ConfigureByMapAction<MapRecommendationProvider>(modifiedArgs));
+        return addProvider(new MapRecommendationProvider(), new ConfigureByMapAction<MapRecommendationProvider>(modifiedArgs));
     }
 
     public MapRecommendationProvider map(Closure closure) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a provided map for recommendations");
-        return add(new MapRecommendationProvider(), new ClosureBackedAction<MapRecommendationProvider>(closure));
+        String message = "nebula.dependency-recommender uses a provided map for recommendations";
+//        insight.addPluginMessage(message);
+        reasons.add(message);
+        return addProvider(new MapRecommendationProvider(), new ClosureBackedAction<MapRecommendationProvider>(closure));
     }
 
-    public CustomRecommendationProvider add(Closure closure) {
-        insight.addPluginMessage("nebula.dependency-recommender uses a CustomRecommendationProvider");
-        return add(new CustomRecommendationProvider(closure), new Action<CustomRecommendationProvider>() {
+    public CustomRecommendationProvider addProvider(Closure closure) {
+        String message = "nebula.dependency-recommender uses a CustomRecommendationProvider";
+//        insight.addPluginMessage(message);
+        reasons.add(message);
+        return addProvider(new CustomRecommendationProvider(closure), new Action<CustomRecommendationProvider>() {
             @Override
             public void execute(CustomRecommendationProvider customRecommendationProvider) {
             }
@@ -188,5 +207,9 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public Set<String> getExcludedConfigurations() {
         return excludedConfigurations;
+    }
+
+    public Set<String> getReasons() {
+        return reasons;
     }
 }
