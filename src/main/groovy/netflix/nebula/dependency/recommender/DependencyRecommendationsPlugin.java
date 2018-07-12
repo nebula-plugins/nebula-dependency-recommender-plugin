@@ -15,25 +15,30 @@
  */
 package netflix.nebula.dependency.recommender;
 
-import com.netflix.nebula.dependencybase.DependencyBasePlugin;
-import com.netflix.nebula.dependencybase.DependencyManagement;
 import com.netflix.nebula.interop.ConfigurationsKt;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
 import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.*;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.DependencyResolveDetails;
+import org.gradle.api.artifacts.DependencySet;
+import org.gradle.api.artifacts.ExternalModuleDependency;
+import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.artifacts.ProjectDependency;
+import org.gradle.api.artifacts.ResolvableDependencies;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,15 +46,12 @@ import java.util.List;
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
-    private DependencyManagement dependencyInsight;
     private RecommendationProviderContainer recommendationProviderContainer;
 
     @Override
     public void apply(final Project project) {
-        project.getPlugins().apply(DependencyBasePlugin.class);
-        dependencyInsight = (DependencyManagement) project.getExtensions().getExtraProperties().get("nebulaDependencyBase");
         project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
-        recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project, dependencyInsight);
+        recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
         applyRecommendations(project);
         enhanceDependenciesWithRecommender(project);
         enhancePublicationsWithBomProducer(project);
@@ -83,6 +85,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                     // don't interfere with the way forces trump everything
                                     for (ModuleVersionSelector force : conf.getResolutionStrategy().getForcedModules()) {
                                         if (requested.getGroup().equals(force.getGroup()) && requested.getName().equals(force.getName())) {
+                                            details.because("Would have recommended a version for " + requested.getGroup() + ":" + requested.getName() + ", but a force is in place");
                                             return;
                                         }
                                     }
@@ -91,8 +94,10 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                         String version = getRecommendedVersionRecursive(project, requested);
                                         if (strategy.recommendVersion(details, version)) {
                                             String coordinate = requested.getGroup() + ":" + requested.getName();
-                                            dependencyInsight.addRecommendation(conf.getName(), coordinate, version, whichStrategy(strategy), "nebula.dependency-recommender");
+                                            String strategyText = whichStrategy(strategy);
                                             logger.debug("Recommending version " + version + " for dependency " + coordinate);
+                                            details.because("Recommending version " + version + " for dependency " + coordinate + " via " + strategyText + "\n" +
+                                                    "\twith reasons: " + StringUtils.join(recommendationProviderContainer.getReasons(), ", "));
                                         } else {
                                             if (recommendationProviderContainer.isStrictMode()) {
                                                 String errorMessage = "Dependency " + details.getRequested().getGroup() + ":" + details.getRequested().getName() + " omitted version with no recommended version. General causes include a dependency being removed from the recommendation source or not applying a recommendation source to a project that depends on another project using a recommender.";

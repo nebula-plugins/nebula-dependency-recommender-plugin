@@ -24,8 +24,6 @@ import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.testfixtures.ProjectBuilder
-import org.xmlunit.builder.DiffBuilder
-import org.xmlunit.builder.Input
 import spock.lang.Issue
 
 class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
@@ -75,12 +73,12 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         buildFile << """\
             apply plugin: 'nebula.dependency-recommender'
             apply plugin: 'java'
-            
+
             repositories {
                 maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
-            
+
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
                 compile 'test.nebula:foo'
@@ -94,7 +92,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         result.standardOutput.contains 'test.nebula:foo -> 1.0.0'
     }
 
-    def 'dependencyInsightEnhanced from recommendation via configuration'() {
+    def 'dependencyInsight from recommendation via configuration'() {
         def repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
         def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
@@ -110,12 +108,12 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         buildFile << """\
             apply plugin: 'nebula.dependency-recommender'
             apply plugin: 'java'
-            
+
             repositories {
                 maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
-            
+
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
                 compile 'test.nebula:foo'
@@ -123,10 +121,10 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully('dependencyInsight', '--configuration', 'compile', '--dependency' , 'foo')
+        def result = runTasksSuccessfully('dependencyInsight', '--configuration', 'compile', '--dependency', 'foo')
 
         then:
-        result.standardOutput.contains 'test.nebula:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'
+        result.standardOutput.contains 'Recommending version 1.0.0 for dependency test.nebula:foo'
         result.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:testbom:pom:1.0.0'
     }
 
@@ -148,12 +146,12 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         buildFile << """\
             apply plugin: 'nebula.dependency-recommender'
             apply plugin: 'java'
-            
+
             repositories {
                 maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
-            
+
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
                 compile 'test.nebula:foo'
@@ -186,12 +184,12 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         buildFile << """\
             apply plugin: 'nebula.dependency-recommender'
             apply plugin: 'java'
-            
+
             repositories {
                 maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
-            
+
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
                 compile 'test.nebula:foo'
@@ -230,12 +228,12 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             }
             apply plugin: 'nebula.dependency-recommender'
             apply plugin: 'java'
-            
+
             repositories {
                 maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
-            
+
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:latest.release@pom'
                 compile 'test.nebula:foo'
@@ -296,70 +294,92 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         runTasksSuccessfully('publish')
 
         def pomText = new File(projectDir, "build/repo/netflix/module-parent/1/module-parent-1.pom").text
-        println pomText
-
-        // Looks like the order of these dependencies differs from Java 7 to 8. We'll need to change this assertion when we switch to Java 8
-        def diff = DiffBuilder
-                .compare(Input.fromString(pomText))
-                .withTest(Input.fromString('''\
-                        <project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                          <modelVersion>4.0.0</modelVersion>
-                          <groupId>netflix</groupId>
-                          <artifactId>module-parent</artifactId>
-                          <version>1</version>
-                          <packaging>pom</packaging>
-                          <dependencyManagement>
-                            <dependencies>
-                              <dependency>
-                                <groupId>commons-digester</groupId>
-                                <artifactId>commons-digester</artifactId>
-                                <version>1.8</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>commons-collections</groupId>
-                                <artifactId>commons-collections</artifactId>
-                                <version>3.2.1</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>commons-beanutils</groupId>
-                                <artifactId>commons-beanutils-core</artifactId>
-                                <version>1.8.0</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>commons-lang</groupId>
-                                <artifactId>commons-lang</artifactId>
-                                <version>2.4</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>commons-beanutils</groupId>
-                                <artifactId>commons-beanutils</artifactId>
-                                <version>1.7.0</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>commons-logging</groupId>
-                                <artifactId>commons-logging</artifactId>
-                                <version>1.1.1</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>commons-configuration</groupId>
-                                <artifactId>commons-configuration</artifactId>
-                                <version>1.6</version>
-                              </dependency>
-                              <dependency>
-                                <groupId>manual</groupId>
-                                <artifactId>dep</artifactId>
-                                <version>1</version>
-                              </dependency>
-                            </dependencies>
-                          </dependencyManagement>
-                          <description>A demonstration of maven POM customization</description>
-                        </project>
-                '''))
-                .ignoreWhitespace()
-                .build()
 
         then:
-        !diff.hasDifferences()
+        // assert on overall shape
+        pomText.contains('''
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>netflix</groupId>
+  <artifactId>module-parent</artifactId>
+  <version>1</version>
+  <packaging>pom</packaging>
+  <dependencyManagement>
+    <dependencies>
+''')
+
+        pomText.contains('''
+    </dependencies>
+  </dependencyManagement>
+  <description>A demonstration of maven POM customization</description>
+</project>
+''')
+
+        // assert on dependency blocks, that are sometimes re-ordered
+        pomText.findAll('<dependency>').size() == 8
+
+        def expectedDependencyBlocks = [
+                '''
+      <dependency>
+        <groupId>commons-digester</groupId>
+        <artifactId>commons-digester</artifactId>
+        <version>1.8</version>
+      </dependency>
+      ''',
+                '''
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      ''',
+                '''
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils-core</artifactId>
+        <version>1.8.0</version>
+      </dependency>
+      ''',
+                '''
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.4</version>
+      </dependency>
+      ''',
+                '''
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.7.0</version>
+      </dependency>
+      ''',
+                '''
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1.1</version>
+      </dependency>
+      ''',
+                '''
+      <dependency>
+        <groupId>commons-configuration</groupId>
+        <artifactId>commons-configuration</artifactId>
+        <version>1.6</version>
+      </dependency>
+      ''',
+                '''
+      <dependency>
+        <groupId>manual</groupId>
+        <artifactId>dep</artifactId>
+        <version>1</version>
+      </dependency>
+      '''
+        ]
+
+        expectedDependencyBlocks.each {
+            pomText.contains(it)
+        }
     }
 
     @Issue('#49')
@@ -424,10 +444,10 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         buildFile << """\
             apply plugin: 'java'
             apply plugin: 'nebula.dependency-recommender'
-            
+
             group = 'example.nebula'
             version = '1.0.0'
-            
+
             repositories {
                 maven { url '${repo.root.absoluteFile.toURI()}' }
                 ${dependencies.mavenRepositoryBlock}

@@ -72,7 +72,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
 
     }
 
-    def 'can use recommender with dependencyInsightEnhanced across a multiproject'() {
+    def 'can use recommender with dependencyInsight across a multiproject'() {
         def repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
         def pom = new Pom('test.nebula.bom', 'multiprojectbom', '1.0.0', ArtifactType.POM)
@@ -117,10 +117,10 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasksSuccessfully(':a:dependencyInsight', '--configuration', 'compile', '--dependency', 'foo')
+        def results = runTasksSuccessfully(':a:dependencyInsight', '--dependency', 'foo', '--configuration', 'compile')
 
         then:
-        results.standardOutput.contains 'example:foo:1.0.0 (recommend 1.0.0 via conflict resolution recommendation)'
+        results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo'
         results.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:multiprojectbom:pom:1.0.0'
     }
 
@@ -170,7 +170,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasks(':b:dependencyInsight', '--configuration', 'compile', '--dependency', 'foo', '--info', 'build')
+        def results = runTasks(':b:dependencyInsight', '--dependency', 'foo', '--configuration', 'compile', '--info', 'build')
 
         then:
         def expectedMessage = 'Dependency example:foo omitted version with no recommended version'
