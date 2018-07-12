@@ -16,7 +16,6 @@
 package netflix.nebula.dependency.recommender;
 
 import com.netflix.nebula.dependencybase.DependencyBasePlugin;
-import com.netflix.nebula.dependencybase.DependencyManagement;
 import com.netflix.nebula.interop.ConfigurationsKt;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -48,15 +47,13 @@ import java.util.List;
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
-    private DependencyManagement dependencyInsight;
     private RecommendationProviderContainer recommendationProviderContainer;
 
     @Override
     public void apply(final Project project) {
         project.getPlugins().apply(DependencyBasePlugin.class);
-        dependencyInsight = (DependencyManagement) project.getExtensions().getExtraProperties().get("nebulaDependencyBase");
         project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
-        recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project, dependencyInsight);
+        recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
         applyRecommendations(project);
         enhanceDependenciesWithRecommender(project);
         enhancePublicationsWithBomProducer(project);

@@ -17,7 +17,6 @@ package netflix.nebula.dependency.recommender.provider;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.netflix.nebula.dependencybase.DependencyManagement;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
@@ -64,17 +63,14 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
             }
         }
     });
-    private DependencyManagement insight;
     private Set<String> reasons = new HashSet<>();
 
     public MavenBomRecommendationProvider(Project project, String configName) {
         super(project, configName);
-//        this.insight = new DependencyManagement();
     }
 
-    public MavenBomRecommendationProvider(Project project, String configName, DependencyManagement insight, Set<String> reasons) {
+    public MavenBomRecommendationProvider(Project project, String configName, Set<String> reasons) {
         super(project, configName);
-//        this.insight = insight;
         this.reasons = reasons;
     }
 
@@ -172,7 +168,6 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
             modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
 
             ModelBuildingResult result = modelBuilder.build(request);
-//            insight.addPluginMessage("nebula.dependency-recommender uses mavenBom: " + result.getEffectiveModel().getId());
             reasons.add("nebula.dependency-recommender uses mavenBom: " + result.getEffectiveModel().getId());
 
             Model model = result.getEffectiveModel();
