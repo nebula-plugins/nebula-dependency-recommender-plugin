@@ -117,7 +117,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasksSuccessfully(':a:dependencyInsight', '--dependency', 'foo')
+        def results = runTasksSuccessfully(':a:dependencyInsight', '--dependency', 'foo', '--configuration', 'compile')
 
         then:
         results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo'
@@ -170,9 +170,11 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasks(':b:dependencyInsight', '--dependency', 'foo', '--info', 'build')
+        def results = runTasks(':b:dependencyInsight', '--dependency', 'foo', '--configuration', 'compile', '--info', 'build')
 
         then:
-        results.getStandardOutput().contains 'Dependency example:foo omitted version with no recommended version'
+        def expectedMessage = 'Dependency example:foo omitted version with no recommended version'
+        //output where message is printed is different between Gradle 4.7 and 4.8 while we are testing Gradle 4.8 we need to check both
+        results.standardError.contains(expectedMessage) || results.standardOutput.contains(expectedMessage)
     }
 }
