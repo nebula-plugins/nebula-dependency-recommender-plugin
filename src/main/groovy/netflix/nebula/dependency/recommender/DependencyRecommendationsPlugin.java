@@ -15,7 +15,6 @@
  */
 package netflix.nebula.dependency.recommender;
 
-import com.netflix.nebula.dependencybase.DependencyBasePlugin;
 import com.netflix.nebula.interop.ConfigurationsKt;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -51,7 +50,6 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
     @Override
     public void apply(final Project project) {
-        project.getPlugins().apply(DependencyBasePlugin.class);
         project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
         recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
         applyRecommendations(project);

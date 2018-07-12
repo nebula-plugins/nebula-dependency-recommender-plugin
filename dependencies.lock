@@ -1,9 +1,5 @@
 {
     "compile": {
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -14,10 +10,6 @@
         }
     },
     "compileClasspath": {
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -28,10 +20,6 @@
         }
     },
     "default": {
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -45,10 +33,6 @@
         "com.github.xmlunit:xmlunit": {
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
-        },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
@@ -68,10 +52,6 @@
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
         },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -89,10 +69,6 @@
         "com.github.xmlunit:xmlunit": {
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
-        },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
@@ -112,10 +88,6 @@
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
         },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -131,19 +103,15 @@
     },
     "jacocoAgent": {
         "org.jacoco:org.jacoco.agent": {
-            "locked": "0.7.9"
+            "locked": "0.8.1"
         }
     },
     "jacocoAnt": {
         "org.jacoco:org.jacoco.ant": {
-            "locked": "0.7.9"
+            "locked": "0.8.1"
         }
     },
     "runtime": {
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -154,10 +122,6 @@
         }
     },
     "runtimeClasspath": {
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -171,10 +135,6 @@
         "com.github.xmlunit:xmlunit": {
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
-        },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
@@ -194,10 +154,6 @@
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
         },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -216,10 +172,6 @@
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
         },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -237,10 +189,6 @@
         "com.github.xmlunit:xmlunit": {
             "locked": "7ed02fb294",
             "requested": "7ed02fb294"
-        },
-        "com.netflix.nebula:nebula-dependency-base-plugin": {
-            "locked": "0.1.0",
-            "requested": "1.0.0-rc.1"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
