@@ -5,7 +5,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
         }
     },
@@ -15,7 +15,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
         }
     },
@@ -25,15 +25,11 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
         }
     },
     "integTestCompile": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -43,15 +39,15 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     },
     "integTestCompileClasspath": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -61,15 +57,15 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     },
     "integTestRuntime": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -79,15 +75,15 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     },
     "integTestRuntimeClasspath": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -97,8 +93,12 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     },
     "jacocoAgent": {
@@ -117,7 +117,7 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
         }
     },
@@ -127,15 +127,11 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
         }
     },
     "testCompile": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -145,15 +141,15 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     },
     "testCompileClasspath": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -163,15 +159,15 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     },
     "testRuntime": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -181,15 +177,15 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     },
     "testRuntimeClasspath": {
-        "com.github.xmlunit:xmlunit": {
-            "locked": "7ed02fb294",
-            "requested": "7ed02fb294"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
@@ -199,8 +195,12 @@
             "requested": "latest.release"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.2",
+            "locked": "3.5.4",
             "requested": "3.+"
+        },
+        "org.xmlunit:xmlunit-core": {
+            "locked": "2.6.0",
+            "requested": "2.6.0"
         }
     }
 }

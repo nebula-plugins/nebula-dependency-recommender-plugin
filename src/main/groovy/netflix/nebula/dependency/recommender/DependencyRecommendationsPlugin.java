@@ -42,19 +42,39 @@ import org.gradle.api.plugins.ExtraPropertiesExtension;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
+    public static final boolean CORE_BOM_SUPPORT_ENABLED = Boolean.getBoolean("nebula.features.coreBomSupport");
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
     private RecommendationProviderContainer recommendationProviderContainer;
 
     @Override
     public void apply(final Project project) {
-        project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
+        Configuration bomConfiguration = project.getConfigurations().create(NEBULA_RECOMMENDER_BOM);
         recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
-        applyRecommendations(project);
-        enhanceDependenciesWithRecommender(project);
-        enhancePublicationsWithBomProducer(project);
+
+        if (CORE_BOM_SUPPORT_ENABLED) {
+            logger.warn("coreBomSupport feature enabled");
+            recommendationProviderContainer.excludeConfigurations("archives", NEBULA_RECOMMENDER_BOM, "provided");
+            applyRecommendationsDirectly(project, bomConfiguration);
+        } else {
+            applyRecommendations(project);
+            enhanceDependenciesWithRecommender(project);
+            enhancePublicationsWithBomProducer(project);
+        }
+    }
+
+    private void applyRecommendationsDirectly(final Project project, final Configuration bomConfiguration) {
+        final Set<String> excluded = recommendationProviderContainer.getExcludedConfigurations();
+        project.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, excluded, project));
+        project.subprojects(new Action<Project>() {
+            @Override
+            public void execute(Project sub) {
+                sub.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, excluded, sub));
+            }
+        });
     }
 
     private void applyRecommendations(final Project project) {
@@ -66,7 +86,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     ConfigurationsKt.onResolve(conf, new Function1<ResolvableDependencies, Unit>() {
                         @Override
                         public Unit invoke(ResolvableDependencies resolvableDependencies) {
-                            if(recommendationProviderContainer.getExcludedConfigurations().contains(conf.getName())) {
+                            if (recommendationProviderContainer.getExcludedConfigurations().contains(conf.getName())) {
                                 return Unit.INSTANCE;
                             }
 
@@ -167,7 +187,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     /**
      * Look for recommended versions in a project and each of its ancestors in order until one is found or the root is reached
      *
-     * @param project the gradle <code>Project</code>
+     * @param project    the gradle <code>Project</code>
      * @param mvSelector the module to lookup
      * @return the recommended version or <code>null</code>
      */

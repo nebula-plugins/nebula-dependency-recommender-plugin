@@ -19,6 +19,7 @@ import groovy.lang.Closure;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.Action;
+import org.gradle.api.GradleException;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
 import org.gradle.api.internal.ClosureBackedAction;
@@ -30,6 +31,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin.CORE_BOM_SUPPORT_ENABLED;
 
 public class RecommendationProviderContainer extends DefaultNamedDomainObjectList<RecommendationProvider> {
 
@@ -77,6 +80,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public PropertyFileRecommendationProvider propertiesFile(Map<String, ?> args) {
+        ensureCoreBomSupportNotEnabled("propertiesFile");
         String message = "nebula.dependency-recommender uses a properties file: " + args.get("file");
         reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
@@ -84,6 +88,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public PropertyFileRecommendationProvider propertiesFile(Closure closure) {
+        ensureCoreBomSupportNotEnabled("propertiesFile");
         String message = "nebula.dependency-recommender uses a properties file";
         reasons.add(message);
         return addProvider(new PropertyFileRecommendationProvider(project), new ClosureBackedAction<PropertyFileRecommendationProvider>(closure));
@@ -95,10 +100,12 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
             throw new IllegalArgumentException("Module may not be null");
         }
 
-        if(Map.class.isAssignableFrom(dependencyNotation.getClass())) {
-            ((Map) dependencyNotation).put("ext", "pom");
-        } else if(!dependencyNotation.toString().endsWith("@pom")) {
-            dependencyNotation = dependencyNotation.toString() + "@pom";
+        if (!CORE_BOM_SUPPORT_ENABLED) {
+            if (Map.class.isAssignableFrom(dependencyNotation.getClass())) {
+                ((Map) dependencyNotation).put("ext", "pom");
+            } else if (!dependencyNotation.toString().endsWith("@pom")) {
+                dependencyNotation = dependencyNotation.toString() + "@pom";
+            }
         }
         project.getDependencies().add(DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, dependencyNotation);
 
@@ -106,6 +113,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public IvyRecommendationProvider ivyXml(Map<String, ?> args) {
+        ensureCoreBomSupportNotEnabled("ivyXml");
         String message = "nebula.dependency-recommender uses a ivyXml: " + args.get("module");
         reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
@@ -113,12 +121,14 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public IvyRecommendationProvider ivyXml(Closure closure) {
+        ensureCoreBomSupportNotEnabled("ivyXml");
         String message = "nebula.dependency-recommender uses a ivyXml";
         reasons.add(message);
         return addProvider(new IvyRecommendationProvider(project), new ClosureBackedAction<IvyRecommendationProvider>(closure));
     }
 
     public DependencyLockProvider dependencyLock(Map<String, ?> args) {
+        ensureCoreBomSupportNotEnabled("dependencyLock");
         String message = "nebula.dependency-recommender uses a dependency lock: " + args.get("module");
         reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
@@ -126,12 +136,14 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public DependencyLockProvider dependencyLock(Closure closure) {
+        ensureCoreBomSupportNotEnabled("dependencyLock");
         String message = "nebula.dependency-recommender uses a dependency lock for recommendations";
         reasons.add(message);
         return addProvider(new DependencyLockProvider(project), new ClosureBackedAction<DependencyLockProvider>(closure));
     }
 
     public MapRecommendationProvider map(Map<String, ?> args) {
+        ensureCoreBomSupportNotEnabled("map");
         String message = "nebula.dependency-recommender uses a provided map for recommendations";
         reasons.add(message);
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
@@ -139,12 +151,14 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     }
 
     public MapRecommendationProvider map(Closure closure) {
+        ensureCoreBomSupportNotEnabled("map");
         String message = "nebula.dependency-recommender uses a provided map for recommendations";
         reasons.add(message);
         return addProvider(new MapRecommendationProvider(), new ClosureBackedAction<MapRecommendationProvider>(closure));
     }
 
     public CustomRecommendationProvider addProvider(Closure closure) {
+        ensureCoreBomSupportNotEnabled("addProvider");
         String message = "nebula.dependency-recommender uses a CustomRecommendationProvider";
         reasons.add(message);
         return addProvider(new CustomRecommendationProvider(closure), new Action<CustomRecommendationProvider>() {
@@ -199,5 +213,11 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public Set<String> getReasons() {
         return reasons;
+    }
+
+    private static void ensureCoreBomSupportNotEnabled(String feature) {
+        if(CORE_BOM_SUPPORT_ENABLED) {
+            throw new GradleException("dependencyRecommender." + feature + " is not available with 'systemProp.nebula.features.coreBomSupport=true'");
+        }
     }
 }
