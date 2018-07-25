@@ -26,17 +26,11 @@ contacts {
     }
 }
 
-repositories {
-    jcenter()
-    maven { url 'https://jitpack.io' } // for xmlunit2
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' } // for xmlunit2
-}
-
 dependencies {
     compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     compile 'org.apache.maven:maven-model-builder:3.+'
     testCompile('com.netflix.nebula:nebula-test:latest.release')
-    testCompile('com.github.xmlunit:xmlunit:7ed02fb294') {
+    testCompile ('org.xmlunit:xmlunit-core:2.6.0') {
         exclude module: 'hamcrest-core'
     }
 }
