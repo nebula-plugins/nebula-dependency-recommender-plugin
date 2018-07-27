@@ -18,8 +18,8 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
     }
 
     @Override
-    public void execute(Configuration files) {
-        if (excludedConfigurationNames.contains(files.getName())) {
+    public void execute(Configuration configuration) {
+        if (excludedConfigurationNames.contains(configuration.getName())) {
             return;
         }
         Configuration toExtend = bom;
@@ -28,6 +28,6 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
             toExtend.setVisible(false);
             project.getConfigurations().add(toExtend);
         }
-        files.extendsFrom(toExtend);
+        configuration.extendsFrom(toExtend);
     }
 }
