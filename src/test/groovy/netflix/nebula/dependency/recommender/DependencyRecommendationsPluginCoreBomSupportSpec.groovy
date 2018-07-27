@@ -42,6 +42,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         pom.addManagementDependency('test.nebula', 'bar', '2.0.0')
         pom.addManagementDependency('test.nebula', 'baz', '2.5.0')
         pom.addManagementDependency('test.nebula', 'lib', '3.9.9')
+        pom.addManagementDependency('test.nebula', 'app', '8.0.0')
         repo.poms.add(pom)
         repo.generate()
         def graph = new DependencyGraphBuilder()
@@ -49,6 +50,8 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
                 .addModule('test.nebula:bar:2.0.0')
                 .addModule('test.nebula:baz:2.5.0')
                 .addModule('test.nebula:lib:3.9.9')
+                .addModule('test.nebula:app:7.0.0')
+                .addModule('test.nebula:app:8.0.0')
                 .build()
         generator = new GradleDependencyGenerator(graph)
         generator.generateTestMavenRepo()
@@ -66,6 +69,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
             }
 
             dependencyRecommendations {
+                excludeConfigurations('compileOnly')
                 mavenBom module: 'test.nebula.bom:testbom:latest.release'
             }
 
@@ -74,17 +78,23 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
                 compile 'test.nebula:foo'
                 providedCompile 'test.nebula:lib'
                 runtimeOnly 'test.nebula:baz'
+                compileOnly 'test.nebula:app:7.0.0' // bom recommends 8, but config excluded
             }
             """.stripIndent()
 
         when:
         def result = runTasksSuccessfully('dependencies')
+        def compileOnlyResult = runTasksSuccessfully('dependencies', '--configuration', 'compileOnly')
 
         then:
         result.standardOutput.contains("+--- test.nebula:foo -> 1.0.0")
         result.standardOutput.contains("+--- test.nebula:bar -> 2.0.0")
         result.standardOutput.contains("\\--- test.nebula:baz -> 2.5.0")
         result.standardOutput.contains("\\--- test.nebula:lib -> 3.9.9")
+
+        compileOnlyResult.standardOutput.contains("compileOnly - Compile only dependencies for source set 'main'.\n" +
+                "\\--- test.nebula:app:7.0.0")
+        !compileOnlyResult.standardOutput.contains('test.nebula.bom:testbom:latest.release')
     }
 
     @Unroll

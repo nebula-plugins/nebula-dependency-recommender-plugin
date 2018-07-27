@@ -67,12 +67,16 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     }
 
     private void applyRecommendationsDirectly(final Project project, final Configuration bomConfiguration) {
-        final Set<String> excluded = recommendationProviderContainer.getExcludedConfigurations();
-        project.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, excluded, project));
-        project.subprojects(new Action<Project>() {
+        project.afterEvaluate(new Action<Project>() {
             @Override
-            public void execute(Project sub) {
-                sub.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, excluded, sub));
+            public void execute(Project p) {
+                p.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, p, recommendationProviderContainer));
+                p.subprojects(new Action<Project>() {
+                    @Override
+                    public void execute(Project sub) {
+                        sub.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, sub, recommendationProviderContainer));
+                    }
+                });
             }
         });
     }
