@@ -22,9 +22,9 @@ import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Namer;
 import org.gradle.api.Project;
-import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
+import org.gradle.util.ConfigureUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -91,7 +91,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         ensureCoreBomSupportNotEnabled("propertiesFile");
         String message = "nebula.dependency-recommender uses a properties file";
         reasons.add(message);
-        return addProvider(new PropertyFileRecommendationProvider(project), new ClosureBackedAction<PropertyFileRecommendationProvider>(closure));
+        return addProvider(new PropertyFileRecommendationProvider(project), ConfigureUtil.<PropertyFileRecommendationProvider>configureUsing(closure));
     }
 
     public MavenBomRecommendationProvider mavenBom(Map<String, ?> args) {
@@ -124,7 +124,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         ensureCoreBomSupportNotEnabled("ivyXml");
         String message = "nebula.dependency-recommender uses a ivyXml";
         reasons.add(message);
-        return addProvider(new IvyRecommendationProvider(project), new ClosureBackedAction<IvyRecommendationProvider>(closure));
+        return addProvider(new IvyRecommendationProvider(project), ConfigureUtil.<IvyRecommendationProvider>configureUsing(closure));
     }
 
     public DependencyLockProvider dependencyLock(Map<String, ?> args) {
@@ -139,7 +139,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         ensureCoreBomSupportNotEnabled("dependencyLock");
         String message = "nebula.dependency-recommender uses a dependency lock for recommendations";
         reasons.add(message);
-        return addProvider(new DependencyLockProvider(project), new ClosureBackedAction<DependencyLockProvider>(closure));
+        return addProvider(new DependencyLockProvider(project), ConfigureUtil.<DependencyLockProvider>configureUsing(closure));
     }
 
     public MapRecommendationProvider map(Map<String, ?> args) {
@@ -154,7 +154,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         ensureCoreBomSupportNotEnabled("map");
         String message = "nebula.dependency-recommender uses a provided map for recommendations";
         reasons.add(message);
-        return addProvider(new MapRecommendationProvider(), new ClosureBackedAction<MapRecommendationProvider>(closure));
+        return addProvider(new MapRecommendationProvider(), ConfigureUtil.<MapRecommendationProvider>configureUsing(closure));
     }
 
     public CustomRecommendationProvider addProvider(Closure closure) {
