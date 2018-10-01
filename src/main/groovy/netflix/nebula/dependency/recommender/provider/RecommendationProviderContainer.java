@@ -59,11 +59,11 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     public RecommendationProviderContainer(Project project) {
         super(RecommendationProvider.class, null, new RecommendationProviderNamer());
         this.project = project;
-        this.mavenBomProvider = getMavenBomRecommendationProvider(project);
+        this.mavenBomProvider = getMavenBomRecommendationProvider();
         this.add(this.mavenBomProvider);
     }
 
-    private MavenBomRecommendationProvider getMavenBomRecommendationProvider(Project project) {
+    private MavenBomRecommendationProvider getMavenBomRecommendationProvider() {
         MavenBomRecommendationProvider mavenBomRecommendationProvider;
         if(DependencyRecommendationsPlugin.CORE_BOM_SUPPORT_ENABLED) {
             mavenBomRecommendationProvider = new CoreBomSupportProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.reasons);
