@@ -27,7 +27,9 @@ import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
 import org.gradle.util.ConfigureUtil;
 
+import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -57,8 +59,18 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     public RecommendationProviderContainer(Project project) {
         super(RecommendationProvider.class, null, new RecommendationProviderNamer());
         this.project = project;
-        this.mavenBomProvider = new MavenBomRecommendationProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.reasons);
+        this.mavenBomProvider = getMavenBomRecommendationProvider();
         this.add(this.mavenBomProvider);
+    }
+
+    private MavenBomRecommendationProvider getMavenBomRecommendationProvider() {
+        MavenBomRecommendationProvider mavenBomRecommendationProvider;
+        if(DependencyRecommendationsPlugin.CORE_BOM_SUPPORT_ENABLED) {
+            mavenBomRecommendationProvider = new CoreBomSupportProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.reasons);
+        } else {
+            mavenBomRecommendationProvider = new MavenBomRecommendationProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.reasons);
+        }
+        return mavenBomRecommendationProvider;
     }
 
     private static class RecommendationProviderNamer implements Namer<RecommendationProvider> {
@@ -224,4 +236,22 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
             throw new GradleException("dependencyRecommender." + feature + " is not available with 'systemProp.nebula.features.coreBomSupport=true'");
         }
     }
+
+    //This is to prevent resolving files from nebulaRecommenderBom configuration
+    private static class CoreBomSupportProvider extends MavenBomRecommendationProvider {
+        public CoreBomSupportProvider(Project project, String configName, Set<String> reasons) {
+            super(project, configName, reasons);
+        }
+
+        @Override
+        public String getName() {
+            return "";
+        }
+
+        @Override
+        Set<File> getFilesOnConfiguration() {
+            return Collections.emptySet();
+        }
+    }
+
 }
