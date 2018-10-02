@@ -190,13 +190,13 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.6'
+            compile 'commons-configuration:commons-configuration:1.10'
             compile 'commons-logging:commons-logging'
         }
 
         then:
         project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies
-                .collect { it.moduleVersion } == ['1.6', '1.1.1']
+                .collect { it.moduleVersion } == ['1.10', '1.1.1']
     }
 
     def 'forces always win over recommendations'() {
@@ -233,9 +233,9 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.6'
+            compile 'commons-configuration:commons-configuration:1.10'
             // no first order dependency on commons-logging, but still recommend with OverrideTransitives strategy
-            excluded 'commons-configuration:commons-configuration:1.6'
+            excluded 'commons-configuration:commons-configuration:1.10'
             // this one will be excluded from recommendations
         }
 
