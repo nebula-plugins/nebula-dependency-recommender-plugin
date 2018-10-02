@@ -151,7 +151,7 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.6'
+            compile 'commons-configuration:commons-configuration:1.10'
             // no first order dependency on commons-logging, so the recommendation will not be effectual
         }
 
@@ -171,7 +171,7 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.6'
+            compile 'commons-configuration:commons-configuration:1.10'
             // no first order dependency on commons-logging, but still recommend with OverrideTransitives strategy
         }
 
