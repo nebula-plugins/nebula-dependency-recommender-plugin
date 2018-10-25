@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script will build the project.
 
-SWITCHES="--info --stacktrace --parallel --scan"
+SWITCHES="--info --stacktrace --parallel"
 
 GRADLE_VERSION=$(./gradlew -version | grep Gradle | cut -d ' ' -f 2)
 
