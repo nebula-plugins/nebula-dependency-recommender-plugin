@@ -58,7 +58,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         if (CORE_BOM_SUPPORT_ENABLED) {
             logger.warn("coreBomSupport feature enabled");
             recommendationProviderContainer.excludeConfigurations("archives", NEBULA_RECOMMENDER_BOM, "provided",
-                    "versionManagement", "resolutionRules", "bootArchives", "webapp");
+                    "versionManagement", "resolutionRules", "bootArchives", "webapp", "protolock");
             bomConfiguration.setCanBeResolved(false);
             applyRecommendationsDirectly(project, bomConfiguration);
         } else {
