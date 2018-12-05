@@ -113,7 +113,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         def result = runTasksWithFailure('dependencies', '--configuration', 'compileClasspath')
 
         then:
-        result.standardOutput.contains("> dependencyRecommender.$type is not available with 'systemProp.nebula.features.coreBomSupport=true'")
+        result.standardError.contains("> dependencyRecommender.$type is not available with 'systemProp.nebula.features.coreBomSupport=true'")
 
         where:
         type             | argType   | arg
