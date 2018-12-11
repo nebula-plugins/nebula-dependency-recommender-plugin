@@ -30,9 +30,6 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
         fork = true
         new File("${projectDir}/gradle.properties").text = "systemProp.nebula.features.coreBomSupport=true"
 
-        settingsFile << """\
-            enableFeaturePreview('IMPROVED_POM_SUPPORT')
-            """.stripIndent()
 
         generateRepoIn(projectDir)
     }
@@ -110,7 +107,6 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
         settingsFile << """\
             rootProject.name = 'composite'
             includeBuild '$compositeDir'
-            enableFeaturePreview('IMPROVED_POM_SUPPORT')
         """
         writeHelloWorld('c')
 

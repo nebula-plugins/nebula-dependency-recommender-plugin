@@ -31,9 +31,6 @@ class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends Inte
         fork = true
         new File("${projectDir}/gradle.properties").text = "systemProp.nebula.features.coreBomSupport=true"
 
-        settingsFile << """\
-            enableFeaturePreview('IMPROVED_POM_SUPPORT')
-            """.stripIndent()
 
         repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
