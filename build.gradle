@@ -33,6 +33,7 @@ contacts {
 dependencies {
     compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     compile 'org.apache.maven:maven-model-builder:3.+'
+    compile 'com.google.guava:guava:20.0'
     testCompile('com.netflix.nebula:nebula-test:latest.release')
     testCompile ('org.xmlunit:xmlunit-core:2.6.0') {
         exclude module: 'hamcrest-core'
