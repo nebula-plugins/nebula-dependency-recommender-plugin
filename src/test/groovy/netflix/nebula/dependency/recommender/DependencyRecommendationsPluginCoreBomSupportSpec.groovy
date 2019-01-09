@@ -48,6 +48,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
                 .addModule('test.nebula:lib:3.9.9')
                 .addModule('test.nebula:app:7.0.0')
                 .addModule('test.nebula:app:8.0.0')
+                .addModule('test.nebula:app:9.0.0')
                 .build()
         generator = new GradleDependencyGenerator(graph)
         generator.generateTestMavenRepo()
@@ -91,6 +92,33 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         compileOnlyResult.standardOutput.contains("compileOnly - Compile only dependencies for source set 'main'")
         compileOnlyResult.standardOutput.contains("\\--- test.nebula:app:7.0.0")
         !compileOnlyResult.standardOutput.contains('test.nebula.bom:testbom:latest.release')
+    }
+
+    def 'add given bom to configs as enforced platform'() {
+        buildFile << """\
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'java'
+            apply plugin: 'war'
+
+            repositories {
+                maven { url '${repo.root.absoluteFile.toURI()}' }
+                ${generator.mavenRepositoryBlock}
+            }
+
+            dependencyRecommendations {
+                mavenBom module: 'test.nebula.bom:testbom:latest.release', enforced: true
+            }
+
+            dependencies {
+                compileOnly 'test.nebula:app:9.0.0' // bom recommends 8
+            }
+            """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('dependencies')
+
+        then:
+        result.standardOutput.contains("+--- test.nebula:app:9.0.0 -> 8.0.0")
     }
 
     @Unroll

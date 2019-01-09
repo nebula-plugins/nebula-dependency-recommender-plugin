@@ -109,6 +109,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public MavenBomRecommendationProvider mavenBom(Map<String, ?> args) {
         Object dependencyNotation = args.get("module");
+        Object isEnforced = args.get("enforced");
         if(dependencyNotation == null) {
             throw new IllegalArgumentException("Module may not be null");
         }
@@ -121,7 +122,11 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
             }
             project.getDependencies().add(DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, dependencyNotation);
         } else {
-            Dependency platform = project.getDependencies().platform(dependencyNotation);
+            Dependency platform;
+            if (isEnforced != null && Boolean.valueOf(isEnforced.toString())) {
+                platform = project.getDependencies().enforcedPlatform(dependencyNotation);
+            } else
+                platform = project.getDependencies().platform(dependencyNotation);
             project.getDependencies().add(DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, platform);
         }
 
