@@ -23,7 +23,7 @@ import java.util.Set;
 
 public abstract class ClasspathBasedRecommendationProvider extends AbstractRecommendationProvider {
     protected Project project;
-    private Configuration configuration;
+    protected Configuration configuration;
 
     ClasspathBasedRecommendationProvider(Project project, String configName) {
         this.project = project;

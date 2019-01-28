@@ -59,13 +59,12 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             logger.warn("coreBomSupport feature enabled");
             recommendationProviderContainer.excludeConfigurations("archives", NEBULA_RECOMMENDER_BOM, "provided",
                     "versionManagement", "resolutionRules", "bootArchives", "webapp", "checkstyle", "jacocoAgent", "jacocoAnt", "pmd", "findbugs", "spotbugs", "cobertura");
-            bomConfiguration.setCanBeResolved(false);
             applyRecommendationsDirectly(project, bomConfiguration);
         } else {
             applyRecommendations(project);
             enhanceDependenciesWithRecommender(project);
-            enhancePublicationsWithBomProducer(project);
         }
+        enhancePublicationsWithBomProducer(project);
     }
 
     private void applyRecommendationsDirectly(final Project project, final Configuration bomConfiguration) {

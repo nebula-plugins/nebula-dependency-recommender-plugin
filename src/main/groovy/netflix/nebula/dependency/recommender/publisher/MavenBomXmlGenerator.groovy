@@ -17,6 +17,7 @@ package netflix.nebula.dependency.recommender.publisher
 import netflix.nebula.dependency.recommender.ModuleNotationParser
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.publish.maven.MavenPublication
