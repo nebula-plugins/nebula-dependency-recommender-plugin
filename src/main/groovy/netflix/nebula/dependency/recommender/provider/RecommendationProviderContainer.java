@@ -28,12 +28,7 @@ import org.gradle.api.internal.DefaultNamedDomainObjectList;
 import org.gradle.util.ConfigureUtil;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin.CORE_BOM_SUPPORT_ENABLED;
 
@@ -242,20 +237,23 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         }
     }
 
-    //This is to prevent resolving files from nebulaRecommenderBom configuration
+    //ensure special handling for resolution. BOMs are added as platforms which prevent their resolution
+    //we add them as regular dependencies so we can resolve them in detached configuration and read the content
+    //this is useful for publishing when we copy content from applied BOMs to published BOM
     private static class CoreBomSupportProvider extends MavenBomRecommendationProvider {
-        public CoreBomSupportProvider(Project project, String configName, Set<String> reasons) {
+
+        CoreBomSupportProvider(Project project, String configName, Set<String> reasons) {
             super(project, configName, reasons);
         }
 
         @Override
-        public String getName() {
-            return "";
-        }
-
-        @Override
         Set<File> getFilesOnConfiguration() {
-            return Collections.emptySet();
+            List<Dependency> rawPomDependencies = new ArrayList<>();
+            for(org.gradle.api.artifacts.Dependency dependency: configuration.getDependencies()) {
+                rawPomDependencies.add(project.getDependencies().create(dependency.getGroup() + ":" + dependency.getName() + ":" + dependency.getVersion() + "@pom"));
+            }
+            return project.getConfigurations().detachedConfiguration(
+                    rawPomDependencies.toArray(new org.gradle.api.artifacts.Dependency[0])).resolve();
         }
     }
 
