@@ -56,7 +56,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
 
         if (CORE_BOM_SUPPORT_ENABLED) {
-            logger.warn("coreBomSupport feature enabled");
+            logger.info(project.getName() + ":coreBomSupport feature enabled");
             recommendationProviderContainer.excludeConfigurations("archives", NEBULA_RECOMMENDER_BOM, "provided",
                     "versionManagement", "resolutionRules", "bootArchives", "webapp", "checkstyle", "jacocoAgent", "jacocoAnt", "pmd", "findbugs", "spotbugs", "cobertura");
             applyRecommendationsDirectly(project, bomConfiguration);
