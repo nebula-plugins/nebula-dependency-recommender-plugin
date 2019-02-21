@@ -49,6 +49,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final boolean CORE_BOM_SUPPORT_ENABLED = Boolean.getBoolean("nebula.features.coreBomSupport");
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
     private RecommendationProviderContainer recommendationProviderContainer;
+    //TODO: remove this exclusion once https://github.com/gradle/gradle/issues/6750 is resolved
+    private final String SCALA_ANALYSIS_CONFIGURATION_PREFIX = "incrementalScalaAnalysis";
 
     @Override
     public void apply(final Project project) {
@@ -59,6 +61,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             logger.info(project.getName() + ":coreBomSupport feature enabled");
             recommendationProviderContainer.excludeConfigurations("archives", NEBULA_RECOMMENDER_BOM, "provided",
                     "versionManagement", "resolutionRules", "bootArchives", "webapp", "checkstyle", "jacocoAgent", "jacocoAnt", "pmd", "findbugs", "spotbugs", "cobertura");
+            recommendationProviderContainer.excludeConfigurationPrefixes(SCALA_ANALYSIS_CONFIGURATION_PREFIX);
             applyRecommendationsDirectly(project, bomConfiguration);
         } else {
             applyRecommendations(project);
@@ -91,7 +94,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     ConfigurationsKt.onResolve(conf, new Function1<ResolvableDependencies, Unit>() {
                         @Override
                         public Unit invoke(ResolvableDependencies resolvableDependencies) {
-                            if (recommendationProviderContainer.getExcludedConfigurations().contains(conf.getName())) {
+                            boolean isExcluded = isExcludedConfiguration(conf.getName());
+                            if (isExcluded) {
                                 return Unit.INSTANCE;
                             }
 
@@ -139,6 +143,20 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 }
             }
         });
+    }
+
+    private boolean isExcludedConfiguration(String confName) {
+        if(recommendationProviderContainer.getExcludedConfigurations().contains(confName)) {
+            return true;
+        }
+
+        for(String prefix : recommendationProviderContainer.getExcludedConfigurationPrefixes()) {
+            if(confName.startsWith(prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited) {

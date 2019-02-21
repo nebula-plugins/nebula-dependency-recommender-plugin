@@ -39,6 +39,7 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     private MavenBomRecommendationProvider mavenBomProvider;
     private Boolean strictMode = false;
     private Set<String> excludedConfigurations = new HashSet<>();
+    private Set<String> excludedConfigurationPrefixes = new HashSet<>();
     private Set<String> reasons = new HashSet<>();
     
     // Make strategies available without import
@@ -223,8 +224,16 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         excludedConfigurations.addAll(Arrays.asList(names));
     }
 
+    public void excludeConfigurationPrefixes(String ... names) {
+        excludedConfigurationPrefixes.addAll(Arrays.asList(names));
+    }
+
     public Set<String> getExcludedConfigurations() {
         return excludedConfigurations;
+    }
+
+    public Set<String> getExcludedConfigurationPrefixes() {
+        return excludedConfigurationPrefixes;
     }
 
     public Set<String> getReasons() {
