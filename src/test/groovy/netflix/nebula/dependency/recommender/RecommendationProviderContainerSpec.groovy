@@ -249,4 +249,34 @@ class RecommendationProviderContainerSpec extends Specification {
         commonsLangCompile.moduleVersion == '1.1'
         commonsLangExcluded.moduleVersion == '1.1.1'
     }
+
+    def 'excludes configurations prefixes'() {
+        setup:
+        project.configurations.create("incrementalExcluded")
+
+        project.dependencyRecommendations {
+            strategy OverrideTransitives
+            excludeConfigurationPrefixes 'incremental'
+            map recommendations: ['commons-logging:commons-logging': '1.1']
+
+        }
+
+        when:
+        project.dependencies {
+            compile 'commons-configuration:commons-configuration:1.10'
+            // no first order dependency on commons-logging, but still recommend with OverrideTransitives strategy
+            incrementalExcluded 'commons-configuration:commons-configuration:1.10'
+            // this one will be excluded from recommendations
+        }
+
+        def commonsConfigCompile = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
+        def commonsLangCompile = commonsConfigCompile.children.find { it.moduleName == 'commons-logging' }
+
+        def commonsConfigExcluded = project.configurations.incrementalExcluded.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
+        def commonsLangExcluded = commonsConfigExcluded.children.find { it.moduleName == 'commons-logging' }
+
+        then:
+        commonsLangCompile.moduleVersion == '1.1'
+        commonsLangExcluded.moduleVersion == '1.1.1'
+    }
 }
