@@ -60,7 +60,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         if (CORE_BOM_SUPPORT_ENABLED) {
             logger.info(project.getName() + ":coreBomSupport feature enabled");
             recommendationProviderContainer.excludeConfigurations("archives", NEBULA_RECOMMENDER_BOM, "provided",
-                    "versionManagement", "resolutionRules", "bootArchives", "webapp", "checkstyle", "jacocoAgent", "jacocoAnt", "pmd", "cobertura");
+                    "versionManagement", "resolutionRules", "bootArchives", "webapp", "checkstyle", "jacocoAgent", "jacocoAnt", "pmd", "cobertura", "zinc");
             recommendationProviderContainer.excludeConfigurationPrefixes(SCALA_ANALYSIS_CONFIGURATION_PREFIX, "spotbugs", "findbugs");
             applyRecommendationsDirectly(project, bomConfiguration);
         } else {
