@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 plugins {
-    id 'nebula.plugin-plugin' version '9.2.4'
+    id 'nebula.plugin-plugin' version '9.3.4'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
