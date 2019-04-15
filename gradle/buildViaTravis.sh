@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script will build the project.
 
-SWITCHES="--info --stacktrace --parallel"
+SWITCHES="--info --stacktrace"
 
 GRADLE_VERSION=$(./gradlew -version | grep Gradle | cut -d ' ' -f 2)
 
@@ -15,10 +15,10 @@ elif [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_TAG" != "" ]; then
   echo -e 'Build Branch for Release => Branch ['$TRAVIS_BRANCH']  Tag ['$TRAVIS_TAG']'
   case "$TRAVIS_TAG" in
   *-rc\.*)
-    ./gradlew -Prelease.travisci=true -Prelease.useLastTag=true candidate $SWITCHES
+    ./gradlew -Prelease.travisci=true -Psonatype.username=$sonatypeUsername -Psonatype.password=$sonatypePassword -Pbintray.user=$bintrayUser -Pbintray.apiKey=$bintrayKey  -Prelease.useLastTag=true candidate $SWITCHES
     ;;
   *)
-    ./gradlew -Prelease.travisci=true -Prelease.useLastTag=true final $SWITCHES
+    ./gradlew -Prelease.travisci=true -Dgradle.publish.key=$gradlePluginPublishKey -Dgradle.publish.secret=$gradlePluginPublishSecret -Psonatype.username=$sonatypeUsername -Psonatype.password=$sonatypePassword -Pbintray.user=$bintrayUser -Pbintray.apiKey=$bintrayKey  -Prelease.useLastTag=true final $SWITCHES
     ;;
   esac
 else
