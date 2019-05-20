@@ -42,7 +42,6 @@ import org.gradle.api.plugins.ExtraPropertiesExtension;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
@@ -146,12 +145,12 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     }
 
     private boolean isExcludedConfiguration(String confName) {
-        if(recommendationProviderContainer.getExcludedConfigurations().contains(confName)) {
+        if (recommendationProviderContainer.getExcludedConfigurations().contains(confName)) {
             return true;
         }
 
-        for(String prefix : recommendationProviderContainer.getExcludedConfigurationPrefixes()) {
-            if(confName.startsWith(prefix)) {
+        for (String prefix : recommendationProviderContainer.getExcludedConfigurationPrefixes()) {
+            if (confName.startsWith(prefix)) {
                 return true;
             }
         }
@@ -214,7 +213,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * @param mvSelector the module to lookup
      * @return the recommended version or <code>null</code>
      */
-    protected String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
+    public String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
         String version = project.getExtensions().getByType(RecommendationProviderContainer.class)
                 .getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
         if (version != null)
