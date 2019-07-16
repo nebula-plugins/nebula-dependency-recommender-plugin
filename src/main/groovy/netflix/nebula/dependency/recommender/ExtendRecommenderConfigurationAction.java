@@ -23,7 +23,7 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
 
     @Override
     public void execute(Configuration configuration) {
-        if (container.getExcludedConfigurations().contains(configuration.getName())) {
+        if (container.getExcludedConfigurations().contains(configuration.getName()) || isCopyOfBomConfiguration(configuration)) {
             return;
         }
 
@@ -38,5 +38,11 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
         } else {
             logger.info("Configuration '" + configuration.getName() + "' has already been resolved and cannot be included for recommendation");
         }
+    }
+
+    //this action creates clones of bom configuration from root and gradle will also apply the action to them which would
+    //lead to another copy of copy and so on creating infinite loop. We won't apply the action when configuration is copy from bom configuration.
+    private boolean isCopyOfBomConfiguration(Configuration configuration) {
+        return configuration.getName().startsWith(bom.getName());
     }
 }
