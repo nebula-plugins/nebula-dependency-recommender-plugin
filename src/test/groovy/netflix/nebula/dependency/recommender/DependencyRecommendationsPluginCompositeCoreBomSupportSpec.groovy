@@ -51,13 +51,13 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
     def 'can use recommender in a composite'() {
         def a = addSubproject('a', '''\
                 dependencies {
-                    compile 'test.nebula:foo'
+                    implementation 'test.nebula:foo'
                 }
             '''.stripIndent())
         writeHelloWorld('a', a)
         def b = addSubproject('b', '''\
                 dependencies {
-                    compile project(':a')
+                    implementation project(':a')
                 }
             '''.stripIndent())
         writeHelloWorld('b', b)
@@ -101,7 +101,7 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
             }
 
             dependencies {
-                compile 'example:b:1.0.0'
+                implementation 'example:b:1.0.0'
             }
         """.stripIndent()
         settingsFile << """\

@@ -39,6 +39,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         pom.addManagementDependency('test.nebula', 'baz', '2.5.0')
         pom.addManagementDependency('test.nebula', 'lib', '3.9.9')
         pom.addManagementDependency('test.nebula', 'app', '8.0.0')
+        pom.addManagementDependency('test.nebula', 'moa', '9.0.0')
         repo.poms.add(pom)
         repo.generate()
         def graph = new DependencyGraphBuilder()
@@ -49,6 +50,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
                 .addModule('test.nebula:app:7.0.0')
                 .addModule('test.nebula:app:8.0.0')
                 .addModule('test.nebula:app:9.0.0')
+                .addModule('test.nebula:moa:9.0.0')
                 .build()
         generator = new GradleDependencyGenerator(graph)
         generator.generateTestMavenRepo()
@@ -73,6 +75,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
             dependencies {
                 annotationProcessor 'test.nebula:bar'
                 compile 'test.nebula:foo'
+                implementation 'test.nebula:moa'
                 providedCompile 'test.nebula:lib'
                 runtimeOnly 'test.nebula:baz'
                 compileOnly 'test.nebula:app:7.0.0' // bom recommends 8, but config excluded
@@ -80,12 +83,14 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
             """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully('dependencies')
-        def compileOnlyResult = runTasksSuccessfully('dependencies', '--configuration', 'compileOnly')
+        //intentionally skipping warnings to be able to test legacy 'compile' configuration
+        def result = runTasksSuccessfully('dependencies', '--warning-mode=none')
+        def compileOnlyResult = runTasksSuccessfully('dependencies', '--configuration', 'compileOnly', '--warning-mode=none')
 
         then:
         result.standardOutput.contains("+--- test.nebula:foo -> 1.0.0")
         result.standardOutput.contains("+--- test.nebula:bar -> 2.0.0")
+        result.standardOutput.contains("+--- test.nebula:moa -> 9.0.0")
         result.standardOutput.contains("\\--- test.nebula:baz -> 2.5.0")
         result.standardOutput.contains("\\--- test.nebula:lib -> 3.9.9")
 
