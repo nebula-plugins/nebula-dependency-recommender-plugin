@@ -60,7 +60,12 @@ class FileBasedRecommendationProviderSpec extends Specification {
         recommender.project = project
 
         when: // maven based repository
-        project.repositories { maven { url repo } }
+        project.repositories { maven {
+            url repo
+            metadataSources {
+                artifact()
+            }
+        } }
         recommender.setModule('sample:recommender:1.0@txt')
 
         then:
@@ -68,7 +73,12 @@ class FileBasedRecommendationProviderSpec extends Specification {
 
         when: // ivy based repository
         project.repositories.clear()
-        project.repositories { ivy { url repo } }
+        project.repositories { ivy {
+            url repo
+            metadataSources {
+                artifact()
+            }
+        } }
         recommender.setModule('sample:recommender:1.0@txt')
 
         then:

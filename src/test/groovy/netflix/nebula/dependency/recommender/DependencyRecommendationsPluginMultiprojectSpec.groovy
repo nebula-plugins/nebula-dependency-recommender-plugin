@@ -34,13 +34,13 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
 
         def a = addSubproject('a', '''\
                 dependencies {
-                    compile 'example:foo'
+                    implementation 'example:foo'
                 }
             '''.stripIndent())
         writeHelloWorld('a', a)
         def b = addSubproject('b', '''\
                 dependencies {
-                    compile project(':a')
+                    implementation project(':a')
                 }
             '''.stripIndent())
         writeHelloWorld('b', b)
@@ -89,13 +89,13 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
 
         def a = addSubproject('a', '''\
                 dependencies {
-                    compile 'example:foo'
+                    implementation 'example:foo'
                 }
             '''.stripIndent())
         writeHelloWorld('a', a)
         def b = addSubproject('b', '''\
                 dependencies {
-                    compile project(':a')
+                    implementation project(':a')
                 }
             '''.stripIndent())
         writeHelloWorld('b', b)
@@ -117,7 +117,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasksSuccessfully(':a:dependencyInsight', '--dependency', 'foo', '--configuration', 'compile')
+        def results = runTasksSuccessfully(':a:dependencyInsight', '--dependency', 'foo', '--configuration', 'compileClasspath')
 
         then:
         results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo'
@@ -128,7 +128,6 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         def repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
         def pom = new Pom('test.nebula.bom', 'multiprojectbom', '1.0.0', ArtifactType.POM)
-        pom.addManagementDependency('example', 'foo', '1.0.0')
         repo.poms.add(pom)
         repo.generate()
         def depGraph = new DependencyGraphBuilder()
@@ -141,14 +140,14 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         def a = addSubproject('a', '''\
                 dependencies {
                     nebulaRecommenderBom 'test.nebula.bom:multiprojectbom:1.0.0@pom'
-                    compile 'example:foo'
+                    implementation 'example:foo'
                 }
             '''.stripIndent())
         writeHelloWorld('a', a)
         def b = addSubproject('b', '''\
                 dependencies {
-                    compile project(':a')
-                    compile 'example:bar:1.0.0'
+                    implementation project(':a')
+                    implementation 'example:bar:1.0.0'
                 }
             '''.stripIndent())
         writeHelloWorld('b', b)
@@ -170,7 +169,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
             }
             """.stripIndent()
         when:
-        def results = runTasks(':b:dependencyInsight', '--dependency', 'foo', '--configuration', 'compile', '--info', 'build')
+        def results = runTasks(':b:dependencyInsight', '--dependency', 'foo', '--configuration', 'compileClasspath', '--info', 'build')
 
         then:
         def expectedMessage = 'Dependency example:foo omitted version with no recommended version'

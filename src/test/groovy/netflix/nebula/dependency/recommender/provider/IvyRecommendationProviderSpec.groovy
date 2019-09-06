@@ -5,12 +5,14 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class IvyRecommendationProviderSpec extends Specification {
     @Rule TemporaryFolder projectDir
     static def version = '1.0'
 
-    def 'recommendations are loaded from the dependencies section of an ivy file'() {
+    @Unroll
+    def 'recommendations are loaded from the dependencies section of an ivy file #module'() {
         setup:
         def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
@@ -22,7 +24,7 @@ class IvyRecommendationProviderSpec extends Specification {
         def sampleFile = new File(sample, 'recommender-1.0.ivy')
         sampleFile << '''<?xml version="1.0" encoding="UTF-8"?>
             <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra" xmlns:n="http://netflix.com/build">
-              <info organisation="netflix" module="platform" revision="2.1287.0" status="candidate" publication="20150318224045">
+              <info organisation="sample" module="recommender" revision="1.0" status="release" publication="20150318224045">
                 <n:manifest>
                   Implementation-Vendor: Netflix, Inc.
                   Status-Minimum: candidate
@@ -32,7 +34,8 @@ class IvyRecommendationProviderSpec extends Specification {
               </info>
               <configurations>
                 <conf name="compile" visibility="public"/>
-                <conf name="default" visibility="public" extends="runtime,master"/>
+                <conf name="runtime" visibility="public"/>
+                <conf name="default" visibility="public" extends="runtime"/>
                 <conf name="dependencyReport" visibility="public"/>
                 <conf name="javadoc" visibility="public"/>
               </configurations>
@@ -45,7 +48,14 @@ class IvyRecommendationProviderSpec extends Specification {
             </ivy-module>
         '''
 
-        project.repositories { ivy { url repo } }
+        project.repositories { ivy {
+            url repo
+            patternLayout {
+                ivy '[organisation]/[module]/[revision]/[module]-[revision].ivy'
+                artifact '[organisation]/[module]/[revision]/[module]-[revision].[ext]'
+                m2compatible = true
+            }
+        } }
 
         when:
         def recommendations = new IvyRecommendationProvider(project)
