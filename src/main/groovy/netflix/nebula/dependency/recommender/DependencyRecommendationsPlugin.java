@@ -42,6 +42,7 @@ import org.gradle.api.plugins.ExtraPropertiesExtension;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
@@ -198,7 +199,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
     protected void enhanceDependenciesWithRecommender(Project project) {
         RecommendationResolver resolver = new RecommendationResolver(project);
-        project.getExtensions().getByType(ExtraPropertiesExtension.class).set("recommend",
+        Objects.requireNonNull(project.getExtensions().findByType(ExtraPropertiesExtension.class)).set("recommend",
                 new MethodClosure(resolver, "recommend"));
     }
 
@@ -214,7 +215,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * @return the recommended version or <code>null</code>
      */
     public String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
-        String version = project.getExtensions().getByType(RecommendationProviderContainer.class)
+        String version = Objects.requireNonNull(project.getExtensions().findByType(RecommendationProviderContainer.class))
                 .getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
         if (version != null)
             return version;

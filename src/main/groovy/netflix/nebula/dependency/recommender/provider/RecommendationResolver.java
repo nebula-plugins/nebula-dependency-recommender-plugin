@@ -15,7 +15,7 @@ public class RecommendationResolver {
         ModuleVersionIdentifier mvid = ModuleNotationParser.parse(dependencyNotation);
 
         String version = mvid.getVersion() != null ? mvid.getVersion() :
-                project.getExtensions().getByType(RecommendationProviderContainer.class).getByName(recommenderName)
+                project.getExtensions().findByType(RecommendationProviderContainer.class).getByName(recommenderName)
                     .getVersion(mvid.getGroup(), mvid.getName());
 
         return mvid.getGroup() + ":" + mvid.getName() + ":" + version;
