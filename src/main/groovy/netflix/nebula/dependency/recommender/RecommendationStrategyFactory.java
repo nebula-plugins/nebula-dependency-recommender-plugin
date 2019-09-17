@@ -3,6 +3,8 @@ package netflix.nebula.dependency.recommender;
 import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
 import org.gradle.api.Project;
 
+import java.util.Objects;
+
 /**
  * Creates RecommendationStrategy lazily on demand and caches it.
  * This is used to allow for scoped recommendationStrategies (e.g. per configuration as in DependencyRecommendationsPlugin)
@@ -18,8 +20,8 @@ public class RecommendationStrategyFactory {
     public RecommendationStrategy getRecommendationStrategy() {
         if(recommendationStrategy == null) {
             try {
-                RecommendationProviderContainer recommendationProviderContainer = project.getExtensions().getByType(RecommendationProviderContainer.class);
-                recommendationStrategy = recommendationProviderContainer.getStrategy().getStrategyClass().newInstance();
+                RecommendationProviderContainer recommendationProviderContainer = project.getExtensions().findByType(RecommendationProviderContainer.class);
+                recommendationStrategy = Objects.requireNonNull(recommendationProviderContainer).getStrategy().getStrategyClass().newInstance();
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
