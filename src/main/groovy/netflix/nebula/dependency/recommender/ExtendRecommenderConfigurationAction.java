@@ -32,6 +32,7 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
             if (!project.getRootProject().equals(project)) {
                 toExtend = bom.copy();
                 toExtend.setVisible(false);
+                toExtend.setCanBeResolved(false);
                 project.getConfigurations().add(toExtend);
             }
             configuration.extendsFrom(toExtend);
