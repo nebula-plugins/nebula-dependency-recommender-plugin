@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Netflix, Inc.
+ * Copyright 2016-2019 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 package netflix.nebula.dependency.recommender.publisher
+
+import groovy.transform.CompileDynamic
 import netflix.nebula.dependency.recommender.ModuleNotationParser
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.publish.maven.MavenPublication
@@ -30,7 +31,7 @@ class MavenBomXmlGenerator {
     }
 
     void fromConfigurations(Closure configurationsClosure) {
-        MavenPublication pub = configurationsClosure.delegate.delegate
+        MavenPublication pub = getMavenPublication(configurationsClosure)
 
         Iterable<Configuration> configurations
 
@@ -38,13 +39,13 @@ class MavenBomXmlGenerator {
         if(configurationsRet instanceof Configuration)
             configurations = [(Configuration) configurationsRet]
         else if(Iterable.class.isAssignableFrom(configurationsRet.class))
-            configurations = configurationsRet
+            configurations = configurationsRet as Iterable<Configuration>
 
         generateDependencyManagementXml(pub, { configurations.collect { getManagedDependencies(it) }.flatten() })
     }
 
     void withDependencies(Closure dependenciesClosure) {
-        MavenPublication pub = dependenciesClosure.delegate.delegate
+        MavenPublication pub = getMavenPublication(dependenciesClosure)
 
         Iterable<String> dependencies = null
 
@@ -52,11 +53,12 @@ class MavenBomXmlGenerator {
         if(dependenciesRet instanceof String)
             dependencies = [(String) dependenciesRet]
         else if(Iterable.class.isAssignableFrom(dependenciesRet.class))
-            dependencies = dependenciesRet
+            dependencies = dependenciesRet as Iterable<String>
 
         generateDependencyManagementXml(pub, { dependencies.collect { ModuleNotationParser.parse(it) } })
     }
 
+    @CompileDynamic
     protected static generateDependencyManagementXml(MavenPublication pub, Closure<Iterable<ModuleVersionIdentifier>> deps) {
         pub.pom.withXml {
             Node root = it.asNode()
@@ -76,6 +78,11 @@ class MavenBomXmlGenerator {
                 dep.appendNode("version").value = mvid.version
             }
         }
+    }
+
+    @CompileDynamic
+    private MavenPublication getMavenPublication(Closure configurationsClosure) {
+        return configurationsClosure.delegate.delegate
     }
 
     protected static Set<ModuleVersionIdentifier> getManagedDependencies(Configuration configuration) {

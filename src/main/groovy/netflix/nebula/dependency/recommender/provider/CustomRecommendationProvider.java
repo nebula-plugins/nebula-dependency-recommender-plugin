@@ -1,7 +1,6 @@
 package netflix.nebula.dependency.recommender.provider;
 
 import groovy.lang.Closure;
-
 public class CustomRecommendationProvider extends AbstractRecommendationProvider {
     private Closure versionFunction;
 
