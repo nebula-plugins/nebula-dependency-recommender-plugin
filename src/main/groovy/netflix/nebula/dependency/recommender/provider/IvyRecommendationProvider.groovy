@@ -1,5 +1,6 @@
 package netflix.nebula.dependency.recommender.provider
 
+import groovy.transform.CompileDynamic
 import org.gradle.api.Project
 
 class IvyRecommendationProvider extends FileBasedRecommendationProvider {
@@ -7,6 +8,7 @@ class IvyRecommendationProvider extends FileBasedRecommendationProvider {
 
     IvyRecommendationProvider(Project p) { super(p) }
 
+    @CompileDynamic
     @Override
     String getVersion(String org, String name) throws Exception {
         if (versionsByCoord == null) {
@@ -23,7 +25,7 @@ class IvyRecommendationProvider extends FileBasedRecommendationProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public InputStreamProvider setModule(Object dependencyNotation) {
+    InputStreamProvider setModule(Object dependencyNotation) {
         if (dependencyNotation == null)
             throw new IllegalArgumentException("Module may not be null")
 
