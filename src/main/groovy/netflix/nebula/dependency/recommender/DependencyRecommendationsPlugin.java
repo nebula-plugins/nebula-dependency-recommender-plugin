@@ -64,6 +64,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             recommendationProviderContainer.excludeConfigurationPrefixes(SCALA_ANALYSIS_CONFIGURATION_PREFIX, "spotbugs", "findbugs");
             applyRecommendationsDirectly(project, bomConfiguration);
         } else {
+            recommendationProviderContainer.excludeConfigurations("zinc", "checkstyle", "jacocoAgent", "jacocoAnt");
+            recommendationProviderContainer.excludeConfigurationPrefixes(SCALA_ANALYSIS_CONFIGURATION_PREFIX, "spotbugs", "findbugs");
             applyRecommendations(project);
             enhanceDependenciesWithRecommender(project);
         }
