@@ -92,6 +92,53 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         result.standardOutput.contains 'test.nebula:foo -> 1.0.0'
     }
 
+    def 'provide recommendation via configuration - no zinc'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '2.0.0', ArtifactType.POM)
+        pom.addManagementDependency('test.nebula', 'foo', '2.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.nebula:foo:1.0.0')
+                .addModule('test.nebula:foo:2.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(graph)
+        generator.generateTestMavenRepo()
+
+        buildFile << """\
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'java'
+
+            repositories {
+                maven { url '${repo.root.absoluteFile.toURI()}' }
+                ${generator.mavenRepositoryBlock}
+            }
+
+            configurations {
+                zinc
+            }
+
+            dependencies {
+                nebulaRecommenderBom 'test.nebula.bom:testbom:2.0.0@pom'
+                zinc 'test.nebula:foo:1.0.0'
+                compile 'test.nebula:foo'
+            }
+            """.stripIndent()
+
+        when:
+        def resultZinc = runTasksSuccessfully('dependencies', '--configuration', 'zinc')
+
+        then:
+        resultZinc.standardOutput.contains '\\--- test.nebula:foo:1.0.0'
+
+        when:
+        def resultCompileClasspath = runTasksSuccessfully('dependencies')
+
+        then:
+        resultCompileClasspath.standardOutput.contains 'test.nebula:foo -> 2.0.0'
+    }
+
     def 'dependencyInsight from recommendation via configuration'() {
         def repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
