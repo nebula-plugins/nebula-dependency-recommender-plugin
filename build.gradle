@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 plugins {
-    id 'nebula.plugin-plugin' version '13.0.2'
+    id 'nebula.plugin-plugin' version '13.1.1'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
@@ -33,11 +33,11 @@ contacts {
 compileGroovy.groovyOptions.configurationScript = file('src/groovyCompile/groovycConfig.groovy')
 
 dependencies {
-    compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
-    compile 'org.apache.maven:maven-model-builder:3.+'
-    compile 'com.google.guava:guava:20.0'
-    testCompile('com.netflix.nebula:nebula-test:latest.release')
-    testCompile ('org.xmlunit:xmlunit-core:2.6.0') {
+    implementation 'com.netflix.nebula:nebula-gradle-interop:latest.release'
+    implementation 'org.apache.maven:maven-model-builder:3.+'
+    implementation 'com.google.guava:guava:20.0'
+    testImplementation('com.netflix.nebula:nebula-test:latest.release')
+    testImplementation ('org.xmlunit:xmlunit-core:2.6.0') {
         exclude module: 'hamcrest-core'
     }
 }
