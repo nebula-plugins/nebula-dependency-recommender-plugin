@@ -242,7 +242,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
         }
 
         project.dependencies {
-            compile 'example:foo'
+            implementation 'example:foo'
         }
 
         def recommendations = new MavenBomRecommendationProvider(project, 'nebulaRecommenderBom')

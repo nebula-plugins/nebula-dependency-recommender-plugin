@@ -48,13 +48,13 @@ class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends Inte
     def 'can use recommender across a multiproject'() {
         def a = addSubproject('a', '''\
                 dependencies {
-                    compile 'test.nebula:foo'
+                    implementation 'test.nebula:foo'
                 }
             '''.stripIndent())
         writeHelloWorld('a', a)
         def b = addSubproject('b', '''\
                 dependencies {
-                    compile project(':a')
+                    implementation project(':a')
                 }
             '''.stripIndent())
         writeHelloWorld('b', b)

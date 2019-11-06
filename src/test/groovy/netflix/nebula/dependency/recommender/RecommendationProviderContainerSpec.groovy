@@ -28,12 +28,12 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-logging:commons-logging'
-            compile 'com.google.guava:guava'
+            implementation 'commons-logging:commons-logging'
+            implementation 'com.google.guava:guava'
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '18.0']
+        project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '18.0']
     }
 
     def 'recommendation providers can be named and recommendations provided by name'() {
@@ -45,11 +45,11 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile project.recommend('commons-logging:commons-logging', 'r2')
+            implementation project.recommend('commons-logging:commons-logging', 'r2')
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.0']
+        project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.0']
     }
 
     def 'transitive dependencies of providers are not calculated and therefore have no effect'() {
@@ -61,12 +61,12 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-logging:commons-logging'
-            compile 'logkit:logkit'
+            implementation 'commons-logging:commons-logging'
+            implementation 'logkit:logkit'
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '2.0']
+        project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '2.0']
     }
 
     def 'dependencies that already have versions are not overriden by providers'() {
@@ -77,11 +77,11 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-logging:commons-logging:1.0'
+            implementation 'commons-logging:commons-logging:1.0'
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.0']
+        project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.0']
     }
 
     def 'recommended versions can be asked of the dependencyRecommendations extension container directly'() {
@@ -92,7 +92,7 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-logging:commons-logging:1.0'
+            implementation 'commons-logging:commons-logging:1.0'
         }
 
         then:
@@ -109,12 +109,12 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-logging:commons-logging'
-            compile 'com.google.guava:guava'
+            implementation 'commons-logging:commons-logging'
+            implementation 'com.google.guava:guava'
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '18.0']
+        project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1', '18.0']
     }
 
     def 'subprojects inherit providers from parent'() {
@@ -135,11 +135,11 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         subproject.dependencies {
-            compile 'commons-logging:commons-logging'
+            implementation 'commons-logging:commons-logging'
         }
 
         then:
-        subproject.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
+        subproject.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
     }
 
     def 'transitive dependency versions are not overriden by recommendations unless there is a corresponding first order dependency'() {
@@ -151,11 +151,11 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.10'
+            implementation 'commons-configuration:commons-configuration:1.10'
             // no first order dependency on commons-logging, so the recommendation will not be effectual
         }
 
-        def commonsConfig = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
+        def commonsConfig = project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
         def commonsLang = commonsConfig.children.find { it.moduleName == 'commons-logging' }
 
         then:
@@ -171,11 +171,11 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.10'
+            implementation 'commons-configuration:commons-configuration:1.10'
             // no first order dependency on commons-logging, but still recommend with OverrideTransitives strategy
         }
 
-        def commonsConfig = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
+        def commonsConfig = project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
         def commonsLang = commonsConfig.children.find { it.moduleName == 'commons-logging' }
 
         then:
@@ -190,12 +190,12 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.10'
-            compile 'commons-logging:commons-logging'
+            implementation 'commons-configuration:commons-configuration:1.10'
+            implementation 'commons-logging:commons-logging'
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies
+        project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies
                 .collect { it.moduleVersion } == ['1.10', '1.1.1']
     }
 
@@ -213,11 +213,11 @@ class RecommendationProviderContainerSpec extends Specification {
         }
 
         project.dependencies {
-            compile 'commons-logging:commons-logging'
+            implementation 'commons-logging:commons-logging'
         }
 
         then:
-        project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
+        project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.collect { it.moduleVersion } == ['1.1']
     }
 
     def 'excludes configurations'() {
@@ -233,13 +233,13 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.10'
+            implementation 'commons-configuration:commons-configuration:1.10'
             // no first order dependency on commons-logging, but still recommend with OverrideTransitives strategy
             excluded 'commons-configuration:commons-configuration:1.10'
             // this one will be excluded from recommendations
         }
 
-        def commonsConfigCompile = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
+        def commonsConfigCompile = project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
         def commonsLangCompile = commonsConfigCompile.children.find { it.moduleName == 'commons-logging' }
 
         def commonsConfigExcluded = project.configurations.excluded.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
@@ -263,13 +263,13 @@ class RecommendationProviderContainerSpec extends Specification {
 
         when:
         project.dependencies {
-            compile 'commons-configuration:commons-configuration:1.10'
+            implementation 'commons-configuration:commons-configuration:1.10'
             // no first order dependency on commons-logging, but still recommend with OverrideTransitives strategy
             incrementalExcluded 'commons-configuration:commons-configuration:1.10'
             // this one will be excluded from recommendations
         }
 
-        def commonsConfigCompile = project.configurations.compile.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
+        def commonsConfigCompile = project.configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
         def commonsLangCompile = commonsConfigCompile.children.find { it.moduleName == 'commons-logging' }
 
         def commonsConfigExcluded = project.configurations.incrementalExcluded.resolvedConfiguration.firstLevelModuleDependencies.iterator().next()
