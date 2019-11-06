@@ -45,10 +45,10 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         }
 
         project.dependencies {
-            compile 'com.google.guava:guava'
+            implementation 'com.google.guava:guava'
         }
 
-        def resolved = project.configurations.compile.incoming.resolutionResult
+        def resolved = project.configurations.compileClasspath.incoming.resolutionResult
                 .allComponents.collect { it.moduleVersion }
 
         then:
@@ -81,7 +81,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
-                compile 'test.nebula:foo'
+                implementation 'test.nebula:foo'
             }
             """.stripIndent()
 
@@ -122,7 +122,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:2.0.0@pom'
                 zinc 'test.nebula:foo:1.0.0'
-                compile 'test.nebula:foo'
+                implementation 'test.nebula:foo'
             }
             """.stripIndent()
 
@@ -163,12 +163,12 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
-                compile 'test.nebula:foo'
+                implementation 'test.nebula:foo'
             }
             """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully('dependencyInsight', '--configuration', 'compile', '--dependency', 'foo')
+        def result = runTasksSuccessfully('dependencyInsight', '--configuration', 'compileClasspath', '--dependency', 'foo')
 
         then:
         result.standardOutput.contains 'Recommending version 1.0.0 for dependency test.nebula:foo'
@@ -201,8 +201,8 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
-                compile 'test.nebula:foo'
-                compile 'test.nebula:bar:1.0.0'
+                implementation 'test.nebula:foo'
+                implementation 'test.nebula:bar:1.0.0'
             }
             """.stripIndent()
 
@@ -239,8 +239,8 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:1.0.0@pom'
-                compile 'test.nebula:foo'
-                compile 'test.nebula:bar:1.0.0'
+                implementation 'test.nebula:foo'
+                implementation 'test.nebula:bar:1.0.0'
             }
             """.stripIndent()
 
@@ -283,7 +283,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
             dependencies {
                 nebulaRecommenderBom 'test.nebula.bom:testbom:latest.release@pom'
-                compile 'test.nebula:foo'
+                implementation 'test.nebula:foo'
             }
             """.stripIndent()
 
@@ -314,18 +314,18 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             group = 'netflix'
             version = '1'
 
-            configurations { compile }
+            configurations { implementation }
 
             repositories { jcenter() }
 
             dependencies {
-                compile 'commons-configuration:commons-configuration:1.6'
+                implementation 'commons-configuration:commons-configuration:1.6'
             }
 
             publishing {
                 publications {
                     parent(MavenPublication) {
-                        nebulaDependencyManagement.fromConfigurations { configurations.compile }
+                        nebulaDependencyManagement.fromConfigurations { configurations.implementation }
                         nebulaDependencyManagement.withDependencies { 'manual:dep:1' }
 
                         artifactId = 'module-parent'
@@ -454,10 +454,10 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         }
 
         project.dependencies {
-            compile 'com.google.collections:google-collections'
+            implementation 'com.google.collections:google-collections'
         }
 
-        def resolutionResult = project.configurations.compile.incoming.resolutionResult
+        def resolutionResult = project.configurations.compileClasspath.incoming.resolutionResult
         def guava = resolutionResult.allDependencies.first()
 
         then:

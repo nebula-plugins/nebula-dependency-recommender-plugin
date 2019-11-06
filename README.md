@@ -68,9 +68,9 @@ dependencyRecommendations {
 
 dependencies {
   nebulaRecommenderBom 'netflix:platform:latest.release@pom'
-  compile 'com.google.guava:guava' // no version, version is recommended
-  compile 'commons-lang:commons-lang:2.6' // I know what I want, don't recommend
-  compile project.recommend('commmons-logging:commons-logging', 'myprops') // source the recommendation from the provider named myprops'
+  implementation 'com.google.guava:guava' // no version, version is recommended
+  implementation 'commons-lang:commons-lang:2.6' // I know what I want, don't recommend
+  implementation project.recommend('commmons-logging:commons-logging', 'myprops') // source the recommendation from the provider named myprops'
 }
 ```
 
@@ -107,18 +107,18 @@ apply plugin: 'nebula.dependency-recommender'
 
 group = 'netflix'
 
-configurations { compile }
+configurations { implementation }
 repositories { jcenter() }
 
 dependencies {
-   compile 'commons-configuration:commons-configuration:1.6'
+   implementation 'commons-configuration:commons-configuration:1.6'
 }
 
 publishing {
     publications {
         parent(MavenPublication) {
             // the transitive closure of this configuration will be flattened and added to the dependency management section
-            nebulaDependencyManagement.fromConfigurations { configurations.compile }
+            nebulaDependencyManagement.fromConfigurations { configurations.implementation }
 
             // alternative syntax when you want to explicitly add a dependency with no transitives
             nebulaDependencyManagement.withDependencies { 'manual:dep:1' }
@@ -215,7 +215,7 @@ dependencyRecommendations {
 }
 
 dependencies {
-   compile 'commons-logging:commons-logging' // version 1.2 is selected
+   implementation 'commons-logging:commons-logging' // version 1.2 is selected
 }
 ```
 
@@ -229,7 +229,7 @@ dependencyRecommendations {
 }
 
 dependencies {
-   compile 'commons-logging:commons-logging:1.0' // version 1.0 is selected
+   implementation 'commons-logging:commons-logging:1.0' // version 1.0 is selected
 }
 ```
 
@@ -243,7 +243,7 @@ dependencyRecommendations {
 }
 
 dependencies {
-   compile 'commons-logging:commons-logging' // version 1.0 is selected
+   implementation 'commons-logging:commons-logging' // version 1.0 is selected
 }
 ```
 
@@ -262,8 +262,8 @@ dependencyRecommendations {
 }
 
 dependencies {
-   compile 'commons-logging:commons-logging'
-   compile 'commons-configuration:commons-configuration:1.6'
+   implementation 'commons-logging:commons-logging'
+   implementation 'commons-configuration:commons-configuration:1.6'
 }
 ```
 
@@ -278,7 +278,7 @@ dependencyRecommendations {
 }
 
 dependencies {
-   compile 'commons-configuration:commons-configuration:1.6'
+   implementation 'commons-configuration:commons-configuration:1.6'
 }
 ```
 
@@ -292,8 +292,8 @@ dependencyRecommendations {
 }
 
 dependencies {
-   compile 'commons-configuration:commons-configuration:1.6'
-   compile 'commons-logging:commons-logging' // version 1.1.1 is selected
+   implementation 'commons-configuration:commons-configuration:1.6'
+   implementation 'commons-logging:commons-logging' // version 1.1.1 is selected
 }
 ```
 
