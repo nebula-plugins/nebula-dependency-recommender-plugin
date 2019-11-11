@@ -18,23 +18,25 @@ package netflix.nebula.dependency.recommender.provider;
 import groovy.lang.Closure;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
-import org.gradle.api.Action;
-import org.gradle.api.GradleException;
-import org.gradle.api.Namer;
-import org.gradle.api.Project;
+import org.gradle.api.*;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.util.ConfigureUtil;
+import org.gradle.util.GradleVersion;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin.CORE_BOM_SUPPORT_ENABLED;
 
-public class RecommendationProviderContainer extends DefaultNamedDomainObjectList<RecommendationProvider> {
+public class RecommendationProviderContainer {
 
     private Project project;
+    private NamedDomainObjectList<RecommendationProvider> providers;
     private RecommendationStrategies strategy = RecommendationStrategies.ConflictResolved;
     private MavenBomRecommendationProvider mavenBomProvider;
     private Boolean strictMode = false;
@@ -46,17 +48,32 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
     public static final RecommendationStrategies ConflictResolved = RecommendationStrategies.ConflictResolved;
 
-    private final Action<? super RecommendationProvider> addLastAction = new Action<RecommendationProvider>() {
-        public void execute(RecommendationProvider r) {
-            RecommendationProviderContainer.super.add(r);
-        }
-    };
-
     public RecommendationProviderContainer(Project project) {
-        super(RecommendationProvider.class, null, new RecommendationProviderNamer());
+        if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0) {
+            createList(project);
+        } else {
+            providers = new DefaultNamedDomainObjectList<RecommendationProvider>(RecommendationProvider.class, null, new RecommendationProviderNamer());
+        }
         this.project = project;
         this.mavenBomProvider = getMavenBomRecommendationProvider();
-        this.add(this.mavenBomProvider);
+        providers.add(this.mavenBomProvider);
+    }
+
+    private void createList(Project project) {
+        ObjectFactory objects = project.getObjects();
+        try {
+            Method factoryMethod = objects.getClass().getDeclaredMethod("namedDomainObjectList", Class.class);
+            providers = (NamedDomainObjectList<RecommendationProvider>) factoryMethod.invoke(objects, RecommendationProvider.class);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("NamedDomainObjectList couldn't be created", e);
+        }
+
+    }
+
+    private static class RecommendationProviderNamer implements Namer<RecommendationProvider> {
+        public String determineName(RecommendationProvider r) {
+            return r.getName();
+        }
     }
 
     private MavenBomRecommendationProvider getMavenBomRecommendationProvider() {
@@ -69,23 +86,20 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
         return mavenBomRecommendationProvider;
     }
 
-    private static class RecommendationProviderNamer implements Namer<RecommendationProvider> {
-        public String determineName(RecommendationProvider r) {
-            return r.getName();
-        }
-    }
-
     public <T extends RecommendationProvider> T addProvider(T provider, Action<? super T> configureAction) {
         configureAction.execute(provider);
-        assertCanAdd(provider.getName());
-        addLastAction.execute(provider);
+        providers.add(provider);
         return provider;
     }
 
     public <T extends RecommendationProvider> T addFirst(T provider) {
-        remove(provider);
-        super.add(0, provider);
+        providers.remove(provider);
+        providers.add(0, provider);
         return provider;
+    }
+
+    public RecommendationProvider getByName(String name) {
+        return providers.getByName(name);
     }
 
     public PropertyFileRecommendationProvider propertiesFile(Map<String, ?> args) {
@@ -191,14 +205,14 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
 
     public String getRecommendedVersion(String group, String name) {
         // providers are queried in LIFO order
-        for (int i = size()-1; i >= 0; i--) {
+        for (int i = providers.size()-1; i >= 0; i--) {
             try {
-                String version = get(i).getVersion(group, name);
+                String version = providers.get(i).getVersion(group, name);
                 if (version != null) {
                     return version;
                 }
             } catch(Exception e) {
-                project.getLogger().error("Exception while polling provider " + get(i).getName() + " for version", e);
+                project.getLogger().error("Exception while polling provider " + providers.get(i).getName() + " for version", e);
             }
         }
         return null;
@@ -265,5 +279,4 @@ public class RecommendationProviderContainer extends DefaultNamedDomainObjectLis
                     rawPomDependencies.toArray(new org.gradle.api.artifacts.Dependency[0])).resolve();
         }
     }
-
 }
