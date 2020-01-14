@@ -40,9 +40,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
@@ -128,7 +126,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                             String strategyText = whichStrategy(strategy);
                                             logger.debug("Recommending version " + version + " for dependency " + coordinate);
                                             details.because("Recommending version " + version + " for dependency " + coordinate + " via " + strategyText + "\n" +
-                                                    "\twith reasons: " + StringUtils.join(recommendationProviderContainer.getReasons(), ", "));
+                                                    "\twith reasons: " + StringUtils.join(getReasonsRecursive(project), ", "));
                                         } else {
                                             if (recommendationProviderContainer.isStrictMode()) {
                                                 String errorMessage = "Dependency " + details.getRequested().getGroup() + ":" + details.getRequested().getName() + " omitted version with no recommended version. General causes include a dependency being removed from the recommendation source or not applying a recommendation source to a project that depends on another project using a recommender.";
@@ -224,5 +222,21 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         if (project.getParent() != null)
             return getRecommendedVersionRecursive(project.getParent(), mvSelector);
         return null;
+    }
+
+    /**
+     * Look for recommendation reasons in a project and each of its ancestors in order until one is found or the root is reached
+     *
+     * @param project    the gradle <code>Project</code>
+     * @return the recommended version or <code>null</code>
+     */
+    public Set<String> getReasonsRecursive(Project project) {
+        Set<String> reasons = Objects.requireNonNull(project.getExtensions().findByType(RecommendationProviderContainer.class))
+                .getReasons();
+        if (! reasons.isEmpty())
+            return reasons;
+        if (project.getParent() != null)
+            return getReasonsRecursive(project.getParent());
+        return Collections.emptySet();
     }
 }
