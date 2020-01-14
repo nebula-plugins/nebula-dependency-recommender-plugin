@@ -176,4 +176,57 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         //output where message is printed is different between Gradle 4.7 and 4.8 while we are testing Gradle 4.8 we need to check both
         results.standardError.contains(expectedMessage) || results.standardOutput.contains(expectedMessage)
     }
+
+    def 'recommendation is defined in root and we can see proper reasons in submodule dependency insight'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'multiprojectbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('example', 'foo', '1.0.0')
+        pom.addManagementDependency('example', 'bar', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def depGraph = new DependencyGraphBuilder()
+                .addModule('example:foo:1.0.0')
+                .addModule('example:bar:1.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(depGraph)
+        generator.generateTestMavenRepo()
+
+        addSubproject('a', '''\
+                apply plugin: 'java'
+                
+                dependencies {
+                    implementation 'example:foo'
+                }
+            '''.stripIndent())
+
+        addSubproject('b', '''\
+                apply plugin: 'java'
+
+                dependencies {
+                    implementation project(':a')
+                }
+            '''.stripIndent())
+
+        buildFile << """\
+            allprojects {
+                apply plugin: 'nebula.dependency-recommender'
+                
+                repositories {
+                    maven { url '${repo.root.absoluteFile.toURI()}' }
+                    ${generator.mavenRepositoryBlock}
+                }
+            }
+
+            dependencyRecommendations {
+                mavenBom module: 'test.nebula.bom:multiprojectbom:1.0.0@pom'
+            }
+            """.stripIndent()
+        when:
+        def results = runTasksSuccessfully(':a:dependencyInsight', '--dependency', 'foo', '--configuration', 'compileClasspath')
+
+        then:
+        results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo'
+        results.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:multiprojectbom:pom:1.0.0'
+    }
 }
