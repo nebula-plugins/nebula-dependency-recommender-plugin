@@ -1,14 +1,14 @@
-## Deprecated
+## Maintenance Mode Support
 
-Much of the functionality of this project can be replicated by a new feature coming in `Gradle 4.6` and the default in `Gradle 5.0`q
+We don't plan add new functionality to this plugin. We focus mainly on compatibility with new version of Gradle.
 
-`org.gradle.advancedpomsupport=true` set in your `gradle.properties`
+Much of the functionality of this project can be replicated by a new feature coming in `Gradle 4.6` and the default in `Gradle 5.0`. We would recommend new users seeking this functionality to adopt the feature directly from the Gradle. You can find details [Sharing dependency versions between projects](https://docs.gradle.org/current/userguide/platforms.html)
 
-[Bom Feature Preview](https://github.com/gradle/gradle/blob/master/subprojects/dependency-management/preview-features.adoc#maven-bom-files-and-dependencymanagement)
+We are actively working on switching from this plugin to Gradle Platform support too with eventual long term goal to deprecate this plugin.
 
 # Nebula Dependency Recommender
 
-![Support Status](https://img.shields.io/badge/nebula-deprecated-yellow.svg)
+![Support Status](https://img.shields.io/badge/nebula-maintence-orange.svg)
 [![Build Status](https://travis-ci.org/nebula-plugins/nebula-dependency-recommender-plugin.svg?branch=master)](https://travis-ci.org/nebula-plugins/nebula-dependency-recommender-plugin)
 [![Coverage Status](https://coveralls.io/repos/nebula-plugins/nebula-dependency-recommender-plugin/badge.svg?branch=master&service=github)](https://coveralls.io/github/nebula-plugins/nebula-dependency-recommender-plugin?branch=master)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nebula-plugins/nebula-dependency-recommender-plugin?utm_source=badgeutm_medium=badgeutm_campaign=pr-badge)
