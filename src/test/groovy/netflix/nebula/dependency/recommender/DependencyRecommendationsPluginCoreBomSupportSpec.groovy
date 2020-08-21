@@ -126,6 +126,55 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         result.standardOutput.contains("+--- test.nebula:app:9.0.0 -> 8.0.0")
     }
 
+    def 'platforms are not published as dependencies of modules'() {
+        buildFile << """\
+            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'maven-publish'
+            apply plugin: 'java'
+            apply plugin: 'war'
+
+            repositories {
+                maven { url '${repo.root.absoluteFile.toURI()}' }
+                ${generator.mavenRepositoryBlock}
+            }
+
+            dependencyRecommendations {
+                mavenBom module: 'test.nebula.bom:testbom:latest.release'
+            }
+
+            dependencies {
+                implementation 'test.nebula:moa'
+            }
+
+             publishing {
+                 publications {
+                     maven(MavenPublication) {
+                         from components.java
+                         versionMapping {
+                             usage('java-api') {
+                                 fromResolutionOf('runtimeClasspath')
+                             }
+                             usage('java-runtime') {
+                                 fromResolutionResult()
+                             }
+                         }
+                     }
+                 }
+             }
+            """.stripIndent()
+
+        when:
+        runTasksSuccessfully('generateMetadataFileForMavenPublication', 'generatePomFileForMavenPublication')
+
+        then:
+        def gradleMetadata = new File(projectDir, "build/publications/maven/module.json").text
+        def pom = new File(projectDir, "build/publications/maven/pom-default.xml").text
+        ! gradleMetadata.contains('"group": "test.nebula.bom"')
+        ! gradleMetadata.contains('"module": "testbom"')
+        ! pom.contains('<groupId>test.nebula.bom</groupId>')
+        ! pom.contains('<artifactId>testbom</artifactId>')
+    }
+
     @Unroll
     def 'error when #type(#argType) used'() {
         given:

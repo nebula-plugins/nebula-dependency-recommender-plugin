@@ -117,7 +117,7 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
         noExceptionThrown()
         results.standardOutput.contains 'Found project \'project :can-use-recommender-in-a-composite-composite:b\' as substitute for module \'example:b\'.'
         results.standardOutput.contains '+--- example:b:1.0.0 -> project :can-use-recommender-in-a-composite-composite:b'
-        results.standardOutput.contains '|    +--- project :can-use-recommender-in-a-composite-composite:a'
-        results.standardOutput.contains '|    |    +--- test.nebula:foo -> 1.0.0'
+        results.standardOutput.contains '|    \\--- project :can-use-recommender-in-a-composite-composite:a'
+        results.standardOutput.contains '|         \\--- test.nebula:foo -> 1.0.0'
     }
 }
