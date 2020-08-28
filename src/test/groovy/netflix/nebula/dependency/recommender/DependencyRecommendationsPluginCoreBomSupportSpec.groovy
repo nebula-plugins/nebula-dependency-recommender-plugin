@@ -40,6 +40,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         pom.addManagementDependency('test.nebula', 'lib', '3.9.9')
         pom.addManagementDependency('test.nebula', 'app', '8.0.0')
         pom.addManagementDependency('test.nebula', 'moa', '9.0.0')
+        pom.addManagementDependency('test.nebula', 'koa', '10.0.0')
         repo.poms.add(pom)
         repo.generate()
         def graph = new DependencyGraphBuilder()
@@ -51,6 +52,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
                 .addModule('test.nebula:app:8.0.0')
                 .addModule('test.nebula:app:9.0.0')
                 .addModule('test.nebula:moa:9.0.0')
+                .addModule('test.nebula:koa:10.0.0')
                 .build()
         generator = new GradleDependencyGenerator(graph)
         generator.generateTestMavenRepo()
@@ -74,6 +76,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
 
             dependencies {
                 annotationProcessor 'test.nebula:bar'
+                testAnnotationProcessor 'test.nebula:koa'
                 compile 'test.nebula:foo'
                 implementation 'test.nebula:moa'
                 providedCompile 'test.nebula:lib'
@@ -93,6 +96,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         result.standardOutput.contains("+--- test.nebula:moa -> 9.0.0")
         result.standardOutput.contains("\\--- test.nebula:baz -> 2.5.0")
         result.standardOutput.contains("\\--- test.nebula:lib -> 3.9.9")
+        result.standardOutput.contains("\\--- test.nebula:koa -> 10.0.0")
 
         compileOnlyResult.standardOutput.contains("compileOnly - Compile only dependencies for source set 'main'")
         compileOnlyResult.standardOutput.contains("\\--- test.nebula:app:7.0.0")

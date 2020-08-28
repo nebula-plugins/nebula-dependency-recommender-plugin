@@ -43,7 +43,7 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
 
     //we want to apply recommendation only into final resolvable configurations like `compileClasspath` or `runtimeClasspath` across all source sets.
     private boolean isClasspathConfiguration(Configuration configuration) {
-        return configuration.getName().endsWith("Classpath") || configuration.getName().equals("annotationProcessor");
+        return configuration.getName().endsWith("Classpath") || configuration.getName().toLowerCase().endsWith("annotationprocessor");
     }
 
     //this action creates clones of bom configuration from root and gradle will also apply the action to them which would
