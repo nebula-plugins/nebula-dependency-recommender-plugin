@@ -61,7 +61,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
     def 'add given bom to configs'() {
         buildFile << """\
             apply plugin: 'nebula.dependency-recommender'
-            apply plugin: 'java'
+            apply plugin: 'java-library'
             apply plugin: 'war'
 
             repositories {
@@ -77,7 +77,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
             dependencies {
                 annotationProcessor 'test.nebula:bar'
                 testAnnotationProcessor 'test.nebula:koa'
-                compile 'test.nebula:foo'
+                api 'test.nebula:foo'
                 implementation 'test.nebula:moa'
                 providedCompile 'test.nebula:lib'
                 runtimeOnly 'test.nebula:baz'
