@@ -49,11 +49,7 @@ public class RecommendationProviderContainer {
     public static final RecommendationStrategies ConflictResolved = RecommendationStrategies.ConflictResolved;
 
     public RecommendationProviderContainer(Project project) {
-        if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0) {
-            createList(project);
-        } else {
-            providers = new DefaultNamedDomainObjectList<RecommendationProvider>(RecommendationProvider.class, null, new RecommendationProviderNamer());
-        }
+        createList(project);
         this.project = project;
         this.mavenBomProvider = getMavenBomRecommendationProvider();
         providers.add(this.mavenBomProvider);
