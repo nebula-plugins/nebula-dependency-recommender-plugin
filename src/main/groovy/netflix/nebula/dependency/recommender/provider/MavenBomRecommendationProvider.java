@@ -15,19 +15,11 @@
  */
 package netflix.nebula.dependency.recommender.provider;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Repository;
-import org.apache.maven.model.building.DefaultModelBuilder;
-import org.apache.maven.model.building.DefaultModelBuilderFactory;
-import org.apache.maven.model.building.DefaultModelBuildingRequest;
-import org.apache.maven.model.building.ModelBuildingRequest;
-import org.apache.maven.model.building.ModelBuildingResult;
-import org.apache.maven.model.building.ModelProblemCollector;
-import org.apache.maven.model.building.ModelSource2;
+import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.model.path.DefaultPathTranslator;
 import org.apache.maven.model.path.DefaultUrlNormalizer;
@@ -45,24 +37,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
-    private Supplier<Map<String, String>> recommendations = Suppliers.memoize(new Supplier<Map<String, String>>() {
-        @Override
-        public Map<String, String> get() {
-            try {
-                return getMavenRecommendations();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    });
+    private volatile Map<String, String> recommendations = null;
     private Set<String> reasons = new HashSet<>();
 
     public MavenBomRecommendationProvider(Project project, String configName) {
@@ -108,7 +86,14 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
     }
 
     public Map<String, String> getRecommendations() {
-        return recommendations.get();
+        if (recommendations == null) {
+            try {
+                recommendations = getMavenRecommendations();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return recommendations;
     }
 
     public Map<String, String> getMavenRecommendations() throws Exception {
