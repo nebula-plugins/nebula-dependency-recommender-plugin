@@ -47,7 +47,7 @@ If you have an old Gradle version (<2.1), you need to do this:
 
 ```groovy
 buildscript {
-    repositories { jcenter() }
+    repositories { mavenCentral() }
 
     dependencies {
         classpath 'com.netflix.nebula:nebula-dependency-recommender:5.1.0'
@@ -98,7 +98,7 @@ Suppose you want to produce a BOM that contains a recommended version for common
 
 ```groovy
 buildscript {
-    repositories { jcenter() }
+    repositories { mavenCentral() }
     dependencies { classpath 'com.netflix.nebula:nebula-dependency-recommender:4.+' }
 }
 
@@ -108,7 +108,7 @@ apply plugin: 'nebula.dependency-recommender'
 group = 'netflix'
 
 configurations { implementation }
-repositories { jcenter() }
+repositories { mavenCentral() }
 
 dependencies {
    implementation 'commons-configuration:commons-configuration:1.6'

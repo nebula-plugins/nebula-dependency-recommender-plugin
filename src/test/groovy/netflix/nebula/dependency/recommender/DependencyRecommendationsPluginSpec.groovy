@@ -316,7 +316,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
             configurations { implementation }
 
-            repositories { jcenter() }
+            repositories { mavenCentral() }
 
             dependencies {
                 implementation 'commons-configuration:commons-configuration:1.6'
