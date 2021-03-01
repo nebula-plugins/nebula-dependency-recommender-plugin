@@ -9,7 +9,7 @@ We are actively working on switching from this plugin to Gradle Platform support
 # Nebula Dependency Recommender
 
 ![Support Status](https://img.shields.io/badge/nebula-maintence-orange.svg)
-[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com.netflix.nebula/nebula-dependency-recommender-plugin/maven-metadata.xml.svg?label=gradlePluginPortal)](https://plugins.gradle.org/plugin/nebula.dependency-recomender)
+[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com.netflix.nebula/nebula-dependency-recommender-plugin/maven-metadata.xml.svg?label=gradlePluginPortal)](https://plugins.gradle.org/plugin/nebula.dependency-recommender)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.netflix.nebula/nebula-dependency-recommender-plugin/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.netflix.nebula/nebula-dependency-recommender-plugin)
 ![CI](https://github.com/nebula-plugins/nebula-dependency-recommender-plugin/actions/workflows/ci.yml/badge.svg)
 ![Publish](https://github.com/nebula-plugins/nebula-dependency-recommender-plugin/actions/workflows/publish.yml/badge.svg)
