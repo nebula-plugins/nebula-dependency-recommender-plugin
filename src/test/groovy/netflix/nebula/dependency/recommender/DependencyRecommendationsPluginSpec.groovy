@@ -344,8 +344,8 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
         then:
         // assert on overall shape
+        pomText.contains('''<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0''')
         pomText.contains('''
-<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>netflix</groupId>
   <artifactId>module-parent</artifactId>
