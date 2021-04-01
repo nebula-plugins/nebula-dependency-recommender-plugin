@@ -11,8 +11,7 @@ We are actively working on switching from this plugin to Gradle Platform support
 ![Support Status](https://img.shields.io/badge/nebula-maintence-orange.svg)
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com.netflix.nebula/nebula-dependency-recommender/maven-metadata.xml.svg?label=gradlePluginPortal)](https://plugins.gradle.org/plugin/nebula.dependency-recommender)
 [![Maven Central](https://img.shields.io/maven-central/v/com.netflix.nebula/nebula-dependency-recommender)](https://maven-badges.herokuapp.com/maven-central/com.netflix.nebula/nebula-dependency-recommender)
-![CI](https://github.com/nebula-plugins/nebula-dependency-recommender-plugin/actions/workflows/ci.yml/badge.svg)
-![Publish](https://github.com/nebula-plugins/nebula-dependency-recommender-plugin/actions/workflows/publish.yml/badge.svg)
+![Build](https://github.com/nebula-plugins/nebula-dependency-recommender-plugin/actions/workflows/nebula.yml/badge.svg)
 [![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/nebula-dependency-recommender-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 A Gradle plugin that allows you to leave off version numbers in your dependencies section and have versions recommended by several possible sources.  The most familiar recommendation provider that is supported is the Maven BOM (i.e. Maven dependency management metadata).  The plugin will control the versions of any dependencies that do not have a version specified.
