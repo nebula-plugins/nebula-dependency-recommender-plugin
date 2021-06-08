@@ -5,10 +5,10 @@ com.google.guava:guava:20.0
 com.netflix.nebula:nebula-gradle-interop:1.0.11
 javax.inject:javax.inject:1
 org.apache.commons:commons-lang3:3.8.1
-org.apache.maven:maven-artifact:3.6.3
-org.apache.maven:maven-builder-support:3.6.3
-org.apache.maven:maven-model-builder:3.6.3
-org.apache.maven:maven-model:3.6.3
+org.apache.maven:maven-artifact:3.8.1
+org.apache.maven:maven-builder-support:3.8.1
+org.apache.maven:maven-model-builder:3.8.1
+org.apache.maven:maven-model:3.8.1
 org.codehaus.plexus:plexus-interpolation:1.25
 org.codehaus.plexus:plexus-utils:3.2.1
 org.eclipse.sisu:org.eclipse.sisu.inject:0.3.4
