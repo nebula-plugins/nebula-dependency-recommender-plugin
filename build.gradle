@@ -32,7 +32,6 @@ dependencies {
     implementation 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     implementation 'org.apache.maven:maven-model-builder:3.+'
     implementation 'com.google.guava:guava:20.0'
-    testImplementation('com.netflix.nebula:nebula-test:latest.release')
     testImplementation ('org.xmlunit:xmlunit-core:2.6.0') {
         exclude module: 'hamcrest-core'
     }
