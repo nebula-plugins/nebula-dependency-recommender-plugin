@@ -71,7 +71,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         generator.generateTestMavenRepo()
 
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
 
             repositories {
@@ -107,7 +107,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         generator.generateTestMavenRepo()
 
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
 
             repositories {
@@ -153,7 +153,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         generator.generateTestMavenRepo()
 
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
 
             repositories {
@@ -191,7 +191,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         generator.generateTestMavenRepo()
 
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
 
             repositories {
@@ -229,7 +229,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         generator.generateTestMavenRepo()
 
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
 
             repositories {
@@ -273,7 +273,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             plugins {
                 id 'nebula.dependency-lock' version '4.3.2'
             }
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
 
             repositories {
@@ -309,7 +309,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         when:
         buildFile << '''
             apply plugin: 'maven-publish'
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
 
             group = 'netflix'
             version = '1'
@@ -490,7 +490,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
         buildFile << """\
             apply plugin: 'java'
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
 
             group = 'example.nebula'
             version = '1.0.0'

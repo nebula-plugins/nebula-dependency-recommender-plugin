@@ -59,7 +59,7 @@ class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends Inte
             '''.stripIndent())
         writeHelloWorld('b', b)
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             dependencyRecommendations {
                 mavenBom module: 'test.nebula.bom:testbom:latest.release'
             }

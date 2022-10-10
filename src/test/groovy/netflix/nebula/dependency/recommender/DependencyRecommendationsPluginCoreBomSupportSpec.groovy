@@ -60,7 +60,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
 
     def 'add given bom to configs'() {
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java-library'
             apply plugin: 'war'
 
@@ -105,7 +105,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
 
     def 'add given bom to configs as enforced platform'() {
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
             apply plugin: 'war'
 
@@ -132,7 +132,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
 
     def 'platforms are not published as dependencies of modules'() {
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'maven-publish'
             apply plugin: 'java'
             apply plugin: 'war'
@@ -183,7 +183,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
     def 'error when #type(#argType) used'() {
         given:
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
 
             dependencyRecommendations {

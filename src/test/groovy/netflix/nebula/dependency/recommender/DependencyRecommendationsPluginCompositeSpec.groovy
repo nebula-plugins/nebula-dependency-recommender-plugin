@@ -47,7 +47,7 @@ class DependencyRecommendationsPluginCompositeSpec extends IntegrationSpec {
             allprojects {
                 group 'example'
             
-                apply plugin: 'nebula.dependency-recommender'
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
                 dependencyRecommendations {
                     map recommendations: ['example:foo': '1.0.0']
                 }
@@ -70,7 +70,7 @@ class DependencyRecommendationsPluginCompositeSpec extends IntegrationSpec {
         // Composite
         buildFile << """\
             apply plugin: 'java'
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
 
             dependencyRecommendations {
                 map recommendations: ['example:foo': '1.0.0']

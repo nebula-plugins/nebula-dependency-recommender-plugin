@@ -46,7 +46,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         writeHelloWorld('b', b)
         buildFile << """\
             allprojects {
-                apply plugin: 'nebula.dependency-recommender'
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
                 dependencyRecommendations {
                     map recommendations: ['example:foo': '1.0.0']
                 }
@@ -101,7 +101,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         writeHelloWorld('b', b)
         buildFile << """\
             allprojects {
-                apply plugin: 'nebula.dependency-recommender'
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
             }
             subprojects {
                 apply plugin: 'java'
@@ -153,7 +153,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         writeHelloWorld('b', b)
         buildFile << """\
             allprojects {
-                apply plugin: 'nebula.dependency-recommender'
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
             }
             subprojects {
                 apply plugin: 'java'
@@ -210,7 +210,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
 
         buildFile << """\
             allprojects {
-                apply plugin: 'nebula.dependency-recommender'
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
                 
                 repositories {
                     maven { url '${repo.root.absoluteFile.toURI()}' }

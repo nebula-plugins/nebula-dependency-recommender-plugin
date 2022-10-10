@@ -35,7 +35,7 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
                 id 'nebula.maven-publish' version '5.1.0'
             }
             
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             
             group = 'test.nebula'
             version = '0.1.0'
@@ -87,7 +87,7 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
                 id 'nebula.maven-publish' version '5.1.0'
             }
             
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             
             group = 'test.nebula'
             version = '0.1.0'
@@ -141,7 +141,7 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
                 id 'nebula.maven-publish' version '5.1.0'
             }
             
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             
             group = 'test.nebula'
             version = '0.1.0'

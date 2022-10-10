@@ -44,7 +44,7 @@ pluginBundle {
 gradlePlugin {
     plugins {
         dependencyRecommender {
-            id = 'nebula.dependency-recommender'
+            id = 'com.netflix.nebula.dependency-recommender'
             displayName = 'Nebula Dependency Recommender'
             description = project.description
             implementationClass = 'netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin'

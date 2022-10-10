@@ -39,7 +39,7 @@ class DependencyRecommendationsPluginConfigurationCacheSpec extends IntegrationT
 
         buildFile << """\
             plugins {
-                id 'nebula.dependency-recommender'
+                id 'com.netflix.nebula.dependency-recommender'
                 id 'java'
             }
 

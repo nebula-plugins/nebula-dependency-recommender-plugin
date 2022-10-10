@@ -63,7 +63,7 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
         writeHelloWorld('b', b)
 
         buildFile << """\
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
             dependencyRecommendations {
                 mavenBom module: 'test.nebula.bom:testbom:latest.release'
             }
@@ -89,7 +89,7 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
         // Composite
         buildFile << """\
             apply plugin: 'java'
-            apply plugin: 'nebula.dependency-recommender'
+            apply plugin: 'com.netflix.nebula.dependency-recommender'
 
             dependencyRecommendations {
                 mavenBom module: 'test.nebula.bom:testbom:latest.release'
