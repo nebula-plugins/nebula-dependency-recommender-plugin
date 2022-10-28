@@ -57,7 +57,7 @@ class DependencyRecommendationsPluginConfigurationCacheSpec extends IntegrationT
         expect:
         //TODO we don't support configuration cache yet so we expect the test to fail
         //this should help us https://github.com/gradle/gradle/issues/12871
-        runTasksAndFail('--configuration-cache', 'dependencies')
+        runTasks('--configuration-cache', 'dependencies')
     }
 
 }
