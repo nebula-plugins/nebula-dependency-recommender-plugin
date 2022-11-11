@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '19.0.2'
+    id 'com.netflix.nebula.plugin-plugin' version '20.0.0'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
@@ -37,10 +37,6 @@ dependencies {
     }
 }
 
-pluginBundle {
-    tags = ['nebula', 'dependency', 'dependencies', 'recommender', 'recommend']
-}
-
 gradlePlugin {
     plugins {
         dependencyRecommender {
@@ -48,6 +44,7 @@ gradlePlugin {
             displayName = 'Nebula Dependency Recommender'
             description = project.description
             implementationClass = 'netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin'
+            tags.set(['nebula', 'dependency', 'dependencies', 'recommender', 'recommend'])
         }
     }
 }
