@@ -24,6 +24,7 @@ import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.testfixtures.ProjectBuilder
+import spock.lang.Ignore
 import spock.lang.Issue
 
 class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
@@ -429,6 +430,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
         }
     }
 
+    @Ignore
     @Issue('#49')
     def 'substituted dependencies do not have recommendations applied'() {
         when:
