@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '20.3.0'
+    id 'com.netflix.nebula.plugin-plugin' version '20.4.0'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
@@ -49,5 +49,3 @@ gradlePlugin {
     }
 }
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
