@@ -98,7 +98,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
         result.standardOutput.contains("\\--- test.nebula:lib -> 3.9.9")
         result.standardOutput.contains("\\--- test.nebula:koa -> 10.0.0")
 
-        compileOnlyResult.standardOutput.contains("compileOnly - Compile only dependencies for source set 'main'")
+        compileOnlyResult.standardOutput.contains("compileOnly - Compile-only dependencies for the 'main' feature.")
         compileOnlyResult.standardOutput.contains("\\--- test.nebula:app:7.0.0")
         !compileOnlyResult.standardOutput.contains('test.nebula.bom:testbom:latest.release')
     }
