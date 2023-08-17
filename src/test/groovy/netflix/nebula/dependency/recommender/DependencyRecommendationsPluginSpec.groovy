@@ -272,7 +272,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
         buildFile << """\
             plugins {
-                id 'nebula.dependency-lock' version '4.3.2'
+                id 'com.netflix.nebula.dependency-lock' version '13.+'
             }
             apply plugin: 'com.netflix.nebula.dependency-recommender'
             apply plugin: 'java'
