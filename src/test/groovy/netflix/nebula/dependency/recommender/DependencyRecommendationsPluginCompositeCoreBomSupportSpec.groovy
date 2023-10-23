@@ -15,23 +15,29 @@
  */
 package netflix.nebula.dependency.recommender
 
-import nebula.test.IntegrationSpec
+
+import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.maven.ArtifactType
 import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
 
-class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends IntegrationSpec {
+class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends IntegrationTestKitSpec {
     def repo
     def generator
 
     def setup() {
-        fork = true
-        new File("${projectDir}/gradle.properties").text = "systemProp.nebula.features.coreBomSupport=true"
-
-
+        new File("${projectDir}/gradle.properties") << """
+            systemProp.nebula.features.coreBomSupport=true
+            org.gradle.configuration-cache=true
+            """.stripIndent()
+        definePluginOutsideOfPluginBlock = true
         generateRepoIn(projectDir)
+    }
+
+    def cleanup() {
+        System.clearProperty('systemProp.nebula.features.coreBomSupport')
     }
 
     private void generateRepoIn(File projectDir) {
@@ -111,13 +117,13 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
         writeHelloWorld('c')
 
         when:
-        def results = runTasksSuccessfully(':dependencies')
+        def results = runTasks(':dependencies', '--info')
 
         then:
         noExceptionThrown()
-        results.standardOutput.contains 'Found project \'project :can-use-recommender-in-a-composite-composite:b\' as substitute for module \'example:b\'.'
-        results.standardOutput.contains '+--- example:b:1.0.0 -> project :can-use-recommender-in-a-composite-composite:b'
-        results.standardOutput.contains '|    \\--- project :can-use-recommender-in-a-composite-composite:a'
-        results.standardOutput.contains '|         \\--- test.nebula:foo -> 1.0.0'
+        results.output.contains 'Found project \'project :can-use-recommender-in-a-composite-composite:b\' as substitute for module \'example:b\'.'
+        results.output.contains '+--- example:b:1.0.0 -> project :can-use-recommender-in-a-composite-composite:b'
+        results.output.contains '|    \\--- project :can-use-recommender-in-a-composite-composite:a'
+        results.output.contains '|         \\--- test.nebula:foo -> 1.0.0'
     }
 }

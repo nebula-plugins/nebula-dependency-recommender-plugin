@@ -15,22 +15,24 @@
  */
 package netflix.nebula.dependency.recommender
 
-import nebula.test.IntegrationSpec
+
+import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
-import nebula.test.dependencies.ModuleBuilder
 import nebula.test.dependencies.maven.ArtifactType
 import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
 
-class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends IntegrationSpec {
+class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends IntegrationTestKitSpec {
     def repo
     def generator
 
     def setup() {
-        fork = true
-        new File("${projectDir}/gradle.properties").text = "systemProp.nebula.features.coreBomSupport=true"
-
+        new File("${projectDir}/gradle.properties") << """
+            systemProp.nebula.features.coreBomSupport=true
+            org.gradle.configuration-cache=true
+            """.stripIndent()
+        definePluginOutsideOfPluginBlock = true
 
         repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
@@ -43,6 +45,10 @@ class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends Inte
                 .build()
         generator = new GradleDependencyGenerator(graph)
         generator.generateTestMavenRepo()
+    }
+
+    def cleanup() {
+        System.clearProperty('systemProp.nebula.features.coreBomSupport')
     }
 
     def 'can use recommender across a multiproject'() {
@@ -74,9 +80,9 @@ class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends Inte
             }
             """.stripIndent()
         when:
-        def results = runTasksSuccessfully(':a:dependencies', '--configuration', 'compileClasspath')
+        def results = runTasks(':a:dependencies', '--configuration', 'compileClasspath')
 
         then:
-        results.standardOutput.contains("+--- test.nebula:foo -> 1.0.0")
+        results.output.contains("+--- test.nebula:foo -> 1.0.0")
     }
 }

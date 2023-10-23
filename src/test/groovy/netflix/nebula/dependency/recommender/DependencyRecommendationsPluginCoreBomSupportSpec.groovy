@@ -15,7 +15,8 @@
  */
 package netflix.nebula.dependency.recommender
 
-import nebula.test.IntegrationSpec
+
+import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.maven.ArtifactType
@@ -23,13 +24,16 @@ import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
 import spock.lang.Unroll
 
-class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec {
+class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationTestKitSpec {
     def repo
     def generator
 
     def setup() {
-        fork = true
-        new File("${projectDir}/gradle.properties").text = "systemProp.nebula.features.coreBomSupport=true"
+        new File("${projectDir}/gradle.properties") << """
+            systemProp.nebula.features.coreBomSupport=true
+            org.gradle.configuration-cache=true
+            """.stripIndent()
+        definePluginOutsideOfPluginBlock = true
 
         repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
@@ -56,6 +60,10 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
                 .build()
         generator = new GradleDependencyGenerator(graph)
         generator.generateTestMavenRepo()
+    }
+
+    def cleanup() {
+        System.clearProperty('systemProp.nebula.features.coreBomSupport')
     }
 
     def 'add given bom to configs'() {
@@ -87,20 +95,20 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
 
         when:
         //intentionally skipping warnings to be able to test legacy 'compile' configuration
-        def result = runTasksSuccessfully('dependencies', '--warning-mode=none')
-        def compileOnlyResult = runTasksSuccessfully('dependencies', '--configuration', 'compileOnly', '--warning-mode=none')
+        def result = runTasks('dependencies', '--warning-mode=none')
+        def compileOnlyResult = runTasks('dependencies', '--configuration', 'compileOnly', '--warning-mode=none')
 
         then:
-        result.standardOutput.contains("+--- test.nebula:foo -> 1.0.0")
-        result.standardOutput.contains("+--- test.nebula:bar -> 2.0.0")
-        result.standardOutput.contains("+--- test.nebula:moa -> 9.0.0")
-        result.standardOutput.contains("\\--- test.nebula:baz -> 2.5.0")
-        result.standardOutput.contains("\\--- test.nebula:lib -> 3.9.9")
-        result.standardOutput.contains("\\--- test.nebula:koa -> 10.0.0")
+        result.output.contains("+--- test.nebula:foo -> 1.0.0")
+        result.output.contains("+--- test.nebula:bar -> 2.0.0")
+        result.output.contains("+--- test.nebula:moa -> 9.0.0")
+        result.output.contains("\\--- test.nebula:baz -> 2.5.0")
+        result.output.contains("\\--- test.nebula:lib -> 3.9.9")
+        result.output.contains("\\--- test.nebula:koa -> 10.0.0")
 
-        compileOnlyResult.standardOutput.contains("compileOnly - Compile-only dependencies for the 'main' feature.")
-        compileOnlyResult.standardOutput.contains("\\--- test.nebula:app:7.0.0")
-        !compileOnlyResult.standardOutput.contains('test.nebula.bom:testbom:latest.release')
+        compileOnlyResult.output.contains("compileOnly - Compile-only dependencies for the 'main' feature.")
+        compileOnlyResult.output.contains("\\--- test.nebula:app:7.0.0")
+        !compileOnlyResult.output.contains('test.nebula.bom:testbom:latest.release')
     }
 
     def 'add given bom to configs as enforced platform'() {
@@ -124,10 +132,10 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
             """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully('dependencies')
+        def result = runTasks('dependencies')
 
         then:
-        result.standardOutput.contains("+--- test.nebula:app:9.0.0 -> 8.0.0")
+        result.output.contains("+--- test.nebula:app:9.0.0 -> 8.0.0")
     }
 
     def 'platforms are not published as dependencies of modules'() {
@@ -168,7 +176,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
             """.stripIndent()
 
         when:
-        runTasksSuccessfully('generateMetadataFileForMavenPublication', 'generatePomFileForMavenPublication')
+        runTasks('generateMetadataFileForMavenPublication', 'generatePomFileForMavenPublication')
 
         then:
         def gradleMetadata = new File(projectDir, "build/publications/maven/module.json").text
@@ -192,10 +200,10 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationSpec 
             """.stripIndent()
 
         when:
-        def result = runTasksWithFailure('dependencies', '--configuration', 'compileClasspath')
+        def result = runTasksAndFail('dependencies', '--configuration', 'compileClasspath')
 
         then:
-        result.standardError.contains("> dependencyRecommender.$type is not available with 'systemProp.nebula.features.coreBomSupport=true'")
+        result.output.contains("> dependencyRecommender.$type is not available with 'systemProp.nebula.features.coreBomSupport=true'")
 
         where:
         type             | argType   | arg
