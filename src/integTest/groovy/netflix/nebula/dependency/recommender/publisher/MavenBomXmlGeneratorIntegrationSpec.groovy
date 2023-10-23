@@ -16,15 +16,18 @@
 package netflix.nebula.dependency.recommender.publisher
 
 import nebula.test.IntegrationSpec
-import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
 import spock.lang.Timeout
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
+    def setup() {
+        new File(projectDir, 'gradle.properties') << '''org.gradle.configuration-cache=true'''.stripIndent()
+    }
+
     def 'pom created'() {
         def graph = new DependencyGraphBuilder().addModule('test0:test0:1.0.0')
                 .build()
