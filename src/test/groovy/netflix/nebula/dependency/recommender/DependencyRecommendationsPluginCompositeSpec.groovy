@@ -20,6 +20,10 @@ import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 
 class DependencyRecommendationsPluginCompositeSpec extends IntegrationSpec {
+    def setup() {
+        new File(projectDir, 'gradle.properties') << '''org.gradle.configuration-cache=true'''.stripIndent()
+    }
+
     def 'can use recommender in a composite'() {
         fork = false
 

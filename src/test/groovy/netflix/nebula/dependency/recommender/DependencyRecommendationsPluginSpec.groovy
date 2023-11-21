@@ -28,6 +28,10 @@ import spock.lang.Ignore
 import spock.lang.Issue
 
 class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
+    def setup() {
+        new File(projectDir, 'gradle.properties') << '''org.gradle.configuration-cache=true'''.stripIndent()
+    }
+
     def 'applies recommendations to dependencies with no version'() {
         when:
         def project = ProjectBuilder.builder().build()
@@ -308,6 +312,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
 
     def 'configures the maven-publish plugin to publish a BOM'() {
         when:
+        new File(projectDir, 'gradle.properties').text = '''org.gradle.configuration-cache=false'''.stripIndent()
         buildFile << '''
             apply plugin: 'maven-publish'
             apply plugin: 'com.netflix.nebula.dependency-recommender'

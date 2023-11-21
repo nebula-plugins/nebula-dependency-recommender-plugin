@@ -24,6 +24,10 @@ import nebula.test.dependencies.maven.Pom
 import nebula.test.dependencies.repositories.MavenRepo
 
 class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
+    def setup() {
+        new File(projectDir, 'gradle.properties') << '''org.gradle.configuration-cache=true'''.stripIndent()
+    }
+
     def 'can use recommender across a multiproject'() {
         def depGraph = new DependencyGraphBuilder()
                 .addModule('example:foo:1.0.0')
