@@ -2,7 +2,10 @@ package netflix.nebula.dependency.recommender.provider;
 
 import org.gradle.api.Project;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -21,7 +24,7 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
             if (property == null) {
                 return null;
             }
-            return property.trim();
+            return property.split(" ")[0].split("#")[0];
         }
     };
 
@@ -34,9 +37,7 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
         if(recommendations == null) {
             recommendations = new Properties();
             try (InputStream inputStream = inputProvider.getInputStream()) {
-                recommendations.load(
-                        new EolCommentFilteringReader(
-                                new ColonFilteringReader(new InputStreamReader(inputStream))));
+                recommendations.load(new ColonFilteringReader(new InputStreamReader(inputStream)));
             }
         }
         return fuzzyResolver.versionOf(org + "/" + name);
@@ -60,44 +61,6 @@ public class PropertyFileRecommendationProvider extends FileBasedRecommendationP
                 if(cbuf[i] == ':')
                     cbuf[i] = '/';
             return pos;
-        }
-
-        @Override
-        public void close() throws IOException {
-            reader.close();
-        }
-    }
-
-    private class EolCommentFilteringReader extends Reader {
-        Reader reader;
-        boolean inComment;
-
-        public EolCommentFilteringReader(Reader reader) {
-            this.reader = reader;
-            inComment = false;
-        }
-
-        @Override
-        public int read(char[] cbuf, int off, int len) throws IOException {
-            int val;
-            int read = 0;
-            while (read < len && (val = reader.read()) != -1) {
-                if (val == '#') {
-                    inComment = true;
-                    continue;
-                }
-                if (val == '\n') {
-                    inComment = false;
-                }
-
-                if (inComment) {
-                    continue;
-                }
-
-                cbuf[off + read] = (char) val;
-                read++;
-            }
-            return read;
         }
 
         @Override
