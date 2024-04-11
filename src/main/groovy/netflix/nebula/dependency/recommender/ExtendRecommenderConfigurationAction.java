@@ -67,12 +67,15 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
      * will be not only a different instance, but also may return different deprecation values.
      */
     private DefaultConfiguration createCopy(Set<Dependency> dependencies, Set<DependencyConstraint> dependencyConstraints) {
-        DefaultConfiguration copiedConfiguration = (DefaultConfiguration) project.getConfigurations().create(getNameWithCopySuffix());
-        copiedConfiguration.setVisible(false);
-        copiedConfiguration.setCanBeResolved(false);
-        copiedConfiguration.setCanBeConsumed(bom.isCanBeConsumed());
-        copiedConfiguration.setTransitive(bom.isTransitive());
-        copiedConfiguration.setDescription(bom.getDescription());
+        DefaultConfiguration copiedConfiguration = (DefaultConfiguration) project.getConfigurations().findByName(getNameWithCopySuffix());
+        if (copiedConfiguration == null) {
+            copiedConfiguration = (DefaultConfiguration) project.getConfigurations().create(getNameWithCopySuffix());
+            copiedConfiguration.setVisible(false);
+            copiedConfiguration.setCanBeResolved(false);
+            copiedConfiguration.setCanBeConsumed(bom.isCanBeConsumed());
+            copiedConfiguration.setTransitive(bom.isTransitive());
+            copiedConfiguration.setDescription(bom.getDescription());
+        }
         copiedConfiguration.getArtifacts().addAll(bom.getAllArtifacts());
         for (ExcludeRule excludeRule : bom.getExcludeRules()) {
             copiedConfiguration.getExcludeRules().add(new DefaultExcludeRule(excludeRule.getGroup(), excludeRule.getModule()));
