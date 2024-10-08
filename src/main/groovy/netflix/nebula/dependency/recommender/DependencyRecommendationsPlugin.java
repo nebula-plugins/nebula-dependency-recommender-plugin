@@ -38,6 +38,7 @@ import org.gradle.api.artifacts.ResolvableDependencies;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
+import org.gradle.internal.deprecation.DeprecationLogger;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -166,20 +167,23 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             ProjectDependency projectDependency = (ProjectDependency) dependency;
             if (!visited.contains(projectDependency)) {
                 visited.add(projectDependency);
-                Configuration configuration;
+                final Configuration[] configuration = new Configuration[1];
                 try {
                     ProjectDependency.class.getMethod("getTargetConfiguration");
                     String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
-                    configuration = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
+
+                    DeprecationLogger.whileDisabled(() -> {
+                        configuration[0] = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
+                    });
                 } catch (NoSuchMethodException ignore) {
                     try {
                         Method method = ProjectDependency.class.getMethod("getProjectConfiguration");
-                        configuration = (Configuration) method.invoke(dependency);
+                        configuration[0] = (Configuration) method.invoke(dependency);
                     } catch (Exception e) {
                         throw new RuntimeException("Unable to retrieve configuration for project dependency", e);
                     }
                 }
-                DependencySet dependencies = configuration.getAllDependencies();
+                DependencySet dependencies = configuration[0].getAllDependencies();
                 for (Dependency dep : dependencies) {
                     applyRecommendationToDependency(factory, dep, visited);
                 }

@@ -54,7 +54,7 @@ gradlePlugin {
  */
 tasks.withType(Test).configureEach {
     Provider<String> jdkVersionForTestsEnvVariable = providers.environmentVariable("JDK_VERSION_FOR_TESTS")
-    Integer jdkVersionForTests = jdkVersionForTestsEnvVariable.isPresent() ? jdkVersionForTestsEnvVariable.get().toInteger() : 8
+    Integer jdkVersionForTests = jdkVersionForTestsEnvVariable.isPresent() ? jdkVersionForTestsEnvVariable.get().toInteger() : 17
     if(jdkVersionForTests >= 17) {
         jvmArgs = [
                 '--add-opens=java.base/java.lang=ALL-UNNAMED',
