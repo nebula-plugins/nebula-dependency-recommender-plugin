@@ -49,7 +49,7 @@ class DependencyRecommendationsPluginCompositeSpec extends IntegrationSpec {
 
         buildFile << """\
             allprojects {
-                group 'example'
+                group = 'example'
             
                 apply plugin: 'com.netflix.nebula.dependency-recommender'
                 dependencyRecommendations {

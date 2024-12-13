@@ -75,11 +75,11 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
             }
             
             allprojects {
-                group 'example'
+                group = 'example'
                 apply plugin: 'java'
 
                 repositories {
-                    maven { url '${repo.root.absoluteFile.toURI()}' }
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
                     ${generator.mavenRepositoryBlock}
                 }
             }
@@ -102,7 +102,7 @@ class DependencyRecommendationsPluginCompositeCoreBomSupportSpec extends Integra
             }
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 

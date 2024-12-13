@@ -44,7 +44,7 @@ class DependencyRecommendationsPluginConfigurationCacheSpec extends IntegrationT
             }
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 

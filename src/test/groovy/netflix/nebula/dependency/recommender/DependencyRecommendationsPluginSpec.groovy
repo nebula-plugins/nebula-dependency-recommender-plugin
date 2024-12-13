@@ -80,7 +80,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -116,7 +116,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -162,7 +162,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -200,7 +200,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -238,7 +238,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -282,7 +282,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             apply plugin: 'java'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -339,7 +339,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
                     }
                 }
                 repositories {
-                    maven { url "$buildDir/repo" }
+                    maven { url = "$buildDir/repo" }
                 }
             }
         '''
@@ -503,7 +503,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             version = '1.0.0'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${dependencies.mavenRepositoryBlock}
             }
 

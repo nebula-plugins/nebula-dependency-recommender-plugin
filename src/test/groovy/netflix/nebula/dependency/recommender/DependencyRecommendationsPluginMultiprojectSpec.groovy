@@ -111,7 +111,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
                 apply plugin: 'java'
 
                 repositories {
-                    maven { url '${repo.root.absoluteFile.toURI()}' }
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
                     ${generator.mavenRepositoryBlock}
                 }
 
@@ -167,7 +167,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
                 }
 
                 repositories {
-                    maven { url '${repo.root.absoluteFile.toURI()}' }
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
                     ${generator.mavenRepositoryBlock}
                 }
             }
@@ -217,7 +217,7 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
                 apply plugin: 'com.netflix.nebula.dependency-recommender'
                 
                 repositories {
-                    maven { url '${repo.root.absoluteFile.toURI()}' }
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
                     ${generator.mavenRepositoryBlock}
                 }
             }

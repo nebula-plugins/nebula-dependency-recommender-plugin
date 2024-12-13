@@ -74,7 +74,7 @@ class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends Inte
                 apply plugin: 'java'
 
                 repositories {
-                    maven { url '${repo.root.absoluteFile.toURI()}' }
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
                     ${generator.mavenRepositoryBlock}
                 }
             }

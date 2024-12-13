@@ -73,7 +73,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationTestK
             apply plugin: 'war'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -118,7 +118,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationTestK
             apply plugin: 'war'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
@@ -146,7 +146,7 @@ class DependencyRecommendationsPluginCoreBomSupportSpec extends IntegrationTestK
             apply plugin: 'war'
 
             repositories {
-                maven { url '${repo.root.absoluteFile.toURI()}' }
+                maven { url = '${repo.root.absoluteFile.toURI()}' }
                 ${generator.mavenRepositoryBlock}
             }
 
