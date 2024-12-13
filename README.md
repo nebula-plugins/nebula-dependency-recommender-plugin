@@ -110,7 +110,7 @@ publishing {
     }
     repositories {
         maven {
-           url "$buildDir/repo" // point this to your destination repository
+           url = "$buildDir/repo" // point this to your destination repository
         }
     }
 }
