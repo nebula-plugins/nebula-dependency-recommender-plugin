@@ -129,7 +129,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                             details.because("Recommending version " + version + " for dependency " + coordinate + " via " + strategyText + "\n" +
                                                     "\twith reasons: " + StringUtils.join(getReasonsRecursive(project), ", "));
                                         } else {
-                                            if (recommendationProviderContainer.isStrictMode()) {
+                                            if (recommendationProviderContainer.getStrictMode()) {
                                                 String errorMessage = "Dependency " + details.getRequested().getGroup() + ":" + details.getRequested().getName() + " omitted version with no recommended version. General causes include a dependency being removed from the recommendation source or not applying a recommendation source to a project that depends on another project using a recommender.";
                                                 project.getLogger().error(errorMessage);
                                                 throw new GradleException(errorMessage);
