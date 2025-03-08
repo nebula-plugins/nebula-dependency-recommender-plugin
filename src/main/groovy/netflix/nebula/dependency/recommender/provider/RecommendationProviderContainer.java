@@ -222,7 +222,12 @@ public class RecommendationProviderContainer {
         this.strategy = strategy;
     }
 
+    @Deprecated
     public Boolean isStrictMode() {
+        return getStrictMode();
+    }
+
+    public Boolean getStrictMode() {
         return strictMode;
     }
 
