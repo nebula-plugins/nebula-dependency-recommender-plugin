@@ -16,6 +16,7 @@
 package netflix.nebula.dependency.recommender.provider;
 
 import groovy.lang.Closure;
+import netflix.nebula.dependency.recommender.ConfigureUtil;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.*;
@@ -23,7 +24,6 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.util.ConfigureUtil;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
