@@ -1,6 +1,7 @@
 package netflix.nebula.dependency.recommender.provider
 
 import groovy.transform.CompileDynamic
+import groovy.xml.XmlSlurper
 import org.gradle.api.Project
 
 class IvyRecommendationProvider extends FileBasedRecommendationProvider {

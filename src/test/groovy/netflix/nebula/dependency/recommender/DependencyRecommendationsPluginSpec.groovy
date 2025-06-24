@@ -304,7 +304,7 @@ class DependencyRecommendationsPluginSpec extends IntegrationSpec  {
             '''.stripIndent()
 
         when:
-        def result = runTasksSuccessfully('dependencies')//, '--configuration', 'compile')
+        def result = runTasksSuccessfully('dependencies', '-Dorg.gradle.configuration-cache=false')//, '--configuration', 'compile')
 
         then:
         result.standardOutput.contains 'test.nebula:foo -> 1.0.0'

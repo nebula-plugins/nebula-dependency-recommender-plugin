@@ -38,7 +38,6 @@ import org.gradle.api.artifacts.ResolvableDependencies;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
-import org.gradle.internal.deprecation.DeprecationLogger;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -101,7 +100,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                             }
 
                             for (Dependency dependency : resolvableDependencies.getDependencies()) {
-                                applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>());
+                                applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>(), project);
 
                                 // if project dependency, pull all first orders and apply recommendations if missing dependency versions
                                 // dependency.getProjectConfiguration().allDependencies iterate and inspect them as well
@@ -160,7 +159,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         return false;
     }
 
-    private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited) {
+    private void applyRecommendationToDependency(final RecommendationStrategyFactory factory, Dependency dependency, List<ProjectDependency> visited, Project rootProject) {
         if (dependency instanceof ExternalModuleDependency) {
             factory.getRecommendationStrategy().inspectDependency(dependency);
         } else if (dependency instanceof ProjectDependency) {
@@ -171,10 +170,11 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 try {
                     ProjectDependency.class.getMethod("getTargetConfiguration");
                     String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
+                    Project dependencyProject = rootProject.findProject(projectDependency.getPath());
+                    if (dependencyProject != null) {
+                        configuration[0] = dependencyProject.getConfigurations().getByName(targetConfiguration);
+                    }
 
-                    DeprecationLogger.whileDisabled(() -> {
-                        configuration[0] = projectDependency.getDependencyProject().getConfigurations().getByName(targetConfiguration);
-                    });
                 } catch (NoSuchMethodException ignore) {
                     try {
                         Method method = ProjectDependency.class.getMethod("getProjectConfiguration");
@@ -183,9 +183,11 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                         throw new RuntimeException("Unable to retrieve configuration for project dependency", e);
                     }
                 }
-                DependencySet dependencies = configuration[0].getAllDependencies();
-                for (Dependency dep : dependencies) {
-                    applyRecommendationToDependency(factory, dep, visited);
+                if (configuration[0] != null) {
+                    DependencySet dependencies = configuration[0].getAllDependencies();
+                    for (Dependency dep : dependencies) {
+                        applyRecommendationToDependency(factory, dep, visited, rootProject);
+                    }
                 }
             }
         }

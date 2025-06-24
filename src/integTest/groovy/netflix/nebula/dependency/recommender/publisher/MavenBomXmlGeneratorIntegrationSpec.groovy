@@ -15,6 +15,7 @@
  */
 package netflix.nebula.dependency.recommender.publisher
 
+import groovy.xml.XmlSlurper
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator

@@ -23,6 +23,7 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.publish.maven.MavenPublication
 
+@CompileDynamic
 class MavenBomXmlGenerator {
     Project project
 
