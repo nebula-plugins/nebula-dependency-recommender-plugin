@@ -20,6 +20,7 @@ import netflix.nebula.dependency.recommender.ConfigureUtil;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.*;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
@@ -271,13 +272,18 @@ public class RecommendationProviderContainer {
         }
 
         @Override
-        Set<File> getFilesOnConfiguration() {
+        protected Map<String, String> getBomRecommendations(Set<String> reasons) {
+            // For core BOM support, we need to create detached configuration with regular dependencies
+            // instead of using the shared service that works with the main configuration
             List<Dependency> rawPomDependencies = new ArrayList<>();
             for(org.gradle.api.artifacts.Dependency dependency: configuration.getDependencies()) {
                 rawPomDependencies.add(project.getDependencies().create(dependency.getGroup() + ":" + dependency.getName() + ":" + dependency.getVersion() + "@pom"));
             }
-            return project.getConfigurations().detachedConfiguration(
-                    rawPomDependencies.toArray(new org.gradle.api.artifacts.Dependency[0])).resolve();
+            Configuration detachedConfig = project.getConfigurations().detachedConfiguration(
+                    rawPomDependencies.toArray(new org.gradle.api.artifacts.Dependency[0]));
+            
+            // Use the build service with cached data only (no resolution during dependency resolution)
+            return bomResolverService.get().getCachedRecommendationsFromConfiguration(detachedConfig, reasons);
         }
     }
 }

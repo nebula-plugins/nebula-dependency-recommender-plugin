@@ -233,4 +233,194 @@ class DependencyRecommendationsPluginMultiprojectSpec extends IntegrationSpec {
         results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo'
         results.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:multiprojectbom:pom:1.0.0'
     }
+
+    def 'recommendation is defined in root and we can see proper reasons in submodule dependency insight in parallel'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'multiprojectbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('example', 'foo', '1.0.0')
+        pom.addManagementDependency('example', 'bar', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def depGraph = new DependencyGraphBuilder()
+                .addModule('example:foo:1.0.0')
+                .addModule('example:bar:1.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(depGraph)
+        generator.generateTestMavenRepo()
+
+        addSubproject('a', '''\
+                apply plugin: 'java'
+                
+                dependencies {
+                    implementation 'example:foo'
+                }
+            '''.stripIndent())
+
+        addSubproject('b', '''\
+                apply plugin: 'java'
+
+                dependencies {
+                    implementation project(':a')
+                }
+            '''.stripIndent())
+
+        buildFile << """\
+            allprojects {
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
+                
+                repositories {
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
+                    ${generator.mavenRepositoryBlock}
+                }
+            }
+
+            dependencyRecommendations {
+                mavenBom module: 'test.nebula.bom:multiprojectbom:1.0.0@pom'
+            }
+            """.stripIndent()
+        when:
+        def results = runTasksSuccessfully(':a:dependencyInsight', '--dependency', 'foo', '--configuration', 'compileClasspath', '--parallel')
+
+        then:
+        results.standardOutput.contains 'Recommending version 1.0.0 for dependency example:foo'
+        results.standardOutput.contains 'nebula.dependency-recommender uses mavenBom: test.nebula.bom:multiprojectbom:pom:1.0.0'
+    }
+
+    def 'different subprojects use different BOMs with different versions of same dependencies'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        
+        // Create BOM for project A with version 1.0.0 of common dependencies
+        def bomA = new Pom('test.nebula.bom', 'projecta-bom', '1.0.0', ArtifactType.POM)
+        bomA.addManagementDependency('commons-logging', 'commons-logging', '1.0.0')
+        bomA.addManagementDependency('commons-lang', 'commons-lang', '2.0.0')
+        bomA.addManagementDependency('junit', 'junit', '4.12')
+        repo.poms.add(bomA)
+        
+        // Create BOM for project B with version 1.1.0 of common dependencies
+        def bomB = new Pom('test.nebula.bom', 'projectb-bom', '1.0.0', ArtifactType.POM)
+        bomB.addManagementDependency('commons-logging', 'commons-logging', '1.1.0')
+        bomB.addManagementDependency('commons-lang', 'commons-lang', '2.1.0')
+        bomB.addManagementDependency('junit', 'junit', '4.13')
+        repo.poms.add(bomB)
+        
+        // Create BOM for project C with version 1.2.0 of common dependencies
+        def bomC = new Pom('test.nebula.bom', 'projectc-bom', '1.0.0', ArtifactType.POM)
+        bomC.addManagementDependency('commons-logging', 'commons-logging', '1.2.0')
+        bomC.addManagementDependency('commons-lang', 'commons-lang', '2.2.0')
+        bomC.addManagementDependency('junit', 'junit', '4.13.2')
+        repo.poms.add(bomC)
+        
+        repo.generate()
+        
+        // Create dependency graph with all versions
+        def depGraph = new DependencyGraphBuilder()
+                .addModule('commons-logging:commons-logging:1.0.0')
+                .addModule('commons-logging:commons-logging:1.1.0')
+                .addModule('commons-logging:commons-logging:1.2.0')
+                .addModule('commons-lang:commons-lang:2.0.0')
+                .addModule('commons-lang:commons-lang:2.1.0')
+                .addModule('commons-lang:commons-lang:2.2.0')
+                .addModule('junit:junit:4.12')
+                .addModule('junit:junit:4.13')
+                .addModule('junit:junit:4.13.2')
+                .build()
+        def generator = new GradleDependencyGenerator(depGraph)
+        generator.generateTestMavenRepo()
+
+        // Create subproject A with its own BOM
+        addSubproject('projecta', '''\
+                apply plugin: 'java'
+                
+                dependencyRecommendations {
+                    mavenBom module: 'test.nebula.bom:projecta-bom:1.0.0@pom'
+                }
+                
+                dependencies {
+                    implementation 'commons-logging:commons-logging'
+                    implementation 'commons-lang:commons-lang'
+                    testImplementation 'junit:junit'
+                }
+            '''.stripIndent())
+
+        // Create subproject B with its own BOM
+        addSubproject('projectb', '''\
+                apply plugin: 'java'
+                
+                dependencyRecommendations {
+                    mavenBom module: 'test.nebula.bom:projectb-bom:1.0.0@pom'
+                }
+                
+                dependencies {
+                    implementation 'commons-logging:commons-logging'
+                    implementation 'commons-lang:commons-lang'
+                    testImplementation 'junit:junit'
+                }
+            '''.stripIndent())
+
+        // Create subproject C with its own BOM
+        addSubproject('projectc', '''\
+                apply plugin: 'java'
+                
+                dependencyRecommendations {
+                    mavenBom module: 'test.nebula.bom:projectc-bom:1.0.0@pom'
+                }
+                
+                dependencies {
+                    implementation 'commons-logging:commons-logging'
+                    implementation 'commons-lang:commons-lang'
+                    testImplementation 'junit:junit'
+                }
+            '''.stripIndent())
+
+        buildFile << """\
+            allprojects {
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
+                
+                repositories {
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
+                    ${generator.mavenRepositoryBlock}
+                }
+            }
+            """.stripIndent()
+
+        when:
+        def resultsA = runTasksSuccessfully(':projecta:dependencies', '--configuration', 'compileClasspath')
+        def resultsB = runTasksSuccessfully(':projectb:dependencies', '--configuration', 'compileClasspath')
+        def resultsC = runTasksSuccessfully(':projectc:dependencies', '--configuration', 'compileClasspath')
+
+        then:
+        // Verify project A gets version 1.0.0 and 2.0.0
+        resultsA.standardOutput.contains('commons-logging:commons-logging -> 1.0.0')
+        resultsA.standardOutput.contains('commons-lang:commons-lang -> 2.0.0')
+        !resultsA.standardOutput.contains('commons-logging:commons-logging -> 1.1.0')
+        !resultsA.standardOutput.contains('commons-logging:commons-logging -> 1.2.0')
+        
+        // Verify project B gets version 1.1.0 and 2.1.0
+        resultsB.standardOutput.contains('commons-logging:commons-logging -> 1.1.0')
+        resultsB.standardOutput.contains('commons-lang:commons-lang -> 2.1.0')
+        !resultsB.standardOutput.contains('commons-logging:commons-logging -> 1.0.0')
+        !resultsB.standardOutput.contains('commons-logging:commons-logging -> 1.2.0')
+        
+        // Verify project C gets version 1.2.0 and 2.2.0
+        resultsC.standardOutput.contains('commons-logging:commons-logging -> 1.2.0')
+        resultsC.standardOutput.contains('commons-lang:commons-lang -> 2.2.0')
+        !resultsC.standardOutput.contains('commons-logging:commons-logging -> 1.0.0')
+        !resultsC.standardOutput.contains('commons-logging:commons-logging -> 1.1.0')
+
+        when: "running with parallel execution to test BOM caching"
+        def parallelResults = runTasksSuccessfully(':projecta:dependencyInsight', '--dependency', 'commons-logging', '--configuration', 'compileClasspath', 
+                                                  ':projectb:dependencyInsight', '--dependency', 'commons-logging', '--configuration', 'compileClasspath',
+                                                  ':projectc:dependencyInsight', '--dependency', 'commons-logging', '--configuration', 'compileClasspath',
+                                                  '--parallel')
+
+        then: "each project should get recommendations from its own BOM"
+        parallelResults.standardOutput.contains('Recommending version 1.0.0 for dependency commons-logging:commons-logging')
+        parallelResults.standardOutput.contains('Recommending version 1.1.0 for dependency commons-logging:commons-logging')
+        parallelResults.standardOutput.contains('Recommending version 1.2.0 for dependency commons-logging:commons-logging')
+        parallelResults.standardOutput.contains('nebula.dependency-recommender uses mavenBom: test.nebula.bom:projecta-bom:pom:1.0.0')
+        parallelResults.standardOutput.contains('nebula.dependency-recommender uses mavenBom: test.nebula.bom:projectb-bom:pom:1.0.0')
+        parallelResults.standardOutput.contains('nebula.dependency-recommender uses mavenBom: test.nebula.bom:projectc-bom:pom:1.0.0')
+    }
 }
