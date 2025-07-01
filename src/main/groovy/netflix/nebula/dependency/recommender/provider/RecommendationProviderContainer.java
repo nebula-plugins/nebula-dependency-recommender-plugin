@@ -19,6 +19,7 @@ import groovy.lang.Closure;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
 import org.gradle.api.*;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.internal.DefaultNamedDomainObjectList;
@@ -270,6 +271,26 @@ public class RecommendationProviderContainer {
             super(project, configName, reasons);
         }
 
+        @Override
+        protected Map<String, String> getBomRecommendations(Set<String> reasons) {
+            // For core BOM support, we need to create detached configuration with regular dependencies
+            // instead of using the shared service that works with the main configuration
+            List<Dependency> rawPomDependencies = new ArrayList<>();
+            for(org.gradle.api.artifacts.Dependency dependency: configuration.getDependencies()) {
+                rawPomDependencies.add(project.getDependencies().create(dependency.getGroup() + ":" + dependency.getName() + ":" + dependency.getVersion() + "@pom"));
+            }
+            Configuration detachedConfig = project.getConfigurations().detachedConfiguration(
+                    rawPomDependencies.toArray(new org.gradle.api.artifacts.Dependency[0]));
+            
+            // Use the build service with cached data only (no resolution during dependency resolution)
+            if (bomResolverService != null) {
+                return bomResolverService.get().getCachedRecommendationsFromConfiguration(detachedConfig, reasons);
+            } else {
+                // Fallback - this shouldn't happen in normal usage but prevents errors
+                throw new RuntimeException("BOM not cached and no build service context available for resolution");
+            }
+        }
+        
         @Override
         Set<File> getFilesOnConfiguration() {
             List<Dependency> rawPomDependencies = new ArrayList<>();
