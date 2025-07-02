@@ -24,7 +24,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.util.ConfigureUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
