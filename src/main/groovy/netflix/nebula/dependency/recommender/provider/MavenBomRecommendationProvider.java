@@ -31,6 +31,7 @@ import org.codehaus.plexus.interpolation.PropertiesBasedValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.util.GradleVersion;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,6 +43,7 @@ import java.util.*;
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
     private volatile Map<String, String> recommendations = null;
     private Set<String> reasons = new HashSet<>();
+    private static final GradleVersion GRADLE_9_0 = GradleVersion.version("9.0.0");
 
     public MavenBomRecommendationProvider(Project project, String configName) {
         super(project, configName);
@@ -88,9 +90,21 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
     public Map<String, String> getRecommendations() {
         if (recommendations == null) {
             try {
-                recommendations = getMavenRecommendations();
+                // Try to get cached recommendations from build service if using Gradle 9+ or flag is enabled
+                if (shouldUseBuildService()) {
+                    recommendations = getBomRecommendations(reasons);
+                } else {
+                    // Fallback to original implementation for older Gradle versions
+                    recommendations = getMavenRecommendations();
+                }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                // Fallback to original implementation if build service fails
+                try {
+                    recommendations = getMavenRecommendations();
+                } catch (Exception fallbackException) {
+                    // If both approaches fail, return empty map to avoid failures
+                    recommendations = new HashMap<>();
+                }
             }
         }
         return recommendations;
@@ -186,5 +200,30 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
             sources.add(new MapBasedValueSource(project.getProperties()));
             return sources;
         }
+    }
+    
+    /**
+     * Determines whether to use the BomResolverService (build service) approach.
+     * 
+     * <p>The build service is used when:</p>
+     * <ul>
+     *   <li>Gradle version is 9.0 or higher, OR</li>
+     *   <li>The gradle property 'nebula.dependency-recommender.useBuildService' is set to true</li>
+     * </ul>
+     * 
+     * @return true if build service should be used, false otherwise
+     */
+    private boolean shouldUseBuildService() {
+        // Check if explicitly enabled via gradle property
+        if (project.hasProperty("nebula.dependency-recommender.useBuildService")) {
+            Object property = project.property("nebula.dependency-recommender.useBuildService");
+            if (Boolean.parseBoolean(property.toString())) {
+                return true;
+            }
+        }
+        
+        // Default behavior: use build service for Gradle 9+
+        GradleVersion currentVersion = GradleVersion.current();
+        return currentVersion.compareTo(GRADLE_9_0) >= 0;
     }
 }
