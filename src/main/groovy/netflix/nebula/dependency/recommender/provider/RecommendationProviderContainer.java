@@ -22,10 +22,8 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.ConfigureByMapAction;
-import org.gradle.api.internal.DefaultNamedDomainObjectList;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.util.ConfigureUtil;
-import org.gradle.util.GradleVersion;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -44,6 +42,7 @@ public class RecommendationProviderContainer {
     private Set<String> excludedConfigurations = new HashSet<>();
     private Set<String> excludedConfigurationPrefixes = new HashSet<>();
     private Set<String> reasons = new HashSet<>();
+    private Boolean eagerlyResolve = true;
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
@@ -235,7 +234,65 @@ public class RecommendationProviderContainer {
     public void setStrictMode(Boolean strict) {
         strictMode = strict;
     }
-    
+
+    /**
+     * Sets whether BOM configurations should be resolved eagerly during the configuration phase.
+     * 
+     * <p>When set to {@code true} (default), BOM configurations will be resolved automatically 
+     * during the {@code afterEvaluate} phase to prevent configuration resolution lock conflicts 
+     * in parallel builds with Gradle 9+.</p>
+     * 
+     * <p>When set to {@code false}, external plugins can take control of BOM resolution timing
+     * by calling {@link netflix.nebula.dependency.recommender.util.BomResolutionUtil#eagerlyResolveBoms} 
+     * manually after modifying BOM configurations.</p>
+     * 
+     * <p><strong>Usage by External Plugins:</strong></p>
+     * <pre>{@code
+     * // Disable automatic eager resolution
+     * dependencyRecommendations {
+     *     setEagerlyResolve(false)
+     *     
+     *     // Add initial BOMs
+     *     mavenBom module: 'com.example:base-bom:1.0.0'
+     * }
+     * 
+     * project.afterEvaluate { p ->
+     *     def container = p.extensions.getByType(RecommendationProviderContainer)
+     *     
+     *     // Add additional BOMs dynamically
+     *     container.mavenBom(module: 'com.example:dynamic-bom:2.0.0')
+     *     
+     *     // Manually trigger resolution
+     *     BomResolutionUtil.eagerlyResolveBoms(p, container, 'nebulaRecommenderBom')
+     * }
+     * }</pre>
+     * 
+     * @param eagerlyResolve {@code true} to enable automatic eager resolution, 
+     *                       {@code false} to disable it and allow manual control
+     * @since 12.7.0
+     * @see netflix.nebula.dependency.recommender.util.BomResolutionUtil#eagerlyResolveBoms
+     */
+    public void setEagerlyResolve(Boolean eagerlyResolve) {
+        this.eagerlyResolve = eagerlyResolve;
+    }
+
+    /**
+     * Returns whether BOM configurations should be resolved eagerly during the configuration phase.
+     * 
+     * <p>This setting controls whether the dependency recommender plugin automatically resolves
+     * BOM configurations during {@code afterEvaluate}, or whether external plugins should
+     * handle resolution timing manually.</p>
+     * 
+     * @return {@code true} if BOMs should be resolved eagerly (default), 
+     *         {@code false} if resolution should be handled manually
+     * @since 12.7.0
+     * @see #setEagerlyResolve(Boolean)
+     * @see netflix.nebula.dependency.recommender.util.BomResolutionUtil#shouldEagerlyResolveBoms
+     */
+    public Boolean shouldEagerlyResolve() {
+        return eagerlyResolve;
+    }
+
     public void excludeConfigurations(String ... names) {
         excludedConfigurations.addAll(Arrays.asList(names));
     }
