@@ -21,6 +21,8 @@ import kotlin.jvm.functions.Function1;
 import netflix.nebula.dependency.recommender.provider.RecommendationProviderContainer;
 import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
+import netflix.nebula.dependency.recommender.service.BomResolverService;
+import netflix.nebula.dependency.recommender.util.BomResolutionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
@@ -38,6 +40,8 @@ import org.gradle.api.artifacts.ResolvableDependencies;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
+import org.gradle.api.provider.Provider;
+import org.gradle.util.GradleVersion;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -45,6 +49,7 @@ import java.util.*;
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
     public static final boolean CORE_BOM_SUPPORT_ENABLED = Boolean.getBoolean("nebula.features.coreBomSupport");
+    private static final GradleVersion GRADLE_9_0 = GradleVersion.version("9.0");
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
     private RecommendationProviderContainer recommendationProviderContainer;
     //TODO: remove this exclusion once https://github.com/gradle/gradle/issues/6750 is resolved
@@ -74,15 +79,19 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         project.afterEvaluate(new Action<Project>() {
             @Override
             public void execute(Project p) {
-                // Eagerly resolve and cache all BOMs after project evaluation
-                eagerlyResolveBoms(p, recommendationProviderContainer);
+                // Eagerly resolve and cache all BOMs if using build service approach
+                if (shouldUseBuildService(p) && BomResolutionUtil.shouldEagerlyResolveBoms(p, recommendationProviderContainer)) {
+                    BomResolutionUtil.eagerlyResolveBoms(p, recommendationProviderContainer, NEBULA_RECOMMENDER_BOM);
+                }
                 
                 p.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, p, recommendationProviderContainer));
                 p.subprojects(new Action<Project>() {
                     @Override
                     public void execute(Project sub) {
-                        // Also eagerly resolve BOMs for subprojects
-                        eagerlyResolveBoms(sub, recommendationProviderContainer);
+                        // Also eagerly resolve BOMs for subprojects if using build service
+                        if (shouldUseBuildService(sub) && BomResolutionUtil.shouldEagerlyResolveBoms(sub, recommendationProviderContainer)) {
+                            BomResolutionUtil.eagerlyResolveBoms(sub, recommendationProviderContainer, NEBULA_RECOMMENDER_BOM);
+                        }
                         sub.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, sub, recommendationProviderContainer));
                     }
                 });
@@ -90,54 +99,16 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         });
     }
     
-    /**
-     * Eagerly resolves BOM configurations during the configuration phase to prevent
-     * configuration resolution lock conflicts in parallel builds.
-     * 
-     * <p>This method is called during {@code afterEvaluate} when exclusive locks are
-     * available. It instructs the {@link BomResolverService} to resolve all BOM
-     * configurations and cache the results for later use during dependency resolution.</p>
-     * 
-     * <p>The eager resolution prevents the need to resolve configurations during the
-     * dependency resolution phase, which would cause {@code IllegalResolutionException}
-     * in parallel builds with Gradle 9+.</p>
-     * 
-     * @param project the Gradle project whose BOM configurations should be resolved
-     * @param container the recommendation provider container to check for additional BOM providers
-     */
-    private void eagerlyResolveBoms(Project project, RecommendationProviderContainer container) {
-        try {
-            // Get the build service
-            org.gradle.api.provider.Provider<netflix.nebula.dependency.recommender.service.BomResolverService> bomResolverService = 
-                project.getGradle().getSharedServices().registerIfAbsent(
-                    "bomResolver", netflix.nebula.dependency.recommender.service.BomResolverService.class, spec -> {}
-                );
-            
-            // Resolve BOMs from the nebulaRecommenderBom configuration
-            bomResolverService.get().eagerlyResolveAndCacheBoms(project, NEBULA_RECOMMENDER_BOM);
-            
-            // Also trigger resolution for maven BOM provider if it exists
-            // This handles mavenBom providers configured in the extension
-            netflix.nebula.dependency.recommender.provider.MavenBomRecommendationProvider mavenBomProvider = container.getMavenBomProvider();
-            if (mavenBomProvider != null) {
-                try {
-                    mavenBomProvider.getVersion("dummy", "dummy");  // Trigger lazy initialization
-                } catch (Exception e) {
-                    // Expected - just needed to trigger BOM resolution
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to eagerly resolve BOMs for project " + project.getPath(), e);
-        }
-    }
 
     private void applyRecommendations(final Project project) {
         // Add eager BOM resolution for regular (non-core) BOM support
         project.afterEvaluate(new Action<Project>() {
             @Override
             public void execute(Project p) {
-                // Eagerly resolve and cache all BOMs after project evaluation
-                eagerlyResolveBoms(p, recommendationProviderContainer);
+                if (shouldUseBuildService(p) && BomResolutionUtil.shouldEagerlyResolveBoms(p, recommendationProviderContainer)) {
+                    // Eagerly resolve and cache all BOMs after project evaluation
+                    BomResolutionUtil.eagerlyResolveBoms(p, recommendationProviderContainer, NEBULA_RECOMMENDER_BOM);
+                }
             }
         });
         
@@ -299,5 +270,61 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         if (project.getParent() != null)
             return getReasonsRecursive(project.getParent());
         return Collections.emptySet();
+    }
+
+    /**
+     * Determines whether to use the BomResolverService (build service) approach.
+     * 
+     * <p>The build service is used when:</p>
+     * <ul>
+     *   <li>Gradle version is 9.0 or higher, OR</li>
+     *   <li>The gradle property 'nebula.dependency-recommender.useBuildService' is set to true</li>
+     * </ul>
+     * 
+     * @param project the Gradle project to check
+     * @return true if build service should be used, false otherwise
+     */
+    private boolean shouldUseBuildService(Project project) {
+        // Check if explicitly enabled via gradle property
+        if (project.hasProperty("nebula.dependency-recommender.useBuildService")) {
+            Object property = project.property("nebula.dependency-recommender.useBuildService");
+            if (Boolean.parseBoolean(property.toString())) {
+                return true;
+            }
+        }
+        
+        // Default behavior: use build service for Gradle 9+
+        GradleVersion currentVersion = GradleVersion.current();
+        return currentVersion.compareTo(GRADLE_9_0) >= 0;
+    }
+    
+    /**
+     * Eagerly resolves BOM configurations during the configuration phase to prevent
+     * configuration resolution lock conflicts in parallel builds.
+     * 
+     * <p>This method delegates to {@link BomResolutionUtil#eagerlyResolveBoms} and is 
+     * provided for backward compatibility and convenience for external plugins.</p>
+     * 
+     * <p><strong>External Plugin Usage:</strong></p>
+     * <pre>{@code
+     * // Get the plugin instance and container
+     * DependencyRecommendationsPlugin plugin = project.plugins.getPlugin(DependencyRecommendationsPlugin)
+     * RecommendationProviderContainer container = project.extensions.getByType(RecommendationProviderContainer)
+     * 
+     * // Disable automatic resolution and add BOMs
+     * container.setEagerlyResolve(false)
+     * container.mavenBom(module: 'com.example:custom-bom:1.0.0')
+     * 
+     * // Manually trigger resolution
+     * plugin.eagerlyResolveBoms(project, container)
+     * }</pre>
+     * 
+     * @param project the Gradle project whose BOM configurations should be resolved
+     * @param container the recommendation provider container to check for additional BOM providers
+     * @since 12.7.0
+     * @see BomResolutionUtil#eagerlyResolveBoms(Project, RecommendationProviderContainer, String)
+     */
+    public void eagerlyResolveBoms(Project project, RecommendationProviderContainer container) {
+        BomResolutionUtil.eagerlyResolveBoms(project, container, NEBULA_RECOMMENDER_BOM);
     }
 }
