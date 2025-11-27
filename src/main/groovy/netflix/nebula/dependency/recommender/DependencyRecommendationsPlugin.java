@@ -45,11 +45,13 @@ import org.gradle.util.GradleVersion;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DependencyRecommendationsPlugin implements Plugin<Project> {
     public static final String NEBULA_RECOMMENDER_BOM = "nebulaRecommenderBom";
     public static final boolean CORE_BOM_SUPPORT_ENABLED = Boolean.getBoolean("nebula.features.coreBomSupport");
     private static final GradleVersion GRADLE_9_0 = GradleVersion.version("9.0");
+    private static final AtomicInteger COPY_COUNT = new AtomicInteger();
     private Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
     private RecommendationProviderContainer recommendationProviderContainer;
     //TODO: remove this exclusion once https://github.com/gradle/gradle/issues/6750 is resolved
@@ -84,7 +86,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     BomResolutionUtil.eagerlyResolveBoms(p, recommendationProviderContainer, NEBULA_RECOMMENDER_BOM);
                 }
                 
-                p.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, p, recommendationProviderContainer));
+                p.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, p, recommendationProviderContainer, COPY_COUNT));
                 p.subprojects(new Action<Project>() {
                     @Override
                     public void execute(Project sub) {
@@ -92,7 +94,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                         if (shouldUseBuildService(sub) && BomResolutionUtil.shouldEagerlyResolveBoms(sub, recommendationProviderContainer)) {
                             BomResolutionUtil.eagerlyResolveBoms(sub, recommendationProviderContainer, NEBULA_RECOMMENDER_BOM);
                         }
-                        sub.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, sub, recommendationProviderContainer));
+                        sub.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, sub, recommendationProviderContainer, COPY_COUNT));
                     }
                 });
             }

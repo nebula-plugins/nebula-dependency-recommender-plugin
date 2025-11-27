@@ -85,4 +85,41 @@ class DependencyRecommendationsPluginMultiprojectCoreBomSupportSpec extends Inte
         then:
         results.output.contains("+--- test.nebula:foo -> 1.0.0")
     }
+
+    def 'can use recommender applied to multiple projects'() {
+        def a = addSubproject('a', '''\
+                dependencies {
+                    implementation 'test.nebula:foo'
+                }
+            '''.stripIndent())
+        writeHelloWorld('a', a)
+        def b = addSubproject('b', '''\
+                dependencies {
+                    implementation project(':a')
+                }
+            '''.stripIndent())
+        writeHelloWorld('b', b)
+        buildFile << """\
+            allprojects {
+                apply plugin: 'com.netflix.nebula.dependency-recommender'
+            }
+            dependencyRecommendations {
+                mavenBom module: 'test.nebula.bom:testbom:latest.release'
+            }
+
+            allprojects {
+                apply plugin: 'java'
+
+                repositories {
+                    maven { url = '${repo.root.absoluteFile.toURI()}' }
+                    ${generator.mavenRepositoryBlock}
+                }
+            }
+            """.stripIndent()
+        when:
+        def results = runTasks(':a:dependencies', '--configuration', 'compileClasspath')
+
+        then:
+        results.output.contains("+--- test.nebula:foo -> 1.0.0")
+    }
 }

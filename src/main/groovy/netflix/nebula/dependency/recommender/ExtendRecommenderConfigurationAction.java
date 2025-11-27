@@ -24,13 +24,18 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
     private final Configuration bom;
     private final Project project;
     private final RecommendationProviderContainer container;
+    private final AtomicInteger copyCount;
 
-    private final AtomicInteger copyCount = new AtomicInteger();
-
-    public ExtendRecommenderConfigurationAction(Configuration bom, Project project, RecommendationProviderContainer container) {
+    public ExtendRecommenderConfigurationAction(Configuration bom, Project project, RecommendationProviderContainer container, AtomicInteger copyCount) {
         this.bom = bom;
         this.project = project;
         this.container = container;
+        this.copyCount = copyCount;
+    }
+
+
+    public ExtendRecommenderConfigurationAction(Configuration bom, Project project, RecommendationProviderContainer container) {
+        this(bom, project, container, new AtomicInteger());
     }
 
     @Override
