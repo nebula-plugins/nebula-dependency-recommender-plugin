@@ -40,7 +40,7 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
 
     @Override
     public void execute(Configuration configuration) {
-        if (!isClasspathConfiguration(configuration) || container.getExcludedConfigurations().contains(configuration.getName()) || isCopyOfBomConfiguration(configuration)) {
+        if (!isClasspathConfiguration(configuration) || container.getExcludedConfigurations().get().contains(configuration.getName()) || isCopyOfBomConfiguration(configuration)) {
             return;
         }
 
@@ -98,8 +98,14 @@ public class ExtendRecommenderConfigurationAction implements Action<Configuratio
 
     private String getNameWithCopySuffix() {
         int count = this.copyCount.incrementAndGet();
-        String copyName = bom.getName() + "Copy";
-        return count == 1 ? copyName : copyName + count;
+        // Include project path to ensure uniqueness across composite builds and subprojects
+        // Replace colons with underscores to avoid configuration naming issues
+        String projectPathSuffix = project.getPath().replace(":", "_");
+        if (projectPathSuffix.isEmpty() || projectPathSuffix.equals("_")) {
+            projectPathSuffix = "root";
+        }
+        String copyName = bom.getName() + "Copy_" + projectPathSuffix;
+        return count == 1 ? copyName : copyName + "_" + count;
     }
 
     //we want to apply recommendation only into final resolvable configurations like `compileClasspath` or `runtimeClasspath` across all source sets.
