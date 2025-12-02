@@ -21,7 +21,7 @@ public class RecommendationStrategyFactory {
         if(recommendationStrategy == null) {
             try {
                 RecommendationProviderContainer recommendationProviderContainer = project.getExtensions().findByType(RecommendationProviderContainer.class);
-                recommendationStrategy = Objects.requireNonNull(recommendationProviderContainer).getStrategy().getStrategyClass().newInstance();
+                recommendationStrategy = Objects.requireNonNull(recommendationProviderContainer).getStrategy().get().getStrategyClass().newInstance();
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }

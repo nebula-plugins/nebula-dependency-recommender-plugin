@@ -24,6 +24,8 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.SetProperty;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -36,13 +38,13 @@ public class RecommendationProviderContainer {
 
     private Project project;
     private NamedDomainObjectList<RecommendationProvider> providers;
-    private RecommendationStrategies strategy = RecommendationStrategies.ConflictResolved;
+    private final Property<RecommendationStrategies> strategy;
     private MavenBomRecommendationProvider mavenBomProvider;
-    private Boolean strictMode = false;
-    private Set<String> excludedConfigurations = new HashSet<>();
-    private Set<String> excludedConfigurationPrefixes = new HashSet<>();
-    private Set<String> reasons = new HashSet<>();
-    private Boolean eagerlyResolve = true;
+    private final Property<Boolean> strictMode;
+    private final SetProperty<String> excludedConfigurations;
+    private final SetProperty<String> excludedConfigurationPrefixes;
+    private Set<String> reasons = new HashSet<>(); // Keep as regular Set - it's an output/result collection
+    private final Property<Boolean> eagerlyResolve;
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
@@ -51,6 +53,20 @@ public class RecommendationProviderContainer {
     public RecommendationProviderContainer(Project project) {
         createList(project);
         this.project = project;
+
+        // Initialize properties using ObjectFactory for proper Gradle integration
+        ObjectFactory objects = project.getObjects();
+        this.strategy = objects.property(RecommendationStrategies.class)
+                .convention(RecommendationStrategies.ConflictResolved);
+        this.strictMode = objects.property(Boolean.class)
+                .convention(false);
+        this.excludedConfigurations = objects.setProperty(String.class)
+                .convention(new HashSet<>());
+        this.excludedConfigurationPrefixes = objects.setProperty(String.class)
+                .convention(new HashSet<>());
+        this.eagerlyResolve = objects.property(Boolean.class)
+                .convention(true);
+
         this.mavenBomProvider = getMavenBomRecommendationProvider();
         providers.add(this.mavenBomProvider);
     }
@@ -214,83 +230,71 @@ public class RecommendationProviderContainer {
         return null;
     }
 
-    public RecommendationStrategies getStrategy() {
+    public Property<RecommendationStrategies> getStrategy() {
         return strategy;
     }
 
-    public void setStrategy(RecommendationStrategies strategy) {
-        this.strategy = strategy;
-    }
-
+    /**
+     * @deprecated Use {@link #getStrategy()}.set() instead
+     */
     @Deprecated
-    public Boolean isStrictMode() {
-        return getStrictMode();
+    public void setStrategy(RecommendationStrategies value) {
+        strategy.set(value);
     }
 
-    public Boolean getStrictMode() {
+    public Property<Boolean> getStrictMode() {
         return strictMode;
     }
 
-    public void setStrictMode(Boolean strict) {
-        strictMode = strict;
+    /**
+     * @deprecated Use {@link #getStrictMode()}.set() instead
+     */
+    @Deprecated
+    public void setStrictMode(Boolean value) {
+        strictMode.set(value);
     }
 
     /**
-     * Sets whether BOM configurations should be resolved eagerly during the configuration phase.
-     * 
-     * <p>When set to {@code true} (default), BOM configurations will be resolved automatically 
-     * during the {@code afterEvaluate} phase to prevent configuration resolution lock conflicts 
+     * Returns the Property controlling whether BOM configurations should be resolved eagerly.
+     *
+     * <p>When set to {@code true} (default), BOM configurations will be resolved automatically
+     * during the {@code afterEvaluate} phase to prevent configuration resolution lock conflicts
      * in parallel builds with Gradle 9+.</p>
-     * 
+     *
      * <p>When set to {@code false}, external plugins can take control of BOM resolution timing
-     * by calling {@link netflix.nebula.dependency.recommender.util.BomResolutionUtil#eagerlyResolveBoms} 
+     * by calling {@link netflix.nebula.dependency.recommender.util.BomResolutionUtil#eagerlyResolveBoms}
      * manually after modifying BOM configurations.</p>
-     * 
-     * <p><strong>Usage by External Plugins:</strong></p>
-     * <pre>{@code
-     * // Disable automatic eager resolution
-     * dependencyRecommendations {
-     *     setEagerlyResolve(false)
-     *     
-     *     // Add initial BOMs
-     *     mavenBom module: 'com.example:base-bom:1.0.0'
-     * }
-     * 
-     * project.afterEvaluate { p ->
-     *     def container = p.extensions.getByType(RecommendationProviderContainer)
-     *     
-     *     // Add additional BOMs dynamically
-     *     container.mavenBom(module: 'com.example:dynamic-bom:2.0.0')
-     *     
-     *     // Manually trigger resolution
-     *     BomResolutionUtil.eagerlyResolveBoms(p, container, 'nebulaRecommenderBom')
-     * }
-     * }</pre>
-     * 
-     * @param eagerlyResolve {@code true} to enable automatic eager resolution, 
-     *                       {@code false} to disable it and allow manual control
+     *
+     * @return Property containing the eagerly resolve flag
      * @since 12.7.0
      * @see netflix.nebula.dependency.recommender.util.BomResolutionUtil#eagerlyResolveBoms
      */
-    public void setEagerlyResolve(Boolean eagerlyResolve) {
-        this.eagerlyResolve = eagerlyResolve;
+    public Property<Boolean> getEagerlyResolve() {
+        return eagerlyResolve;
     }
 
     /**
-     * Returns whether BOM configurations should be resolved eagerly during the configuration phase.
-     * 
-     * <p>This setting controls whether the dependency recommender plugin automatically resolves
-     * BOM configurations during {@code afterEvaluate}, or whether external plugins should
-     * handle resolution timing manually.</p>
-     * 
-     * @return {@code true} if BOMs should be resolved eagerly (default), 
+     * Convenience method to check if BOMs should be resolved eagerly.
+     *
+     * @return {@code true} if BOMs should be resolved eagerly (default),
      *         {@code false} if resolution should be handled manually
      * @since 12.7.0
-     * @see #setEagerlyResolve(Boolean)
-     * @see netflix.nebula.dependency.recommender.util.BomResolutionUtil#shouldEagerlyResolveBoms
      */
     public Boolean shouldEagerlyResolve() {
-        return eagerlyResolve;
+        return eagerlyResolve.get();
+    }
+
+    /**
+     * Convenience method to set whether BOMs should be resolved eagerly.
+     *
+     * @param value {@code true} to enable automatic eager resolution,
+     *              {@code false} to disable it and allow manual control
+     * @since 12.7.0
+     * @deprecated Use {@link #getEagerlyResolve()}.set() instead
+     */
+    @Deprecated
+    public void setEagerlyResolve(Boolean value) {
+        eagerlyResolve.set(value);
     }
 
     public void excludeConfigurations(String ... names) {
@@ -301,11 +305,11 @@ public class RecommendationProviderContainer {
         excludedConfigurationPrefixes.addAll(Arrays.asList(names));
     }
 
-    public Set<String> getExcludedConfigurations() {
+    public SetProperty<String> getExcludedConfigurations() {
         return excludedConfigurations;
     }
 
-    public Set<String> getExcludedConfigurationPrefixes() {
+    public SetProperty<String> getExcludedConfigurationPrefixes() {
         return excludedConfigurationPrefixes;
     }
 
