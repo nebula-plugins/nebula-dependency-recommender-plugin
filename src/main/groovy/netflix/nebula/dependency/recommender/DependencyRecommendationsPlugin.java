@@ -43,7 +43,6 @@ import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.provider.Provider;
 import org.gradle.util.GradleVersion;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -129,9 +128,6 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
                             for (Dependency dependency : resolvableDependencies.getDependencies()) {
                                 applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>(), project);
-
-                                // if project dependency, pull all first orders and apply recommendations if missing dependency versions
-                                // dependency.getProjectConfiguration().allDependencies iterate and inspect them as well
                             }
 
                             conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
@@ -156,7 +152,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                             details.because("Recommending version " + version + " for dependency " + coordinate + " via " + strategyText + "\n" +
                                                     "\twith reasons: " + StringUtils.join(getReasonsRecursive(project), ", "));
                                         } else {
-                                            if (recommendationProviderContainer.getStrictMode()) {
+                                            if (recommendationProviderContainer.getStrictMode().get()) {
                                                 String errorMessage = "Dependency " + details.getRequested().getGroup() + ":" + details.getRequested().getName() + " omitted version with no recommended version. General causes include a dependency being removed from the recommendation source or not applying a recommendation source to a project that depends on another project using a recommender.";
                                                 project.getLogger().error(errorMessage);
                                                 throw new GradleException(errorMessage);
@@ -174,11 +170,11 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     }
 
     private boolean isExcludedConfiguration(String confName) {
-        if (recommendationProviderContainer.getExcludedConfigurations().contains(confName)) {
+        if (recommendationProviderContainer.getExcludedConfigurations().get().contains(confName)) {
             return true;
         }
 
-        for (String prefix : recommendationProviderContainer.getExcludedConfigurationPrefixes()) {
+        for (String prefix : recommendationProviderContainer.getExcludedConfigurationPrefixes().get()) {
             if (confName.startsWith(prefix)) {
                 return true;
             }
@@ -194,25 +190,11 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
             ProjectDependency projectDependency = (ProjectDependency) dependency;
             if (!visited.contains(projectDependency)) {
                 visited.add(projectDependency);
-                final Configuration[] configuration = new Configuration[1];
-                try {
-                    ProjectDependency.class.getMethod("getTargetConfiguration");
-                    String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
-                    Project dependencyProject = rootProject.findProject(projectDependency.getPath());
-                    if (dependencyProject != null) {
-                        configuration[0] = dependencyProject.getConfigurations().getByName(targetConfiguration);
-                    }
-
-                } catch (NoSuchMethodException ignore) {
-                    try {
-                        Method method = ProjectDependency.class.getMethod("getProjectConfiguration");
-                        configuration[0] = (Configuration) method.invoke(dependency);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Unable to retrieve configuration for project dependency", e);
-                    }
-                }
-                if (configuration[0] != null) {
-                    DependencySet dependencies = configuration[0].getAllDependencies();
+                String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
+                Project dependencyProject = rootProject.findProject(projectDependency.getPath());
+                if (dependencyProject != null) {
+                    Configuration configuration = dependencyProject.getConfigurations().getByName(targetConfiguration);
+                    DependencySet dependencies = configuration.getAllDependencies();
                     for (Dependency dep : dependencies) {
                         applyRecommendationToDependency(factory, dep, visited, rootProject);
                     }
