@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '22.0.2'
+    id 'com.netflix.nebula.plugin-plugin' version '25.+'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
@@ -35,6 +35,7 @@ dependencies {
     testImplementation ('org.xmlunit:xmlunit-core:2.6.0') {
         exclude module: 'hamcrest-core'
     }
+    testImplementation("org.spockframework:spock-junit4:2.4-groovy-4.0")
 }
 
 gradlePlugin {
@@ -45,6 +46,11 @@ gradlePlugin {
             description = project.description
             implementationClass = 'netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin'
             tags.set(['nebula', 'dependency', 'dependencies', 'recommender', 'recommend'])
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }
