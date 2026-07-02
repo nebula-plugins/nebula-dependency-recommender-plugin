@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '22.0.2'
+    id 'com.netflix.nebula.plugin-plugin'
+    id "org.jetbrains.kotlin.jvm" version '2.2.0'
 }
 
 description = 'Allows projects to leave off version numbers in dependencies section and have versions recommended by other sources'
@@ -35,8 +36,22 @@ dependencies {
     testImplementation ('org.xmlunit:xmlunit-core:2.6.0') {
         exclude module: 'hamcrest-core'
     }
+    testImplementation("com.netflix.nebula:nebula-test:latest.release")
+    testImplementation("org.spockframework:spock-junit4:2.4-groovy-4.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-stdlib")
 }
-
+testing {
+    suites {
+        named("test", JvmTestSuite) {
+            useJUnitJupiter()
+            targets.all {
+                testTask.configure {
+                    maxParallelForks = 4
+                }
+            }
+        }
+    }
+}
 gradlePlugin {
     plugins {
         dependencyRecommender {
@@ -65,4 +80,9 @@ tasks.withType(Test).configureEach {
 
         ]
     }
+}
+tasks.wrapper {
+    distributionType = Wrapper.DistributionType.ALL // ALL helps when debugging gradle plugins
+    gradleVersion = "9.6.1"
+    distributionSha256Sum = "61ba77b3ff7167e60962763eb4bae79db7120c189b9544358d0ade3c1e712a83"
 }

@@ -148,7 +148,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                         if (strategy.recommendVersion(details, version)) {
                                             String coordinate = requested.getGroup() + ":" + requested.getName();
                                             String strategyText = whichStrategy(strategy);
-                                            logger.debug("Recommending version " + version + " for dependency " + coordinate);
+                                            logger.info("Recommending version " + version + " for dependency " + coordinate);
                                             details.because("Recommending version " + version + " for dependency " + coordinate + " via " + strategyText + "\n" +
                                                     "\twith reasons: " + StringUtils.join(getReasonsRecursive(project), ", "));
                                         } else {
@@ -215,7 +215,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
 
     protected void enhanceDependenciesWithRecommender(Project project) {
         RecommendationResolver resolver = new RecommendationResolver(project);
-        Objects.requireNonNull(project.getExtensions().findByType(ExtraPropertiesExtension.class)).set("recommend",
+        project.getExtensions().getByType(ExtraPropertiesExtension.class).set("recommend",
                 new MethodClosure(resolver, "recommend"));
     }
 
@@ -231,7 +231,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * @return the recommended version or <code>null</code>
      */
     public String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
-        String version = Objects.requireNonNull(project.getExtensions().findByType(RecommendationProviderContainer.class))
+        String version = project.getExtensions().getByType(RecommendationProviderContainer.class)
                 .getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
         if (version != null)
             return version;
@@ -247,7 +247,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * @return the recommended version or <code>null</code>
      */
     public Set<String> getReasonsRecursive(Project project) {
-        Set<String> reasons = Objects.requireNonNull(project.getExtensions().findByType(RecommendationProviderContainer.class))
+        Set<String> reasons = project.getExtensions().getByType(RecommendationProviderContainer.class)
                 .getReasons();
         if (! reasons.isEmpty())
             return reasons;
