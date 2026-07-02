@@ -26,8 +26,6 @@ import org.apache.maven.model.path.DefaultUrlNormalizer;
 import org.apache.maven.model.resolution.InvalidRepositoryException;
 import org.apache.maven.model.resolution.ModelResolver;
 import org.apache.maven.model.resolution.UnresolvableModelException;
-import org.codehaus.plexus.interpolation.MapBasedValueSource;
-import org.codehaus.plexus.interpolation.PropertiesBasedValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -414,8 +412,8 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
         public List<ValueSource> createValueSources(Model model, File projectDir, ModelBuildingRequest request, ModelProblemCollector collector) {
             List<ValueSource> sources = new ArrayList<>();
             sources.addAll(super.createValueSources(model, projectDir, request, collector));
-            sources.add(new PropertiesBasedValueSource(System.getProperties()));
-            sources.add(new MapBasedValueSource(project.getProperties()));
+            sources.add(new SystemPropertiesValueSource(project.getProviders()));
+            sources.add(new ProjectPropertiesValueSource(project.getProviders()));
             return sources;
         }
     }
