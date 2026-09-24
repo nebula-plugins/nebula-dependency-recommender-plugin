@@ -227,7 +227,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     }
 
     protected void enhancePublicationsWithBomProducer(Project project) {
-        project.getExtensions().create("nebulaDependencyManagement", MavenBomXmlGenerator.class, project);
+        project.getExtensions().create("nebulaDependencyManagement", MavenBomXmlGenerator.class);
     }
 
     /**
