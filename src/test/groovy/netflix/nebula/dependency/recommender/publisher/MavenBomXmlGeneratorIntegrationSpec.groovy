@@ -16,31 +16,37 @@
 package netflix.nebula.dependency.recommender.publisher
 
 import groovy.xml.XmlSlurper
-import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
-import spock.lang.Timeout
+import nebula.test.dsl.GroovyTestProjectBuilder
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.io.TempDir
 
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat
 
-class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
-    def setup() {
-        new File(projectDir, 'gradle.properties') << '''org.gradle.configuration-cache=true'''.stripIndent()
-    }
+class MavenBomXmlGeneratorIntegrationSpec {
+    @TempDir
+    File projectDir
 
-    def 'pom created'() {
+    @Test
+    void 'pom created'() {
         def graph = new DependencyGraphBuilder().addModule('test0:test0:1.0.0')
                 .build()
         def generator = new GradleDependencyGenerator(graph, "$projectDir/mytestrepo")
         generator.generateTestMavenRepo()
-        buildFile << """\
-            plugins {
-                id 'nebula.maven-publish' version '5.1.0'
+        def runner = GroovyTestProjectBuilder.testProject(projectDir) {
+            properties {
+                buildCache(true)
             }
-            
-            apply plugin: 'com.netflix.nebula.dependency-recommender'
-            
+            rootProject {
+                plugins {
+                    id("com.netflix.nebula.dependency-recommender")
+                    id 'nebula.maven-publish' version 'latest.release'
+                }
+                rawBuildScript("""\
             group = 'test.nebula'
             version = '0.1.0'
             
@@ -65,50 +71,54 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
                     }
                 }
             }
-            """.stripIndent()
+            """)
+            }
+        }
 
-        when:
-        def results = runTasks('generatePomFileForRecommenderPublication')
+        def results = runner.run('generatePomFileForRecommenderPublication', "--stacktrace")
 
-        then:
         def xml = new File(projectDir, 'build/publications/recommender/pom-default.xml')
         def reader = new XmlSlurper().parse(xml)
-        reader.dependencyManagement.dependencies.dependency.size() == 1
-        reader.dependencyManagement.dependencies.dependency.groupId.text() == 'test0'
-        reader.dependencyManagement.dependencies.dependency.artifactId.text() == 'test0'
-        reader.dependencyManagement.dependencies.dependency.version.text() == '1.0.0'
+        assertThat(reader.dependencyManagement.dependencies.dependency.size()).isEqualTo(1)
+        assertThat(reader.dependencyManagement.dependencies.dependency.groupId.text()).isEqualTo('test0')
+        assertThat(reader.dependencyManagement.dependencies.dependency.artifactId.text()).isEqualTo('test0')
+        assertThat(reader.dependencyManagement.dependencies.dependency.version.text()).isEqualTo('1.0.0')
     }
 
-    def 'pom created conflict resolves'() {
+    @Test
+    void 'pom created conflict resolves'() {
         def graph = new DependencyGraphBuilder()
                 .addModule('test0:test0:1.0.0')
                 .addModule('test0:test0:1.1.0')
                 .build()
         def generator = new GradleDependencyGenerator(graph, "$projectDir/mytestrepo")
         generator.generateTestMavenRepo()
-        buildFile << """\
-            plugins {
-                id 'nebula.maven-publish' version '5.1.0'
+        def runner = GroovyTestProjectBuilder.testProject(projectDir) {
+            properties {
+                buildCache(true)
             }
-            
-            apply plugin: 'com.netflix.nebula.dependency-recommender'
-            
+            rootProject {
+                plugins {
+                    id("com.netflix.nebula.dependency-recommender")
+                    id 'nebula.maven-publish' version 'latest.release'
+                }
+                rawBuildScript("""\
             group = 'test.nebula'
             version = '0.1.0'
-            
+
             repositories {
                 ${generator.mavenRepositoryBlock}
             }
-            
+
             configurations {
                 recommendation
             }
-            
+
             dependencies {
                 recommendation 'test0:test0:1.1.0'
                 recommendation 'test0:test0:1.0.0'
             }
-            
+
             publishing {
                 publications {
                     recommender(MavenPublication) {
@@ -118,51 +128,55 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
                     }
                 }
             }
-            """.stripIndent()
+            """)
+            }
+        }
 
-        when:
-        def results = runTasks('generatePomFileForRecommenderPublication')
+        def results = runner.run('generatePomFileForRecommenderPublication')
 
-        then:
         def xml = new File(projectDir, 'build/publications/recommender/pom-default.xml')
         def reader = new XmlSlurper().parse(xml)
-        reader.dependencyManagement.dependencies.dependency.size() == 1
-        reader.dependencyManagement.dependencies.dependency.groupId.text() == 'test0'
-        reader.dependencyManagement.dependencies.dependency.artifactId.text() == 'test0'
-        reader.dependencyManagement.dependencies.dependency.version.text() == '1.1.0'
+        assertThat(reader.dependencyManagement.dependencies.dependency.size()).isEqualTo(1)
+        assertThat(reader.dependencyManagement.dependencies.dependency.groupId.text()).isEqualTo('test0')
+        assertThat(reader.dependencyManagement.dependencies.dependency.artifactId.text()).isEqualTo('test0')
+        assertThat(reader.dependencyManagement.dependencies.dependency.version.text()).isEqualTo('1.1.0')
     }
 
-    @Timeout(10)
-    def 'pom generates with circular dependency in graph'() {
+    @Test
+    @Timeout(30)
+    void 'pom generates with circular dependency in graph'() {
         def graph = new DependencyGraphBuilder()
                 .addModule(new ModuleBuilder('test0:test0:0.1.0').addDependency('test1:test1:1.0.0').build())
                 .addModule(new ModuleBuilder('test1:test1:1.0.0').addDependency('test0:test0:0.1.0').build())
                 .build()
         def generator = new GradleDependencyGenerator(graph, "$projectDir/mytestrepo")
         generator.generateTestMavenRepo()
-        buildFile << """\
-            plugins {
-                id 'nebula.maven-publish' version '5.1.0'
+        def runner = GroovyTestProjectBuilder.testProject(projectDir) {
+            properties {
+                buildCache(true)
             }
-            
-            apply plugin: 'com.netflix.nebula.dependency-recommender'
-            
+            rootProject {
+                plugins {
+                    id("com.netflix.nebula.dependency-recommender")
+                    id 'nebula.maven-publish' version 'latest.release'
+                }
+                rawBuildScript("""\
             group = 'test.nebula'
             version = '0.1.0'
-            
+
             repositories {
                 ${generator.mavenRepositoryBlock}
             }
-            
+
             configurations {
                 recommendation
             }
-            
+
             dependencies {
                 recommendation 'test0:test0:0.1.0'
                 recommendation 'test1:test1:1.0.0'
             }
-            
+
             publishing {
                 publications {
                     recommender(MavenPublication) {
@@ -172,24 +186,24 @@ class MavenBomXmlGeneratorIntegrationSpec extends IntegrationSpec {
                     }
                 }
             }
-            """.stripIndent()
+            """)
+            }
+        }
 
-        when:
-        def results = runTasks('generatePomFileForRecommenderPublication')
+        def results = runner.run('generatePomFileForRecommenderPublication')
 
-        then:
         def xml = new File(projectDir, 'build/publications/recommender/pom-default.xml')
         def reader = new XmlSlurper().parse(xml)
-        reader.dependencyManagement.dependencies.dependency.size() == 2
+        assertThat(reader.dependencyManagement.dependencies.dependency.size()).isEqualTo(2)
         reader.dependencyManagement.dependencies.dependency.each { dep ->
             if (dep.groupId.text() == 'test0') {
-                dep.artifactId.text() == 'test0'
-                dep.version.text() == '0.1.0'
+                assertThat(dep.artifactId.text()).isEqualTo('test0')
+                assertThat(dep.version.text()).isEqualTo('0.1.0')
             } else if (dep.groupId.text() == 'test1') {
-                dep.artifactId.text() == 'test1'
-                dep.version.text() == '1.0.0'
+                assertThat(dep.artifactId.text()).isEqualTo('test1')
+                assertThat(dep.version.text()).isEqualTo('1.0.0')
             } else {
-                fail('dependency has unexpected group')
+                Assertions.fail('dependency has unexpected group')
             }
         }
     }

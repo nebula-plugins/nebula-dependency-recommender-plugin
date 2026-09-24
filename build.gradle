@@ -53,7 +53,7 @@ testing {
 }
 gradlePlugin {
     plugins {
-        dependencyRecommender {
+        create("com.netflix.nebula.dependency-recommender") {
             id = 'com.netflix.nebula.dependency-recommender'
             displayName = 'Nebula Dependency Recommender'
             description = project.description

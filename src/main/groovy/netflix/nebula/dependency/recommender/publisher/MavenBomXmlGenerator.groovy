@@ -25,11 +25,6 @@ import org.gradle.api.publish.maven.MavenPublication
 
 @CompileDynamic
 class MavenBomXmlGenerator {
-    Project project
-
-    MavenBomXmlGenerator(Project project) {
-        this.project = project
-    }
 
     void fromConfigurations(Closure configurationsClosure) {
         MavenPublication pub = getMavenPublication(configurationsClosure)
