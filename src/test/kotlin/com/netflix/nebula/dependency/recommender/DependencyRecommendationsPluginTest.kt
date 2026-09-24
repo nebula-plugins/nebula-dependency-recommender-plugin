@@ -2,6 +2,7 @@ package com.netflix.nebula.dependency.recommender
 
 import nebula.test.dsl.*
 import nebula.test.dsl.TestKitAssertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -63,7 +64,9 @@ class DependencyRecommendationsPluginTest {
                     maven(repo.toURI().toURL().toExternalForm())
                     mavenCentral()
                 }
-                dependencies("""implementation("commons-configuration:commons-configuration")""")
+                dependencies{
+                    implementation("commons-configuration:commons-configuration")
+                }
                 rawBuildScript(
                     """
 dependencyRecommendations {
@@ -80,5 +83,35 @@ dependencyRecommendations {
         assertThat(result).hasNoDeprecationWarnings()
         assertThat(result.output)
             .contains("commons-configuration:commons-configuration -> 1.10")
+    }
+
+    @Test
+    fun `test variant matching`() {
+        val runner = testProject(projectDir, BuildscriptLanguage.GROOVY) {
+            properties {
+                buildCache(true)
+                configurationCache(true)
+            }
+            subProject("sub1") {
+                plugins {
+                    id("java-library")
+                    id("com.netflix.nebula.dependency-recommender")
+                }
+            }
+            subProject("sub2") {
+                plugins{
+                    id("java-library")
+                }
+                dependencies {
+                    implementation(project(":sub1"))
+                }
+            }
+        }
+        val result = runner.run("sub2:dependencyInsight",
+            "--configuration", "compileClasspath",
+            "--dependency", "sub1")
+        assertThat(result).hasNoDeprecationWarnings()
+        assertThat(result.output)
+            .contains("Variant apiElements:")
     }
 }

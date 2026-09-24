@@ -61,10 +61,11 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     project.getObjects().named(Usage.class, Usage.JAVA_API));
             c.getAttributes().attribute(
                     LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                    project.getObjects().named(LibraryElements.class, LibraryElements.CLASSES_AND_RESOURCES));
+                    project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
             c.getAttributes().attribute(
                     Category.CATEGORY_ATTRIBUTE,
                     project.getObjects().named(Category.class, Category.LIBRARY));
+            c.setCanBeConsumed(false);
         });
         recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
 
