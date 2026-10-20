@@ -107,6 +107,60 @@ dependencies {
     }
 
     @Test
+    void 'resolves a BOM published as a Gradle platform'() {
+        def versionDir = new File(repoDir, 'test/nebula/bom/platform/1.0')
+        assert versionDir.mkdirs()
+        new File(versionDir, 'platform-1.0.module').text = '''
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "test.nebula.bom",
+    "module": "platform",
+    "version": "1.0"
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "platform",
+        "org.gradle.usage": "java-api"
+      }
+    }
+  ]
+}
+'''
+
+        def runner = GroovyTestProjectBuilder.testProject(projectDir) {
+            rootProject {
+                plugins {
+                    java()
+                    id('com.netflix.nebula.dependency-recommender')
+                }
+                rawBuildScript("""
+repositories {
+    maven {
+        url = '${repoDir.toURI()}'
+        metadataSources { gradleMetadata() }
+    }
+}
+dependencies {
+    nebulaRecommenderBom 'test.nebula.bom:platform:1.0'
+}
+tasks.register('resolveBom') {
+    doLast {
+        configurations.nebulaRecommenderBom.resolve()
+        println(configurations.nebulaRecommenderBom.incoming.resolutionResult.allComponents*.id)
+    }
+}
+""")
+            }
+        }
+
+        BuildResult result = runner.run('resolveBom')
+        assertThat(result.output).contains 'test.nebula.bom:platform:1.0'
+    }
+
+    @Test
     void 'provide recommendation via configuration - no zinc'() {
         def repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
