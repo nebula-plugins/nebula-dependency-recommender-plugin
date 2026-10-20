@@ -64,7 +64,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                     project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
             c.getAttributes().attribute(
                     Category.CATEGORY_ATTRIBUTE,
-                    project.getObjects().named(Category.class, Category.LIBRARY));
+                    project.getObjects().named(Category.class, Category.REGULAR_PLATFORM));
             c.setCanBeConsumed(false);
         });
         recommendationProviderContainer = project.getExtensions().create("dependencyRecommendations", RecommendationProviderContainer.class, project);
