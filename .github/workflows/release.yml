@@ -8,7 +8,7 @@ on:
 jobs:
   publish:
     if: github.event.base_ref == 'refs/heads/main' # tags must be pushed to main
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Gradle Build and Publish
     environment:
       name: Publish
