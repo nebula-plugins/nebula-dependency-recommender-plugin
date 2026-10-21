@@ -161,6 +161,46 @@ tasks.register('resolveBom') {
     }
 
     @Test
+    void 'does not recommend versions while resolving its own Maven BOM'() {
+        def repo = new MavenRepo()
+        repo.root = new File(projectDir, 'build/bomrepo')
+        def pom = new Pom('test.nebula.bom', 'testbom', '1.0.0', ArtifactType.POM)
+        pom.addManagementDependency('test.nebula', 'foo', '1.0.0')
+        repo.poms.add(pom)
+        repo.generate()
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.nebula:foo:1.0.0')
+                .build()
+        def generator = new GradleDependencyGenerator(graph, repoDir.absolutePath)
+        generator.generateTestMavenRepo()
+
+        def runner = GroovyTestProjectBuilder.testProject(projectDir) {
+            rootProject {
+                plugins {
+                    java()
+                    id('com.netflix.nebula.dependency-recommender')
+                }
+                rawBuildScript("""
+repositories {
+    maven { url = '${repo.root.absoluteFile.toURI()}' }
+    ${generator.mavenRepositoryBlock}
+}
+dependencyRecommendations {
+    strategy = OverrideTransitives
+    mavenBom module: 'test.nebula.bom:testbom:1.0.0'
+}
+dependencies {
+    implementation 'test.nebula:foo'
+}
+""")
+            }
+        }
+
+        BuildResult result = runner.run('dependencies', '--configuration', 'compileClasspath')
+        assertThat(result.output).contains 'test.nebula:foo -> 1.0.0'
+    }
+
+    @Test
     void 'provide recommendation via configuration - no zinc'() {
         def repo = new MavenRepo()
         repo.root = new File(projectDir, 'build/bomrepo')
