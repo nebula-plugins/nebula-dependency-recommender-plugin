@@ -42,3 +42,11 @@ jobs:
         run: ./gradlew --stacktrace build
         env:
           JDK_VERSION_FOR_TESTS: ${{ matrix.java }}
+      - name: Upload failed test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-tests-jdk-${{ matrix.java }}
+          path: |
+            build/test-results/test/*.xml
+            build/reports/tests/test/**
