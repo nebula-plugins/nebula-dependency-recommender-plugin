@@ -16,8 +16,6 @@
 package netflix.nebula.dependency.recommender.publisher
 
 import groovy.transform.CompileDynamic
-import netflix.nebula.dependency.recommender.ModuleNotationParser
-import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedDependency
@@ -37,7 +35,11 @@ class MavenBomXmlGenerator {
         else if(Iterable.class.isAssignableFrom(configurationsRet.class))
             configurations = configurationsRet as Iterable<Configuration>
 
-        generateDependencyManagementXml(pub, { configurations.collect { getManagedDependencies(it) }.flatten() })
+        // ResolutionResult providers are tracked by Gradle and are only queried for a
+        // selected publication. Do not retain Configuration or this DSL's delegates.
+        pub.pom.withXml(new DependencyManagementXmlAction(configurations.collect {
+            it.incoming.resolutionResult.rootComponent.map(new DependencyManagementXmlAction.ResolvedCoordinates())
+        }))
     }
 
     void withDependencies(Closure dependenciesClosure) {
@@ -51,10 +53,12 @@ class MavenBomXmlGenerator {
         else if(Iterable.class.isAssignableFrom(dependenciesRet.class))
             dependencies = dependenciesRet as Iterable<String>
 
-        generateDependencyManagementXml(pub, { dependencies.collect { ModuleNotationParser.parse(it) } })
+        pub.pom.withXml(new DependencyManagementXmlAction.ExplicitDependencies(dependencies.collect { String notation -> notation }))
     }
 
     @CompileDynamic
+    // Compatibility hook for subclasses. Unlike the built-in DSL above, callers
+    // supplying deferred closures remain responsible for their execution state.
     protected static generateDependencyManagementXml(MavenPublication pub, Closure<Iterable<ModuleVersionIdentifier>> deps) {
         pub.pom.withXml {
             Node root = it.asNode()
