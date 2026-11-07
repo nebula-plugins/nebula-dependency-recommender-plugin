@@ -299,10 +299,30 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      *   <li>The gradle property 'nebula.dependency-recommender.useBuildService' is set to true</li>
      * </ul>
      *
+     * <p>The property is additive: {@code false} does not disable the Gradle 9+
+     * default. With experimental Isolated Projects support enabled, that default is
+     * selected before consulting project properties. This avoids an unnecessary dynamic
+     * lookup that can inspect an ancestor project, including when the property is absent
+     * locally. Local, inherited, and build-wide property values cannot change the result
+     * on Gradle 9+, so no replacement property declaration is needed for this shortcut.</p>
+     *
+     * <p>The disabled rollout path retains the existing lookup and its timing. This
+     * method only selects the automatic eager-resolution mechanism; it does not change
+     * the container's {@code eagerlyResolve} setting or the public manual adapters.
+     * It remains called from the same {@code afterEvaluate} callbacks; disabling eager
+     * resolution still permits late BOM customization before a manual call. The shortcut does not fix
+     * other cross-project access in root-driven core-BOM distribution.</p>
+     *
      * @param project the Gradle project to check
      * @return true if build service should be used, false otherwise
      */
     private boolean shouldUseBuildService(Project project) {
+        // The explicit setting only opts in; it cannot override the Gradle 9+ default.
+        // Avoid dynamic ancestor-property lookup when that setting cannot affect selection.
+        if (isolatedProjectsSupport && GradleVersion.current().compareTo(GRADLE_9_0) >= 0) {
+            return true;
+        }
+
         // Check if explicitly enabled via gradle property
         if (project.hasProperty("nebula.dependency-recommender.useBuildService")) {
             Object property = project.property("nebula.dependency-recommender.useBuildService");

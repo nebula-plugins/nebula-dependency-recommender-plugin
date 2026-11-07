@@ -100,6 +100,24 @@ core-BOM distribution remain outside the supported isolated scope. With the flag
 ordinary parent-to-child recommendation inheritance is unchanged. The existing BOM
 publishing/configuration-cache fix remains active independently of this flag.
 
+### Build-service selection
+
+On Gradle 9+, the build service is already the default. The existing
+`nebula.dependency-recommender.useBuildService` setting only opts into that mechanism:
+`false` does **not** disable the Gradle 9+ default. With experimental support enabled,
+the plugin selects that default before looking up the setting. This avoids dynamic
+parent-property access, including the Gradle 9.1.0 isolation failure when no local value
+is declared. No migration of this setting is needed on Gradle 9+; its local, inherited,
+and build-wide values cannot change service selection there. With the flag disabled,
+the legacy lookup remains, including its parent-property isolation limitation on 9.1.0.
+
+Automatic BOM resolution still runs after project evaluation. To defer it, use
+`dependencyRecommendations.eagerlyResolve = false`, finish customization, and call
+either existing public manual-resolution adapter. This setting is independent of the
+build-service default and retains its timing. Tests on Gradle 9.1.0 and 9.7.1 cover
+missing, ancestor, local and Gradle property declarations, both adapters, actual artifacts
+and reasons, strict cache storage/reuse, Isolated Projects, and rollout/rollback.
+
 ### Local ancestor policy layers
 
 With the flag enabled, consumers provide equivalent ancestor policy through a local
