@@ -95,8 +95,9 @@ use the public manual-resolution adapters instead of looking up the experimental
 Turning the flag off restores the legacy cache behavior, including its known sharing defects.
 
 This flag is the rollout gate for future experimental Isolated Projects resolution work.
-Automatic parent policy import, `OverrideTransitives` producer inspection, and root-driven
-core-BOM distribution remain outside the supported isolated scope. With the flag disabled,
+Automatic parent policy import, `OverrideTransitives` producer inspection, and automatic
+cross-project core-BOM distribution remain outside the supported isolated scope. Core-BOM
+consumers can adopt local policy as described below. With the flag disabled,
 ordinary parent-to-child recommendation inheritance is unchanged. The existing BOM
 publishing/configuration-cache fix remains active independently of this flag.
 
@@ -162,6 +163,87 @@ automatic eager resolution still permits late BOM replacement followed by a manu
 Local Maven coverage compares legacy inheritance with adopted sibling/nested consumers on
 Gradle 9.1.0 and 9.7.1 using real artifacts and reasons, strict cache storage/reuse and Isolated
 Projects, changed policy inputs, explicit versions, forces, and unused-source laziness.
+
+### Local core-BOM policy and migration
+
+Core-BOM mode uses Gradle's native platform resolution and remains a separate opt-in:
+
+```properties
+systemProp.nebula.features.coreBomSupport=true
+nebula.dependency-recommender.isolatedProjectsSupport=true
+```
+
+With experimental support unset or `false`, core mode keeps its existing behavior: a plugin
+applied at the root distributes its BOM policy to descendant classpaths. With experimental
+support `true`, each plugin instance wires only its own project's configurations to its live
+local `nebulaRecommenderBom`. It neither enumerates descendants nor copies a root BOM into
+them. A root BOM therefore still applies to the root, but **does not automatically apply to
+children on the enabled path**. Consumers must adopt equivalent local policy before rollout,
+including in ordinary builds without Isolated Projects.
+
+Move the effective shared policy into a convention applied in each participating consumer.
+For example, this script is evaluated separately in each project:
+
+```groovy
+// dependency-policy.gradle
+repositories { maven { url = uri('https://repo.example.org/releases') } }
+dependencyRecommendations {
+  mavenBom module: 'example:platform:1.0', enforced: true
+  // Include all effective root/parent BOMs and exact-name exclusions here.
+}
+```
+
+Keep the root applying the plugin and policy for the legacy path:
+
+```groovy
+// Root build.gradle: keep your existing plugin version.
+plugins { id 'com.netflix.nebula.dependency-recommender' version '<your-version>' }
+apply from: new File(rootDir, 'dependency-policy.gradle')
+```
+
+In **each consumer**, including nested consumers, apply the plugin and the same policy
+locally when adopting the experimental path:
+
+```groovy
+// Consumer build.gradle
+plugins { id 'com.netflix.nebula.dependency-recommender' apply false }
+if (providers.gradleProperty('nebula.dependency-recommender.isolatedProjectsSupport')
+    .orElse('false').get().toBoolean()) {
+  apply plugin: 'com.netflix.nebula.dependency-recommender'
+  apply from: new File(rootDir, 'dependency-policy.gradle')
+}
+```
+
+A convention plugin can supply the same local setup. Reproduce all effective BOM declarations,
+repositories, exclusions, and any relevant local inputs; a change made only to an ancestor's
+build script is not imported. The `inheritedPolicy` layers above describe recommender-provider
+fallback in non-core mode; native core mode needs its BOM declarations in the consumer's main
+`dependencyRecommendations` container. An unadopted child may fail on a versionless dependency
+or resolve an explicitly versioned dependency without the intended BOM constraints. There is
+no automatic check that every child has adopted the policy.
+
+The enabled path preserves platform versus `enforcedPlatform` semantics, classpath and
+annotation-processor name filtering, exact-name exclusions, and wiring after project evaluation.
+Existing core-mode behavior ignores `excludeConfigurationPrefixes`; this opt-in does not change
+that limitation. The default eager resolution remains after evaluation. For late customization,
+set `eagerlyResolve = false`, finish changes, and call either public manual-resolution adapter.
+Local classpaths then see the final BOM policy, including a replacement made after the wiring
+callback. Legacy descendant snapshot copies retain their existing timing when the flag is off.
+
+Before rollout, compare actual artifacts, versions, and dependency-insight reasons against the
+legacy build, then run twice with strict configuration cache and twice with Isolated Projects.
+Test changed policy inputs too. To roll back the example, set the support flag to `false` or
+remove it: consumer application stops and root distribution resumes on the next build, including
+in the same daemon. Disable Gradle's Isolated Projects mode for that legacy path. Core mode's
+separate switch is unchanged.
+
+Regression coverage uses local Maven artifacts for sibling and nested consumers on Gradle 9.1.0
+and 9.7.1, native selection reasons, explicit versions, forces, platform/enforced-platform,
+manual adapters, changed BOM inputs, and strict cache storage/reuse. Java publication checks
+cover resolved POM versions and absence of the policy BOM from POM/module dependencies; other
+publishing plugins, custom recommendation providers in core mode, and composite builds are not
+established by this coverage. Automatic distribution and `OverrideTransitives` producer inspection
+remain separate work.
 
 ## 2. Built-in recommendation providers
 
@@ -242,8 +324,9 @@ Apply and configure plugins in each participating project. Custom `pom.withXml` 
 and subclass callbacks through the protected closure helper must themselves satisfy
 Gradle's configuration-cache restrictions. This does not establish general Isolated
 Projects support for the recommender: automatic ancestor policy import, OverrideTransitives
-inspection of dependency projects, and root-driven core-BOM distribution still have isolation
-limitations. Other publishing-plugin combinations are not covered by this cache matrix.
+inspection of dependency projects, and automatic cross-project core-BOM distribution still
+have isolation limitations. Core consumers can adopt the local policy convention documented
+above. Other publishing-plugin combinations are not covered by this cache matrix.
 
 The resultant BOM would look like this:
 
