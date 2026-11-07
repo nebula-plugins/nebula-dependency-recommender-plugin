@@ -79,8 +79,8 @@ which it does not use. Sibling and nested project dependencies with complete pro
 recommendation policy are tested on Gradle 9.1.0 and 9.7.1 with strict ordinary configuration
 cache and Isolated Projects. Coverage compares resolved artifacts and reasons without cache,
 on cold storage, on warm reuse, and after policy, producer declaration, and force changes.
-Each project applies and configures the plugin locally. Policy misses can still trigger the
-ancestor lookup limitation. `OverrideTransitives` retains declaration inspection to preserve
+Each project applies and configures the plugin locally. Policy misses can require
+explicit local ancestor layers as described below. `OverrideTransitives` retains declaration inspection to preserve
 explicit versions; its project-dependency workflow is not covered by this isolated guarantee.
 
 With the flag enabled, BOM recommendation and reason caches belong to each project and configuration for the
@@ -94,11 +94,56 @@ longer contaminates other projects. Service names become `bomResolver` plus each
 use the public manual-resolution adapters instead of looking up the experimental services by name.
 Turning the flag off restores the legacy cache behavior, including its known sharing defects.
 
-This flag is the rollout gate for future experimental Isolated Projects resolution work. It
-does not yet fix ancestor recommendation/reason lookup, `OverrideTransitives` producer inspection,
-or root-driven core-BOM distribution. Ordinary parent-to-child recommendation inheritance is
-unchanged. The existing BOM publishing/configuration-cache fix remains active independently
-of this flag.
+This flag is the rollout gate for future experimental Isolated Projects resolution work.
+Automatic parent policy import, `OverrideTransitives` producer inspection, and root-driven
+core-BOM distribution remain outside the supported isolated scope. With the flag disabled,
+ordinary parent-to-child recommendation inheritance is unchanged. The existing BOM
+publishing/configuration-cache fix remains active independently of this flag.
+
+### Local ancestor policy layers
+
+With the flag enabled, consumers provide equivalent ancestor policy through a local
+convention. For a project at `:parent:leaf`, configure its sources locally:
+
+```groovy
+dependencyRecommendations {
+  // Consumer providers always take precedence over inherited layers.
+  map name: 'local', recommendations: ['sample:local': '3.0']
+
+  inheritedPolicy(':parent') {
+    propertiesFile file: new File(rootDir, 'parent-policy.properties')
+  }
+  inheritedPolicy(':') {
+    mavenBom module: 'sample:platform:1.0'
+  }
+}
+```
+
+The paths label policy scopes; they do not access those projects. Declare layers nearest
+parent first and root last, including an empty layer for an intermediate scope without
+policy. Repeated calls for an existing layer append providers. Lookup checks consumer
+providers first, then each local layer, retaining provider LIFO order and fuzzy matching.
+Reasons retain the existing independent lookup: the nearest nonempty reason set wins,
+even if a more distant scope supplied the version. A needed undeclared layer produces
+an actionable error instead of silently omitting inherited policy or reading a foreign extension.
+
+Apply a shared convention in each consumer to supply equivalent sources, repositories,
+and interpolation values. Changes to the shared convention, files, BOMs, and tracked
+properties then affect each consumer. A change made only to an ancestor's build script is
+not automatically imported. Existing parent/root-only declarations remain supported on
+the flag-disabled path; adopting local layers is required for inherited policy on the
+flag-enabled path, including ordinary configuration-cache builds. No settings plugin is required.
+
+Each layer uses the existing provider DSL with consumer-owned instances and a separate local
+BOM configuration. Providers are queried lazily; custom callbacks must be local and deterministic.
+The consumer controls strategy, strictness, and exclusions. The top-level `eagerlyResolve`
+property is shared across its layers: the normal eager default and both public manual
+resolution adapters resolve the complete local chain after customization. Disabling
+automatic eager resolution still permits late BOM replacement followed by a manual call.
+
+Local Maven coverage compares legacy inheritance with adopted sibling/nested consumers on
+Gradle 9.1.0 and 9.7.1 using real artifacts and reasons, strict cache storage/reuse and Isolated
+Projects, changed policy inputs, explicit versions, forces, and unused-source laziness.
 
 ## 2. Built-in recommendation providers
 
@@ -178,7 +223,7 @@ This scope covers project-local publications using Gradle's `maven-publish` plug
 Apply and configure plugins in each participating project. Custom `pom.withXml` actions
 and subclass callbacks through the protected closure helper must themselves satisfy
 Gradle's configuration-cache restrictions. This does not establish general Isolated
-Projects support for the recommender: ancestor recommendation inheritance, OverrideTransitives
+Projects support for the recommender: automatic ancestor policy import, OverrideTransitives
 inspection of dependency projects, and root-driven core-BOM distribution still have isolation
 limitations. Other publishing-plugin combinations are not covered by this cache matrix.
 
