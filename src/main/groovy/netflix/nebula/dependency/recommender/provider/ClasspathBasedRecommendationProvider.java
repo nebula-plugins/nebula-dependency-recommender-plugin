@@ -39,17 +39,23 @@ public abstract class ClasspathBasedRecommendationProvider extends AbstractRecom
     }
 
     /**
-     * Retrieves BOM recommendations using the owning project's {@link BomResolverService}.
+     * Retrieves cached BOM recommendations using the service selected for this project.
      * 
      * <p>This method delegates to the build service to get cached BOM recommendations,
      * avoiding direct configuration resolution that could cause lock conflicts in
      * parallel builds. The build service ensures that all BOM resolution happens
      * during the configuration phase when exclusive locks are available.</p>
+     *
+     * <p>{@link IsolatedProjectsSupport#registerBomResolver(Project)} selects the
+     * legacy shared service by default, or the project-owned service when opted in.
+     * Manual eager-resolution adapters use that same selection so they populate the
+     * cache this provider reads. The flag does not change when this provider requests
+     * recommendations or when users may customize BOM declarations before resolution.</p>
      * 
      * @param reasons a mutable set that will be populated with reasons explaining
      *                why specific recommendations were applied
      * @return a map of dependency coordinates (groupId:artifactId) to recommended versions
-     * @throws RuntimeException if the build service is not available or BOM resolution fails
+     * @throws RuntimeException if the build service is unavailable or the BOM was not cached eagerly
      */
     protected Map<String, String> getBomRecommendations(Set<String> reasons) {
         return bomResolverService.get().getRecommendations(project, configName, reasons);

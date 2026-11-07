@@ -55,6 +55,13 @@ public final class BomResolutionUtil {
      * <p>The eager resolution prevents the need to resolve configurations during the
      * dependency resolution phase, which would cause {@code IllegalResolutionException}
      * in parallel builds with Gradle 9+.</p>
+     *
+     * <p>The service is selected through
+     * {@link IsolatedProjectsSupport#registerBomResolver(Project)}, matching the normal
+     * recommendation provider. Unset or disabled rollout flags retain the legacy shared
+     * cache; opted-in projects populate their own configuration's cache. This explicit
+     * adapter remains callable when automatic eager resolution is disabled, allowing
+     * callers to finish BOM customization before manually taking the snapshot.</p>
      * 
      * <p><strong>Usage by External Plugins:</strong></p>
      * <pre>{@code

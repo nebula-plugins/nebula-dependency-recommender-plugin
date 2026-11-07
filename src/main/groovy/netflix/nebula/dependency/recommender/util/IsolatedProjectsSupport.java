@@ -20,16 +20,61 @@ import netflix.nebula.dependency.recommender.service.ProjectOwnedBomResolverServ
 import org.gradle.api.Project;
 import org.gradle.api.provider.Provider;
 
-/** Internal rollout gate for experimental Isolated Projects resolution changes. */
+/**
+ * Internal rollout gate for experimental dependency-recommender resolution changes.
+ *
+ * <p>Set the build-wide Gradle property
+ * {@code nebula.dependency-recommender.isolatedProjectsSupport=true} in
+ * {@code gradle.properties}, or pass it with {@code -P}, before applying the plugin.
+ * The default is {@code false}. Gradle's Isolated Projects mode and this opt-in
+ * are independent: neither enables the other.</p>
+ *
+ * <p>Future experimental resolution paths should use this gate during configuration
+ * and retain their legacy path when disabled. Reading through Gradle's provider API
+ * makes the property a configuration-cache input and avoids a static decision leaking
+ * between builds in the same daemon. Project extra properties and changes after plugin
+ * application are not supported ways to select the mode.</p>
+ *
+ * <p>The gate currently selects project-owned BOM caching and the ConflictResolved
+ * project-inspection shortcut. It does not establish full Isolated Projects support:
+ * ancestor lookup, OverrideTransitives producer inspection, and root-driven core-BOM
+ * distribution retain their existing limitations. BOM publication fixes remain active
+ * independently of this gate.</p>
+ */
 public final class IsolatedProjectsSupport {
     private static final String PROPERTY = "nebula.dependency-recommender.isolatedProjectsSupport";
 
     private IsolatedProjectsSupport() {}
 
+    /**
+     * Reads the rollout property from the current project's Gradle provider factory.
+     *
+     * <p>Call during configuration and capture the decision before wiring resolution
+     * callbacks. An absent property or any value other than {@code true}, ignoring
+     * case, selects the legacy path. This does not consult another project's model.</p>
+     *
+     * @param project the project being configured
+     * @return whether experimental Isolated Projects resolution changes are enabled
+     */
     public static boolean isEnabled(Project project) {
         return project.getProviders().gradleProperty(PROPERTY).map(Boolean::parseBoolean).getOrElse(false);
     }
 
+    /**
+     * Registers, or retrieves, the BOM service selected by the rollout property.
+     *
+     * <p>Disabled builds retain the legacy {@code bomResolver} registration and its
+     * coordinate-based cache. Enabled builds use {@link ProjectOwnedBomResolverService}
+     * under {@code bomResolver} plus the owning project path. These registrations have
+     * separate cache state, so experimental results cannot populate the legacy cache.</p>
+     *
+     * <p>Normal providers and manual eager-resolution adapters must use this same
+     * registration path. Registration does not resolve any BOM; the returned provider
+     * retains lazy service creation and the caller's existing eager-resolution timing.</p>
+     *
+     * @param project the project whose BOM policy the service will resolve
+     * @return a provider for the selected service, without realizing it
+     */
     public static Provider<BomResolverService> registerBomResolver(Project project) {
         if (isEnabled(project)) {
             return project.getGradle().getSharedServices().registerIfAbsent(
