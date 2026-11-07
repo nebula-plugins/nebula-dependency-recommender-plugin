@@ -39,9 +39,14 @@ import org.gradle.api.provider.Provider;
  * project-inspection shortcut. Gradle 9+ build-service selection also skips redundant
  * project-property lookup, retaining the version default without reading ancestor extras.
  * Ancestor fallback uses explicitly configured local policy
- * layers rather than importing parent extension state. It does not establish full Isolated
- * Projects support: automatic parent policy import, OverrideTransitives producer inspection,
- * and root-driven core-BOM distribution retain their limitations. BOM publication fixes remain active
+ * layers rather than importing parent extension state. Core-BOM mode wires only local
+ * classpaths to a live local BOM; every participating consumer must apply the plugin and
+ * equivalent policy locally. Disabling this gate restores legacy descendant distribution.
+ * The separate core-mode switch and eager-resolution timing are unchanged.</p>
+ *
+ * <p>This does not establish full Isolated Projects support: automatic parent policy import,
+ * OverrideTransitives producer inspection, and automatic cross-project core-BOM distribution
+ * retain their limitations. BOM publication fixes remain active
  * independently of this gate.</p>
  */
 public final class IsolatedProjectsSupport {

@@ -87,6 +87,21 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         enhancePublicationsWithBomProducer(project);
     }
 
+    /**
+     * Attaches native BOM policy after the applying project's evaluation.
+     *
+     * <p>With experimental Isolated Projects support enabled, the configuration and
+     * container belong to this project and only its own classpaths are wired. Each
+     * consumer must apply the plugin and equivalent BOM policy locally, typically
+     * through a shared convention. Root declarations are not imported automatically.</p>
+     *
+     * <p>The disabled path retains legacy descendant distribution. Automatic eager
+     * resolution and the local wiring retain their evaluation timing; opting in does
+     * not enable core mode or change platform versus enforced-platform semantics.</p>
+     *
+     * @param project the project applying the plugin
+     * @param bomConfiguration its local BOM dependency configuration
+     */
     private void applyRecommendationsDirectly(final Project project, final Configuration bomConfiguration) {
         project.afterEvaluate(new Action<Project>() {
             @Override
@@ -97,6 +112,9 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                 }
 
                 p.getConfigurations().all(new ExtendRecommenderConfigurationAction(bomConfiguration, p, recommendationProviderContainer, COPY_COUNT));
+                if (isolatedProjectsSupport) {
+                    return;
+                }
                 p.subprojects(new Action<Project>() {
                     @Override
                     public void execute(Project sub) {
@@ -311,7 +329,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * the container's {@code eagerlyResolve} setting or the public manual adapters.
      * It remains called from the same {@code afterEvaluate} callbacks; disabling eager
      * resolution still permits late BOM customization before a manual call. The shortcut does not fix
-     * other cross-project access in root-driven core-BOM distribution.</p>
+     * automatic cross-project core-BOM distribution; enabled core mode instead requires
+     * local policy in every participating consumer.</p>
      *
      * @param project the Gradle project to check
      * @return true if build service should be used, false otherwise

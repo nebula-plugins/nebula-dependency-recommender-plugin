@@ -308,22 +308,31 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         verify(warm)
     }
 
-    @ParameterizedTest(name = "root-only core BOM characterization: Gradle {0}")
+    @ParameterizedTest(name = "local core-BOM convention: Gradle {0}")
     @MethodSource("versions")
-    fun `characterization - root only core BOM mutates child configurations`(version: String) {
+    fun `local core BOM convention stores reuses and tracks shared policy`(version: String) {
         fixture("include 'child'", core = true)
-        write("build.gradle", localPlugins + repository + """
-            dependencyRecommendations { mavenBom module: 'sample:bom:1.0' }
+        write("core-policy.gradle", """
+            dependencyRecommendations { mavenBom module: 'sample:bom:' + providers.gradleProperty('bomVersion').get() }
         """)
-        write("child/build.gradle", "plugins { id 'java-library' }\n" + repository + """
+        val policy = "\napply from: new File(rootDir, 'core-policy.gradle')\n"
+        write("build.gradle", localPlugins + repository + policy)
+        write("child/build.gradle", localPlugins + repository + policy + """
             dependencies { implementation 'sample:foo' }
-        """ + resolveTask)
+        """ + resolveFreshTask)
         val tasks = listOf(":child:resolveRecommendations")
 
-        assertStored(run(version, false, tasks))
-        assertResolved("child", "1.0")
-        assertReused(run(version, false, tasks))
-        assertIsolationFailure(version, tasks, "configurations", ":child")
+        listOf("1.0", "2.0").forEach { selected ->
+            val args = listOf("-PbomVersion=$selected")
+            run(version, false, tasks, args, cache = false)
+            assertResolved("child", selected)
+            listOf(false, true).forEach { isolated ->
+                assertStored(run(version, isolated, tasks, args))
+                assertResolved("child", selected)
+                assertReused(run(version, isolated, tasks, args))
+                assertResolved("child", selected)
+            }
+        }
     }
 
     @ParameterizedTest(name = "build-service default without parent lookup: Gradle {0}")
