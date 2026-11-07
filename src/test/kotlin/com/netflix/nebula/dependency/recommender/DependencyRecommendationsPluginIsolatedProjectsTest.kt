@@ -326,9 +326,9 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         assertIsolationFailure(version, tasks, "configurations", ":child")
     }
 
-    @ParameterizedTest(name = "dynamic parent property characterization: Gradle {0}")
+    @ParameterizedTest(name = "build-service default without parent lookup: Gradle {0}")
     @MethodSource("versions")
-    fun `characterization - implicit parent property lookup depends on Gradle version`(version: String) {
+    fun `build service default avoids implicit parent property lookup`(version: String) {
         fixture("include 'child'")
         val properties = File(projectDir, "gradle.properties")
         properties.writeText(properties.readText().replace("nebula.dependency-recommender.useBuildService=true", ""))
@@ -336,20 +336,16 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         write("child/build.gradle", localPlugins + repository + """
             dependencyRecommendations { map name: 'local', recommendations: ['sample:foo': '1.0'] }
             dependencies { implementation 'sample:foo' }
-        """ + resolveTask)
+        """ + resolveFreshTask)
         val tasks = listOf(":child:resolveRecommendations")
 
-        assertStored(run(version, false, tasks))
+        run(version, false, tasks, cache = false)
         assertResolved("child", "1.0")
-        assertReused(run(version, false, tasks))
-        if (GradleVersion.version(version) < GradleVersion.version("9.6")) {
-            assertIsolationFailure(version, tasks, "dynamically look up a property", ":child")
-        } else {
-            // Gradle 9.6+ disables implicit ancestor lookup under isolation. This only proves
-            // resolution on Gradle 9+, where build-service use is already the default.
-            assertStored(run(version, true, tasks))
+        listOf(false, true).forEach { isolated ->
+            assertStored(run(version, isolated, tasks))
             assertResolved("child", "1.0")
-            assertReused(run(version, true, tasks))
+            assertReused(run(version, isolated, tasks))
+            assertResolved("child", "1.0")
         }
     }
 

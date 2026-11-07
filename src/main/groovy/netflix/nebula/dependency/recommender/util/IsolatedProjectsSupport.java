@@ -36,7 +36,9 @@ import org.gradle.api.provider.Provider;
  * application are not supported ways to select the mode.</p>
  *
  * <p>The gate currently selects project-owned BOM caching and the ConflictResolved
- * project-inspection shortcut. Ancestor fallback uses explicitly configured local policy
+ * project-inspection shortcut. Gradle 9+ build-service selection also skips redundant
+ * project-property lookup, retaining the version default without reading ancestor extras.
+ * Ancestor fallback uses explicitly configured local policy
  * layers rather than importing parent extension state. It does not establish full Isolated
  * Projects support: automatic parent policy import, OverrideTransitives producer inspection,
  * and root-driven core-BOM distribution retain their limitations. BOM publication fixes remain active
