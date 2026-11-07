@@ -129,8 +129,19 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         });
     }
 
-
+    /**
+     * Installs local resolution hooks without choosing a strategy during plugin application.
+     *
+     * <p>The existing resolve callback selects the final customized strategy. With the rollout
+     * gate enabled, only the exact built-in OverrideTransitives strategy uses the separate
+     * producer metadata graph, once per consumer configuration. Custom strategy hooks and
+     * flag-disabled builds retain legacy inspection. Internal metadata configurations are
+     * excluded from recommendation hooks to avoid recursively resolving the original graph.</p>
+     */
     private void applyRecommendations(final Project project) {
+        if (isolatedProjectsSupport) {
+            ProjectDependencyInspection.register(project);
+        }
         // Add eager BOM resolution for regular (non-core) BOM support
         project.afterEvaluate(new Action<Project>() {
             @Override
@@ -155,8 +166,18 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
                                 return Unit.INSTANCE;
                             }
 
+                            boolean inspectedProjects = false;
                             for (Dependency dependency : resolvableDependencies.getDependencies()) {
-                                applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>(), project);
+                                if (isolatedProjectsSupport && dependency instanceof ProjectDependency
+                                        && rsFactory.getRecommendationStrategy().getClass() == RecommendationsOverrideTransitivesStrategy.class) {
+                                    if (!inspectedProjects) {
+                                        ((RecommendationsOverrideTransitivesStrategy) rsFactory.getRecommendationStrategy())
+                                                .inspectCoordinates(ProjectDependencyInspection.inspect(project, conf));
+                                        inspectedProjects = true;
+                                    }
+                                } else {
+                                    applyRecommendationToDependency(rsFactory, dependency, new ArrayList<ProjectDependency>(), project);
+                                }
                             }
 
                             conf.getResolutionStrategy().eachDependency(new Action<DependencyResolveDetails>() {
@@ -199,6 +220,9 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     }
 
     private boolean isExcludedConfiguration(String confName) {
+        if (isolatedProjectsSupport && ProjectDependencyInspection.isInternal(confName)) {
+            return true;
+        }
         if (recommendationProviderContainer.getExcludedConfigurations().get().contains(confName)) {
             return true;
         }

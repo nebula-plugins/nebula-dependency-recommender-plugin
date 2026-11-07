@@ -231,7 +231,7 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
     fun `late strategy selection preserves project inspection explicit versions and forces`(version: String, strategy: String) {
         fixture("include 'parent:lib', 'app'")
         // The consumer supplies an empty local root layer for project-selector misses.
-        // OverrideTransitives producer inspection remains a separate isolation blocker.
+        // Both built-in strategies must retain late selection timing under strict isolation.
         write("build.gradle", localPlugins)
         write("parent/build.gradle", "")
         listOf("bar", "direct", "forced", "bridge").forEach { name ->
@@ -306,6 +306,12 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         val warm = run(version, false, tasks, args)
         assertReused(warm)
         verify(warm)
+        val isolatedCold = run(version, true, tasks, args)
+        assertStored(isolatedCold)
+        verify(isolatedCold)
+        val isolatedWarm = run(version, true, tasks, args)
+        assertReused(isolatedWarm)
+        verify(isolatedWarm)
     }
 
     @ParameterizedTest(name = "local core-BOM convention: Gradle {0}")

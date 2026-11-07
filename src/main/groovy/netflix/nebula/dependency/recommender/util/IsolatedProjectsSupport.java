@@ -36,8 +36,12 @@ import org.gradle.api.provider.Provider;
  * application are not supported ways to select the mode.</p>
  *
  * <p>The gate currently selects project-owned BOM caching and the ConflictResolved
- * project-inspection shortcut. Gradle 9+ build-service selection also skips redundant
- * project-property lookup, retaining the version default without reading ancestor extras.
+ * project-inspection shortcut, plus producer-owned metadata inspection for the built-in
+ * OverrideTransitives strategy. Every inspected producer must apply the plugin locally;
+ * metadata preserves the declared target-configuration/default scope and explicit-version
+ * semantics without changing ordinary classpath variant selection. Gradle 9+ build-service
+ * selection also skips redundant project-property lookup, retaining the version default
+ * without reading ancestor extras.
  * Ancestor fallback uses explicitly configured local policy
  * layers rather than importing parent extension state. Core-BOM mode wires only local
  * classpaths to a live local BOM; every participating consumer must apply the plugin and
@@ -45,8 +49,8 @@ import org.gradle.api.provider.Provider;
  * The separate core-mode switch and eager-resolution timing are unchanged.</p>
  *
  * <p>This does not establish full Isolated Projects support: automatic parent policy import,
- * OverrideTransitives producer inspection, and automatic cross-project core-BOM distribution
- * retain their limitations. BOM publication fixes remain active
+ * automatic cross-project core-BOM distribution, composite builds, and custom-strategy
+ * inspection retain their limitations. BOM publication fixes remain active
  * independently of this gate.</p>
  */
 public final class IsolatedProjectsSupport {
