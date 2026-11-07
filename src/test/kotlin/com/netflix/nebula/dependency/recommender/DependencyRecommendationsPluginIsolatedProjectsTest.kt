@@ -16,8 +16,8 @@ import java.util.jar.JarFile
 import java.util.stream.Stream
 
 /**
- * Publishing regressions and assessment of the remaining isolation limitations. Known
- * failures outside publishing are asserted explicitly; they are not proof of compatibility.
+ * Regression coverage and assessment of the remaining isolation limitations. Known
+ * failures are asserted explicitly; they are not proof of compatibility.
  * Every project applies its own plugins. No allprojects/subprojects setup masks the cause.
  */
 class DependencyRecommendationsPluginIsolatedProjectsTest {
@@ -115,26 +115,156 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         assertIsolationFailure(version, tasks, "extensions", ":parent:leaf", ":parent")
     }
 
-    @ParameterizedTest(name = "project dependency characterization: Gradle {0}")
-    @MethodSource("versions")
-    fun `characterization - dependency project traversal violates isolation`(version: String) {
-        fixture("include 'lib', 'app'")
+    @ParameterizedTest(name = "ConflictResolved project dependencies: Gradle {0}, isolated={1}, nested={2}")
+    @MethodSource("projectDependencyModes")
+    fun `ConflictResolved project dependencies store reuse and invalidate`(version: String, isolated: Boolean, nested: Boolean) {
+        val prefix = if (nested) "parent:" else ""
+        val lib = "${prefix}lib"
+        val app = "${prefix}app"
+        val libDir = lib.replace(':', '/')
+        val appDir = app.replace(':', '/')
+        fixture("include '$lib', '$app'")
         write("build.gradle", "")
-        write("lib/build.gradle", localPlugins + repository + """
-            dependencyRecommendations { map name: 'lib', recommendations: ['sample:foo': '1.0'] }
+        if (nested) write("parent/build.gradle", "")
+        // Complete local policy, including the project coordinate. No ancestor lookup is needed.
+        val policy = """
+            dependencyRecommendations {
+                map name: 'local', recommendations: [
+                    'sample:lib': '1.0', 'sample:foo': providers.gradleProperty('sample.version').get()
+                ]
+            }
+        """
+        write("$libDir/build.gradle", localPlugins + repository + policy + """
+            group = 'sample'
+            version = '1.0'
             dependencies { api 'sample:foo' }
         """)
-        write("lib/src/main/resources/library.txt", "producer artifact")
-        write("app/build.gradle", localPlugins + repository + """
-            dependencyRecommendations { map name: 'app', recommendations: ['sample:foo': '1.0'] }
-            dependencies { implementation project(':lib') }
-        """ + resolveTask)
-        val tasks = listOf(":app:resolveRecommendations")
+        write("$libDir/src/main/resources/library.txt", "producer artifact")
+        write("$appDir/build.gradle", localPlugins + repository + policy + """
+            dependencies { implementation project(':$lib') }
+        """ + resolveFreshTask)
+        val tasks = listOf(":$app:resolveRecommendations", ":$app:dependencyInsight")
 
-        assertStored(run(version, false, tasks))
-        assertResolved("app", "1.0", setOf("lib.jar"))
-        assertReused(run(version, false, tasks))
-        assertIsolationFailure(version, tasks, "configurations", ":app", ":lib")
+        fun check(selected: String, policyVersion: String, recommended: Boolean = true, forced: Boolean = false) {
+            val args = listOf("--dependency", "sample:foo", "--configuration", "runtimeClasspath", "-Psample.version=$policyVersion")
+            fun verify(result: BuildResult) {
+                assertEquals(TaskOutcome.SUCCESS, result.task(":$app:resolveRecommendations")?.outcome, result.output)
+                assertResolved(appDir, selected, setOf("lib-1.0.jar"))
+                JarFile(File(projectDir, "$appDir/build/resolved/lib-1.0.jar")).use { jar ->
+                    assertEquals("producer artifact", jar.getInputStream(jar.getJarEntry("library.txt")).bufferedReader().readText())
+                }
+                assertTrue(result.output.contains("sample:foo:$selected"), result.output)
+                val reason = "Recommending version $selected for dependency sample:foo via conflict resolution recommendation"
+                if (recommended) {
+                    assertTrue(result.output.contains(reason), result.output)
+                    assertTrue(result.output.contains("with reasons: nebula.dependency-recommender uses a provided map for recommendations"), result.output)
+                } else {
+                    assertFalse(result.output.contains("Recommending version"), result.output)
+                }
+                if (forced) assertTrue(result.output.contains("sample:foo:$selected (forced)"), result.output)
+            }
+            // Isolated Projects requires the cache. Use an ordinary no-cache build as the control.
+            verify(run(version, false, tasks, args, cache = false))
+            val cold = run(version, isolated, tasks, args)
+            assertStored(cold)
+            assertFalse(cold.output.contains("Reusing configuration cache"), cold.output)
+            verify(cold)
+            // The fixture deletes outputs through Gradle on every run, including warm reuse.
+            val warm = run(version, isolated, tasks, args)
+            assertReused(warm)
+            verify(warm)
+        }
+
+        check("1.0", "1.0")
+        check("2.0", "2.0")
+        // A producer declaration change must invalidate the consumer's cached graph. Explicit
+        // versions remain authoritative for ConflictResolved even when local policy differs.
+        val producer = File(projectDir, "$libDir/build.gradle")
+        producer.writeText(producer.readText().replace("api 'sample:foo'", "api 'sample:foo:1.0'"))
+        check("1.0", "2.0", recommended = false)
+        File(projectDir, "$appDir/build.gradle").appendText("\nconfigurations.runtimeClasspath.resolutionStrategy.force 'sample:foo:2.0'\n")
+        check("2.0", "2.0", recommended = false, forced = true)
+    }
+
+    @ParameterizedTest(name = "late strategy selection: Gradle {0}, strategy={1}")
+    @MethodSource("inspectionStrategies")
+    fun `late strategy selection preserves project inspection explicit versions and forces`(version: String, strategy: String) {
+        fixture("include 'parent:lib', 'app'")
+        // OverrideTransitives still consults ancestors on a miss (including project selectors).
+        // Keep that existing ordinary-build behavior separate from the isolated default strategy.
+        write("build.gradle", localPlugins)
+        write("parent/build.gradle", "")
+        listOf("bar", "direct", "forced", "bridge").forEach { name ->
+            listOf("1.0", "2.0").forEach { selected ->
+                pom(name, selected, "jar", if (name == "bridge") """
+                    <dependencies><dependency><groupId>sample</groupId><artifactId>bar</artifactId>
+                      <version>1.0</version></dependency></dependencies>
+                """ else "")
+                JarOutputStream(File(projectDir, "repo/sample/$name/$selected/$name-$selected.jar").outputStream()).use {
+                    it.putNextEntry(JarEntry("version.txt"))
+                    it.write(selected.toByteArray())
+                    it.closeEntry()
+                }
+            }
+        }
+        val policy = """
+            dependencyRecommendations {
+                map name: 'local', recommendations: [
+                    'sample:bridge': '1.0', 'sample:foo': '2.0',
+                    'sample:bar': '2.0', 'sample:direct': '2.0', 'sample:forced': '2.0'
+                ]
+            }
+        """
+        write("parent/lib/build.gradle", localPlugins + repository + policy + """
+            group = 'sample'
+            version = '1.0'
+            dependencies {
+                api 'sample:foo:1.0'
+                api 'sample:bridge:1.0'
+                api 'sample:forced'
+            }
+        """)
+        write("app/build.gradle", localPlugins + repository + policy + """
+            // Strategy selection must remain lazy, including after plugin application/evaluation.
+            afterEvaluate { dependencyRecommendations.strategy = dependencyRecommendations.$strategy }
+            configurations.runtimeClasspath.resolutionStrategy.force 'sample:forced:1.0'
+            dependencies {
+                implementation project(':parent:lib')
+                implementation 'sample:direct:1.0'
+            }
+        """ + resolveFreshTask)
+        val tasks = listOf(":app:resolveRecommendations", ":app:dependencyInsight")
+        val args = listOf("--dependency", "sample", "--configuration", "runtimeClasspath")
+        fun verify(result: BuildResult) {
+            assertEquals(TaskOutcome.SUCCESS, result.task(":app:resolveRecommendations")?.outcome, result.output)
+            val bar = if (strategy == "OverrideTransitives") "2.0" else "1.0"
+            val expected = mapOf("foo" to "1.0", "bridge" to "1.0", "bar" to bar, "direct" to "1.0", "forced" to "1.0")
+            val resolved = File(projectDir, "app/build/resolved")
+            assertEquals(expected.map { (name, selected) -> "$name-$selected.jar" }.toSet() + "lib-1.0.jar", resolved.list()?.toSet())
+            expected.forEach { (name, selected) ->
+                JarFile(File(resolved, "$name-$selected.jar")).use { jar ->
+                    assertEquals(selected, jar.getInputStream(jar.getJarEntry("version.txt")).bufferedReader().readText())
+                }
+                assertTrue(result.output.contains("sample:$name:$selected"), result.output)
+            }
+            // Removing producer traversal would incorrectly override foo's explicit 1.0 with 2.0.
+            assertFalse(result.output.contains("Recommending version 2.0 for dependency sample:foo"), result.output)
+            assertFalse(result.output.contains("Recommending version 2.0 for dependency sample:direct"), result.output)
+            assertTrue(result.output.contains("sample:forced:1.0 (forced)"), result.output)
+            if (strategy == "OverrideTransitives") {
+                assertTrue(result.output.contains("Recommending version 2.0 for dependency sample:bar via override transitive recommendation"), result.output)
+                assertTrue(result.output.contains("with reasons: nebula.dependency-recommender uses a provided map for recommendations"), result.output)
+            } else {
+                assertFalse(result.output.contains("Recommending version 2.0 for dependency sample:bar"), result.output)
+            }
+        }
+        verify(run(version, false, tasks, args, cache = false))
+        val cold = run(version, false, tasks, args)
+        assertStored(cold)
+        verify(cold)
+        val warm = run(version, false, tasks, args)
+        assertReused(warm)
+        verify(warm)
     }
 
     @ParameterizedTest(name = "root-only core BOM characterization: Gradle {0}")
@@ -613,6 +743,15 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         }
     """.trimIndent() + "\n"
 
+    // Keep output regeneration inside Gradle's tracked filesystem operations. Deleting the
+    // directory externally between fast TestKit runs can race filesystem watcher delivery.
+    private val resolveFreshTask get() = resolveTask + """
+        tasks.register('cleanResolved', Delete) {
+            delete layout.buildDirectory.dir('resolved')
+        }
+        tasks.named('resolveRecommendations') { dependsOn 'cleanResolved' }
+    """.trimIndent() + "\n"
+
     companion object {
         @JvmStatic
         fun versions(): Stream<String> = listOf("9.1.0", GradleVersion.current().version).distinct().stream()
@@ -620,6 +759,18 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         @JvmStatic
         fun cacheModes(): Stream<Arguments> = versions().flatMap { version ->
             Stream.of(Arguments.of(version, false), Arguments.of(version, true))
+        }
+
+        @JvmStatic
+        fun projectDependencyModes(): Stream<Arguments> = versions().flatMap { version ->
+            Stream.of(false, true).flatMap { isolated ->
+                Stream.of(Arguments.of(version, isolated, false), Arguments.of(version, isolated, true))
+            }
+        }
+
+        @JvmStatic
+        fun inspectionStrategies(): Stream<Arguments> = versions().flatMap { version ->
+            Stream.of(Arguments.of(version, "ConflictResolved"), Arguments.of(version, "OverrideTransitives"))
         }
 
         private fun isolationFlag(version: String, isolated: Boolean): String =

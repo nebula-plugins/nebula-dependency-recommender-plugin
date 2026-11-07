@@ -58,6 +58,15 @@ You can also specify bom lookup via a configuration
  }
  ```
 
+The default `ConflictResolved` strategy skips dependency-project declaration inspection,
+which it does not use. Sibling and nested project dependencies with complete project-local
+recommendation policy are tested on Gradle 9.1.0 and 9.7.1 with strict ordinary configuration
+cache and Isolated Projects. Coverage compares resolved artifacts and reasons without cache,
+on cold storage, on warm reuse, and after policy, producer declaration, and force changes.
+Each project applies and configures the plugin locally. Policy misses can still trigger the
+ancestor lookup limitation. `OverrideTransitives` retains declaration inspection to preserve
+explicit versions; its project-dependency workflow is not covered by this isolated guarantee.
+
 ## 2. Built-in recommendation providers
 
 Several recommendation providers pack with the plugin.  The file-based providers all a shared basic configuration that is described separately.
@@ -136,8 +145,8 @@ This scope covers project-local publications using Gradle's `maven-publish` plug
 Apply and configure plugins in each participating project. Custom `pom.withXml` actions
 and subclass callbacks through the protected closure helper must themselves satisfy
 Gradle's configuration-cache restrictions. This does not establish general Isolated
-Projects support for the recommender: ancestor recommendation inheritance, inspection
-of dependency projects, and root-driven core-BOM distribution still have isolation
+Projects support for the recommender: ancestor recommendation inheritance, OverrideTransitives
+inspection of dependency projects, and root-driven core-BOM distribution still have isolation
 limitations. Other publishing-plugin combinations are not covered by this cache matrix.
 
 The resultant BOM would look like this:

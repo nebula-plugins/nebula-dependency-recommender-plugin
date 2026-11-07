@@ -195,6 +195,11 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         if (dependency instanceof ExternalModuleDependency) {
             factory.getRecommendationStrategy().inspectDependency(dependency);
         } else if (dependency instanceof ProjectDependency projectDependency) {
+            // ConflictResolved has no dependency inspection state. Avoid accessing another
+            // project's configurations for its no-op hook; other strategies still need the scan.
+            if (factory.getRecommendationStrategy().getClass() == RecommendationsConflictResolvedStrategy.class) {
+                return;
+            }
             if (!visited.contains(projectDependency)) {
                 visited.add(projectDependency);
                 String targetConfiguration = projectDependency.getTargetConfiguration() == null ? Dependency.DEFAULT_CONFIGURATION : projectDependency.getTargetConfiguration();
