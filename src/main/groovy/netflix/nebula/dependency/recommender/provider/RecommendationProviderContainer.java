@@ -19,9 +19,13 @@ import groovy.lang.Closure;
 import netflix.nebula.dependency.recommender.ConfigureUtil;
 import netflix.nebula.dependency.recommender.DependencyRecommendationsPlugin;
 import netflix.nebula.dependency.recommender.RecommendationStrategies;
+import netflix.nebula.dependency.recommender.util.IsolatedProjectsSupport;
 import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.attributes.Category;
+import org.gradle.api.attributes.LibraryElements;
+import org.gradle.api.attributes.Usage;
 import org.gradle.api.internal.ConfigureByMapAction;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
@@ -45,14 +49,24 @@ public class RecommendationProviderContainer {
     private final SetProperty<String> excludedConfigurationPrefixes;
     private Set<String> reasons = new HashSet<>(); // Keep as regular Set - it's an output/result collection
     private final Property<Boolean> eagerlyResolve;
+    private final String bomConfigurationName;
+    private final boolean inheritedLayer;
+    private final Map<String, RecommendationProviderContainer> inheritedPolicies = new LinkedHashMap<>();
     
     // Make strategies available without import
     public static final RecommendationStrategies OverrideTransitives = RecommendationStrategies.OverrideTransitives;
     public static final RecommendationStrategies ConflictResolved = RecommendationStrategies.ConflictResolved;
 
     public RecommendationProviderContainer(Project project) {
+        this(project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, null, false);
+    }
+
+    private RecommendationProviderContainer(Project project, String bomConfigurationName,
+                                            Property<Boolean> eagerlyResolve, boolean inheritedLayer) {
         createList(project);
         this.project = project;
+        this.bomConfigurationName = bomConfigurationName;
+        this.inheritedLayer = inheritedLayer;
 
         // Initialize properties using ObjectFactory for proper Gradle integration
         ObjectFactory objects = project.getObjects();
@@ -64,8 +78,7 @@ public class RecommendationProviderContainer {
                 .convention(new HashSet<>());
         this.excludedConfigurationPrefixes = objects.setProperty(String.class)
                 .convention(new HashSet<>());
-        this.eagerlyResolve = objects.property(Boolean.class)
-                .convention(true);
+        this.eagerlyResolve = eagerlyResolve == null ? objects.property(Boolean.class).convention(true) : eagerlyResolve;
 
         this.mavenBomProvider = getMavenBomRecommendationProvider();
         providers.add(this.mavenBomProvider);
@@ -91,9 +104,9 @@ public class RecommendationProviderContainer {
     private MavenBomRecommendationProvider getMavenBomRecommendationProvider() {
         MavenBomRecommendationProvider mavenBomRecommendationProvider;
         if(DependencyRecommendationsPlugin.CORE_BOM_SUPPORT_ENABLED) {
-            mavenBomRecommendationProvider = new CoreBomSupportProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.reasons);
+            mavenBomRecommendationProvider = new CoreBomSupportProvider(this.project, bomConfigurationName, this.reasons);
         } else {
-            mavenBomRecommendationProvider = new MavenBomRecommendationProvider(this.project, DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, this.reasons);
+            mavenBomRecommendationProvider = new MavenBomRecommendationProvider(this.project, bomConfigurationName, this.reasons);
         }
         return mavenBomRecommendationProvider;
     }
@@ -142,14 +155,14 @@ public class RecommendationProviderContainer {
             } else if (!dependencyNotation.toString().endsWith("@pom")) {
                 dependencyNotation = dependencyNotation.toString() + "@pom";
             }
-            project.getDependencies().add(DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, dependencyNotation);
+            project.getDependencies().add(bomConfigurationName, dependencyNotation);
         } else {
             Dependency platform;
             if (isEnforced != null && Boolean.valueOf(isEnforced.toString())) {
                 platform = project.getDependencies().enforcedPlatform(dependencyNotation);
             } else
                 platform = project.getDependencies().platform(dependencyNotation);
-            project.getDependencies().add(DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM, platform);
+            project.getDependencies().add(bomConfigurationName, platform);
         }
 
         return mavenBomProvider;
@@ -213,6 +226,143 @@ public class RecommendationProviderContainer {
 
     public MavenBomRecommendationProvider getMavenBomProvider() {
         return mavenBomProvider;
+    }
+
+    /**
+     * Supplies an inherited policy layer using sources configured in the consumer project.
+     *
+     * <p>This experimental adapter requires
+     * {@code nebula.dependency-recommender.isolatedProjectsSupport=true}. A shared local
+     * convention should configure equivalent sources for each ancestor, nearest parent
+     * first and root last. The path identifies the policy scope; it does not look up or
+     * configure that project. Empty layers explicitly represent ancestors without policy.
+     * Repeated calls for an existing layer append providers using the normal LIFO order.</p>
+     *
+     * <p>Each layer owns its provider instances, reasons, and BOM configuration in this
+     * consumer. Source declarations retain their usual lazy query behavior. Automatic
+     * eager resolution is controlled by the shared top-level {@link #getEagerlyResolve()}
+     * property; public manual adapters resolve all declared local layers. Strategy,
+     * strictness, and configuration exclusions remain consumer settings and are not
+     * inherited from these source containers.</p>
+     *
+     * <p>Declare equivalent repository and interpolation inputs in the local convention.
+     * Arbitrary ancestor build-script callbacks are not imported automatically. Core-BOM
+     * distribution is outside this adapter's scope.</p>
+     *
+     * @param ancestorPath the next ancestor's absolute Gradle path, or an existing layer
+     * @param action configures this consumer's local sources for that ancestor
+     * @return the local source container, which may be customized before resolution
+     * @throws GradleException if the flag is disabled, core mode is enabled, or the path is out of order
+     */
+    public RecommendationProviderContainer inheritedPolicy(String ancestorPath, Action<? super RecommendationProviderContainer> action) {
+        ensureCoreBomSupportNotEnabled("inheritedPolicy");
+        if (!IsolatedProjectsSupport.isEnabled(project)) {
+            throw new GradleException("inheritedPolicy requires nebula.dependency-recommender.isolatedProjectsSupport=true");
+        }
+        if (inheritedLayer) {
+            throw new GradleException("Declare inheritedPolicy layers on the consumer's dependencyRecommendations container");
+        }
+        RecommendationProviderContainer layer = inheritedPolicies.get(ancestorPath);
+        if (layer == null) {
+            String expected = nextAncestorPath();
+            if (expected == null || !expected.equals(ancestorPath)) {
+                throw new GradleException("Expected inheritedPolicy '" + expected + "' next for " + project.getPath()
+                        + "; declare layers nearest parent first, including empty intermediate layers");
+            }
+            String configurationName = DependencyRecommendationsPlugin.NEBULA_RECOMMENDER_BOM + "Inherited" + inheritedPolicies.size();
+            excludeConfigurations(configurationName);
+            project.getConfigurations().create(configurationName, configuration -> {
+                configuration.setCanBeConsumed(false);
+                configuration.getAttributes().attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_API));
+                configuration.getAttributes().attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, project.getObjects().named(LibraryElements.class, LibraryElements.JAR));
+                configuration.getAttributes().attribute(Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.REGULAR_PLATFORM));
+            });
+            layer = new RecommendationProviderContainer(project, configurationName, eagerlyResolve, true);
+            inheritedPolicies.put(ancestorPath, layer);
+        }
+        action.execute(layer);
+        return layer;
+    }
+
+    /**
+     * Groovy DSL adapter for {@link #inheritedPolicy(String, Action)}.
+     * The closure configures a consumer-owned container and must not capture foreign projects.
+     *
+     * @param ancestorPath the ancestor scope supplied by the local convention
+     * @param closure configures equivalent sources for that scope
+     * @return the consumer-owned source container
+     */
+    public RecommendationProviderContainer inheritedPolicy(String ancestorPath, Closure closure) {
+        return inheritedPolicy(ancestorPath, ConfigureUtil.<RecommendationProviderContainer>configureUsing(closure));
+    }
+
+    /**
+     * Returns the local BOM configuration name used by eager-resolution adapters.
+     *
+     * @return the main or inherited layer's consumer-owned configuration name
+     */
+    public String getBomConfigurationName() {
+        return bomConfigurationName;
+    }
+
+    /**
+     * Returns declared local ancestor layers in nearest-parent-to-root order.
+     *
+     * @return an unmodifiable view of the consumer-owned layer containers
+     */
+    public Collection<RecommendationProviderContainer> getInheritedPolicies() {
+        return Collections.unmodifiableCollection(inheritedPolicies.values());
+    }
+
+    /**
+     * Queries inherited local layers after the consumer's own providers miss.
+     * Each layer retains provider LIFO precedence and lazy initialization.
+     *
+     * @param group dependency group
+     * @param name dependency name
+     * @return the nearest layer's recommendation, or null after a complete chain misses
+     * @throws GradleException if lookup needs an ancestor not supplied by the convention
+     */
+    public String getInheritedRecommendedVersion(String group, String name) {
+        for (RecommendationProviderContainer layer : inheritedPolicies.values()) {
+            String version = layer.getRecommendedVersion(group, name);
+            if (version != null) return version;
+        }
+        requireCompleteInheritedPolicy();
+        return null;
+    }
+
+    /**
+     * Selects the nearest nonempty inherited reason set independently of version selection.
+     * This preserves the legacy reason lookup, including reasons from a nearer layer whose
+     * providers did not supply the chosen version. It does not poll additional providers.
+     *
+     * @return the first nonempty layer's reasons, or an empty set after a complete chain
+     * @throws GradleException if reason lookup needs an undeclared ancestor layer
+     */
+    public Set<String> getInheritedReasons() {
+        for (RecommendationProviderContainer layer : inheritedPolicies.values()) {
+            if (!layer.getReasons().isEmpty()) return layer.getReasons();
+        }
+        requireCompleteInheritedPolicy();
+        return Collections.emptySet();
+    }
+
+    private String nextAncestorPath() {
+        String path = project.getPath();
+        for (String ancestor : inheritedPolicies.keySet()) path = ancestor;
+        if (path.equals(":")) return null;
+        int separator = path.lastIndexOf(':');
+        return separator == 0 ? ":" : path.substring(0, separator);
+    }
+
+    private void requireCompleteInheritedPolicy() {
+        String missing = nextAncestorPath();
+        if (missing != null) {
+            throw new GradleException("Inherited recommendation lookup in " + project.getPath() + " requires local inheritedPolicy('"
+                    + missing + "') sources. Configure equivalent parent/root layers through a shared local convention; "
+                    + "implicit access to another project's recommendations is unavailable with isolatedProjectsSupport=true.");
+        }
     }
 
     public String getRecommendedVersion(String group, String name) {

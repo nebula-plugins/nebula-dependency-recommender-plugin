@@ -36,9 +36,10 @@ import org.gradle.api.provider.Provider;
  * application are not supported ways to select the mode.</p>
  *
  * <p>The gate currently selects project-owned BOM caching and the ConflictResolved
- * project-inspection shortcut. It does not establish full Isolated Projects support:
- * ancestor lookup, OverrideTransitives producer inspection, and root-driven core-BOM
- * distribution retain their existing limitations. BOM publication fixes remain active
+ * project-inspection shortcut. Ancestor fallback uses explicitly configured local policy
+ * layers rather than importing parent extension state. It does not establish full Isolated
+ * Projects support: automatic parent policy import, OverrideTransitives producer inspection,
+ * and root-driven core-BOM distribution retain their limitations. BOM publication fixes remain active
  * independently of this gate.</p>
  */
 public final class IsolatedProjectsSupport {

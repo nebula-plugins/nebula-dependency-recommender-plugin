@@ -62,6 +62,11 @@ public final class BomResolutionUtil {
      * cache; opted-in projects populate their own configuration's cache. This explicit
      * adapter remains callable when automatic eager resolution is disabled, allowing
      * callers to finish BOM customization before manually taking the snapshot.</p>
+     *
+     * <p>Consumer-owned inherited policy layers are resolved through their separate local
+     * BOM configurations as part of the same call. Their automatic eager setting shares
+     * the top-level container's property. No ancestor project is located or configured by
+     * this adapter, and no provider callbacks are enumerated to export parent snapshots.</p>
      * 
      * <p><strong>Usage by External Plugins:</strong></p>
      * <pre>{@code
@@ -99,6 +104,12 @@ public final class BomResolutionUtil {
             
             // Resolve BOMs from the specified configuration
             bomResolverService.get().eagerlyResolveAndCacheBoms(project, bomConfigurationName);
+
+            // Inherited layers are owned by this same consumer. Manual adapters resolve the
+            // complete local chain after customization; automatic calls share its eager flag.
+            for (RecommendationProviderContainer layer : container.getInheritedPolicies()) {
+                eagerlyResolveBoms(project, layer, layer.getBomConfigurationName());
+            }
             
             // Also trigger resolution for maven BOM provider if it exists
             // This handles mavenBom providers configured in the extension

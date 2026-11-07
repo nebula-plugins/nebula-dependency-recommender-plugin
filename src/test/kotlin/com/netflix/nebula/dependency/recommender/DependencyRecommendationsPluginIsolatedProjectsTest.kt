@@ -93,30 +93,48 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         }
     }
 
-    @ParameterizedTest(name = "nested inheritance characterization: Gradle {0}")
+    @ParameterizedTest(name = "local ancestor convention: Gradle {0}")
     @MethodSource("versions")
-    fun `characterization - nearest parent recommendations violate isolation`(version: String) {
+    fun `local ancestor convention preserves nearest parent and invalidates shared policy`(version: String) {
         fixture("include 'parent:leaf'")
-        write("build.gradle", localPlugins + """
-            dependencyRecommendations { map name: 'root', recommendations: ['sample:foo': '1.0'] }
+        val convention = """
+            def parentVersion = '2.0'
+            if (path == ':') {
+                dependencyRecommendations { map name: 'root', recommendations: ['sample:foo': '1.0'] }
+            } else if (path == ':parent') {
+                dependencyRecommendations { map name: 'parent', recommendations: ['sample:foo': parentVersion] }
+            } else {
+                dependencyRecommendations {
+                    inheritedPolicy(':parent') { map name: 'parent', recommendations: ['sample:foo': parentVersion] }
+                    inheritedPolicy(':') { map name: 'root', recommendations: ['sample:foo': '1.0'] }
+                }
+            }
+        """.trimIndent()
+        write("policy.gradle", convention)
+        val policy = "\napply from: new File(rootDir, 'policy.gradle')\n"
+        write("build.gradle", localPlugins + policy + """
+            tasks.register('removeConvention', Delete) { delete layout.projectDirectory.file('policy.gradle') }
         """)
-        write("parent/build.gradle", localPlugins + """
-            dependencyRecommendations { map name: 'parent', recommendations: ['sample:foo': '2.0'] }
-        """)
-        write("parent/leaf/build.gradle", localPlugins + repository + """
+        write("parent/build.gradle", localPlugins + policy)
+        write("parent/leaf/build.gradle", localPlugins + repository + policy + """
             dependencies { implementation 'sample:foo' }
-        """ + resolveTask)
+        """ + resolveFreshTask)
         val tasks = listOf(":parent:leaf:resolveRecommendations")
 
-        assertStored(run(version, false, tasks))
-        assertResolved("parent/leaf", "2.0")
-        assertReused(run(version, false, tasks))
-        write("parent/build.gradle", File(projectDir, "parent/build.gradle").readText().replace("'2.0'", "'1.0'"))
-        assertStored(run(version, false, tasks))
-        assertResolved("parent/leaf", "1.0")
-        assertReused(run(version, false, tasks))
-
-        assertIsolationFailure(version, tasks, "extensions", ":parent:leaf", ":parent")
+        fun verify(selected: String) {
+            run(version, false, tasks, cache = false)
+            assertResolved("parent/leaf", selected)
+            listOf(false, true).forEach { isolated ->
+                assertStored(run(version, isolated, tasks))
+                assertResolved("parent/leaf", selected)
+                assertReused(run(version, isolated, tasks))
+                assertResolved("parent/leaf", selected)
+            }
+        }
+        verify("2.0")
+        run(version, false, listOf(":removeConvention"), cache = false)
+        write("policy.gradle", convention.replace("'2.0'", "'1.0'"))
+        verify("1.0")
     }
 
     @ParameterizedTest(name = "ConflictResolved project dependencies: Gradle {0}, isolated={1}, nested={2}")
@@ -212,8 +230,8 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
     @MethodSource("inspectionStrategies")
     fun `late strategy selection preserves project inspection explicit versions and forces`(version: String, strategy: String) {
         fixture("include 'parent:lib', 'app'")
-        // OverrideTransitives still consults ancestors on a miss (including project selectors).
-        // Keep that existing ordinary-build behavior separate from the isolated default strategy.
+        // The consumer supplies an empty local root layer for project-selector misses.
+        // OverrideTransitives producer inspection remains a separate isolation blocker.
         write("build.gradle", localPlugins)
         write("parent/build.gradle", "")
         listOf("bar", "direct", "forced", "bridge").forEach { name ->
@@ -247,6 +265,7 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
             }
         """)
         write("app/build.gradle", localPlugins + repository + policy + """
+            dependencyRecommendations { inheritedPolicy(':') {} }
             // Strategy selection must remain lazy, including after plugin application/evaluation.
             afterEvaluate { dependencyRecommendations.strategy = dependencyRecommendations.$strategy }
             configurations.runtimeClasspath.resolutionStrategy.force 'sample:forced:1.0'
