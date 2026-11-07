@@ -67,6 +67,13 @@ Each project applies and configures the plugin locally. Policy misses can still 
 ancestor lookup limitation. `OverrideTransitives` retains declaration inspection to preserve
 explicit versions; its project-dependency workflow is not covered by this isolated guarantee.
 
+BOM recommendation and reason caches belong to each project and configuration for the
+current build. Matching BOM coordinates in different projects still resolve against each
+project's repositories and interpolation inputs. Coverage on Gradle 9.1.0 and 9.7.1 verifies
+fixed and dynamic BOM requests, changed POM bytes, repositories and Gradle/system properties,
+parallel projects, strict ordinary configuration cache and Isolated Projects. Automatic eager
+resolution and both public manual-resolution adapters retain their existing timing.
+
 ## 2. Built-in recommendation providers
 
 Several recommendation providers pack with the plugin.  The file-based providers all a shared basic configuration that is described separately.

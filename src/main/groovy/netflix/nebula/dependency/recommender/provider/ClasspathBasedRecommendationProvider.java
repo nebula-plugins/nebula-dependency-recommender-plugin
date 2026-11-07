@@ -35,12 +35,12 @@ public abstract class ClasspathBasedRecommendationProvider extends AbstractRecom
         this.configName = configName;
         this.configuration = project.getConfigurations().getByName(configName);
         this.bomResolverService = project.getGradle().getSharedServices().registerIfAbsent(
-            "bomResolver", BomResolverService.class, spec -> {}
+            "bomResolver" + project.getPath(), BomResolverService.class, spec -> {}
         );
     }
 
     /**
-     * Retrieves BOM recommendations using the shared {@link BomResolverService}.
+     * Retrieves BOM recommendations using the owning project's {@link BomResolverService}.
      * 
      * <p>This method delegates to the build service to get cached BOM recommendations,
      * avoiding direct configuration resolution that could cause lock conflicts in

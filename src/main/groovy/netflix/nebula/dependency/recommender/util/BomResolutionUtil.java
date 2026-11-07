@@ -89,7 +89,7 @@ public final class BomResolutionUtil {
             // Get the build service
             Provider<BomResolverService> bomResolverService =
                 project.getGradle().getSharedServices().registerIfAbsent(
-                    "bomResolver", BomResolverService.class, spec -> {}
+                    "bomResolver" + project.getPath(), BomResolverService.class, spec -> {}
                 );
             
             // Resolve BOMs from the specified configuration
