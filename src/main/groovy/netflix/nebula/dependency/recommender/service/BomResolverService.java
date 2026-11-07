@@ -58,6 +58,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * <p>Thread-safe implementation using {@link ConcurrentHashMap} and synchronized blocks
  * to handle concurrent access from multiple projects in parallel builds.</p>
+ *
+ * <p>This is the default, legacy service. Its coordinate-based cache intentionally
+ * retains existing sharing and mutable-return behavior while the rollout flag is
+ * disabled. Opted-in projects use {@link ProjectOwnedBomResolverService}, which
+ * isolates parsed policy by owning configuration. Both services use the same Maven
+ * model parser; selecting a service does not change automatic or manual eager timing.</p>
  * 
  * @since 13.1.0
  */
@@ -69,16 +75,17 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
     /**
      * Retrieves BOM recommendations for a given project configuration.
      * 
-     * <p>This method first attempts to return cached recommendations. If not cached,
-     * it falls back to direct resolution. This is the main entry point for accessing
-     * BOM recommendations from the build service.</p>
+     * <p>This method looks up the named configuration and returns its already cached
+     * recommendations. It performs no resolution on a cache miss. Automatic eager
+     * resolution or a public manual-resolution adapter must populate the cache first.
+     * This is the main entry point for providers accessing the build service.</p>
      * 
      * @param project the Gradle project requesting recommendations
      * @param configName the name of the configuration containing BOM dependencies
      * @param reasons a mutable set that will be populated with reasons explaining
      *                why specific recommendations were applied
      * @return a map of dependency coordinates (groupId:artifactId) to recommended versions
-     * @throws RuntimeException if BOM resolution fails
+     * @throws RuntimeException if the configuration cannot be found or has no cached result
      */
     public Map<String, String> getRecommendations(Project project, String configName, Set<String> reasons) {
         Configuration configuration = project.getConfigurations().getByName(configName);
@@ -212,11 +219,11 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
     
     /**
      * Creates a cache key for BOM recommendations based on project and configuration.
-     * 
+     *
      * <p>This method attempts to create a key based on the actual BOM coordinates
      * in the configuration. If that fails, it falls back to using the project path
      * and configuration name.</p>
-     * 
+     *
      * @param project the Gradle project
      * @param configName the configuration name
      * @return a unique cache key for the BOM
@@ -230,15 +237,15 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
             return project.getPath() + ":" + configName;
         }
     }
-    
+
     /**
      * Creates a cache key based on the actual BOM dependencies in a configuration.
-     * 
+     *
      * <p>This method creates a deterministic key by concatenating all dependency
      * coordinates (group:name:version) in the configuration. This ensures that
      * configurations with the same BOM dependencies share the same cache entry,
      * regardless of which project they belong to.</p>
-     * 
+     *
      * @param configuration the Gradle configuration containing BOM dependencies
      * @return a unique cache key based on the BOM coordinates
      */
@@ -255,7 +262,7 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
         });
         return keyBuilder.toString();
     }
-    
+
     /**
      * Parses a BOM file using Maven model building with full interpolation support.
      * 
@@ -266,6 +273,11 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      *   <li>Interpolate properties from both system and Gradle project properties</li>
      *   <li>Extract dependency management recommendations</li>
      * </ul>
+     *
+     * <p>Shared with the experimental project-owned service so cache ownership can
+     * change independently of parsing semantics. This package-private method is an
+     * implementation detail, not a subclass customization hook. Its effective model
+     * depends on the supplied project's repository and interpolation context.</p>
      * 
      * @param bomFile the BOM POM file to parse
      * @param project the Gradle project (used for property interpolation)
@@ -273,7 +285,7 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * @return a map of dependency coordinates to recommended versions
      * @throws Exception if BOM parsing or model building fails
      */
-    private Map<String, String> parseBom(File bomFile, Project project, Set<String> reasons) throws Exception {
+    Map<String, String> parseBom(File bomFile, Project project, Set<String> reasons) throws Exception {
         Map<String, String> recommendations = new HashMap<>();
         
         DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();

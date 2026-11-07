@@ -58,7 +58,23 @@ You can also specify bom lookup via a configuration
  }
  ```
 
-The default `ConflictResolved` strategy skips dependency-project declaration inspection,
+Experimental Isolated Projects resolution changes are **disabled by default**. Opt in for
+the build using `gradle.properties`:
+
+```properties
+nebula.dependency-recommender.isolatedProjectsSupport=true
+```
+
+Alternatively, pass `-Pnebula.dependency-recommender.isolatedProjectsSupport=true`.
+Leaving the property unset or setting it to `false` retains legacy resolution behavior,
+including the shared `bomResolver` service and its coordinate-based cache. Enabling Gradle's
+Isolated Projects mode does not enable this flag automatically, and the flag does not enable
+Gradle's mode. The setting is tracked as a configuration-cache input; changing it selects
+the corresponding behavior on the next invocation, including when reusing the same daemon.
+Use the build-wide property rather than project extra properties or changing it after plugin
+application.
+
+With the flag enabled, the default `ConflictResolved` strategy skips dependency-project declaration inspection,
 which it does not use. Sibling and nested project dependencies with complete project-local
 recommendation policy are tested on Gradle 9.1.0 and 9.7.1 with strict ordinary configuration
 cache and Isolated Projects. Coverage compares resolved artifacts and reasons without cache,
@@ -66,6 +82,23 @@ on cold storage, on warm reuse, and after policy, producer declaration, and forc
 Each project applies and configures the plugin locally. Policy misses can still trigger the
 ancestor lookup limitation. `OverrideTransitives` retains declaration inspection to preserve
 explicit versions; its project-dependency workflow is not covered by this isolated guarantee.
+
+With the flag enabled, BOM recommendation and reason caches belong to each project and configuration for the
+current build. Matching BOM coordinates in different projects still resolve against each
+project's repositories and interpolation inputs. Coverage on Gradle 9.1.0 and 9.7.1 verifies
+fixed and dynamic BOM requests, changed POM bytes, repositories and Gradle/system properties,
+parallel projects, strict ordinary configuration cache and Isolated Projects. Automatic eager
+resolution and both public manual-resolution adapters retain their existing timing. Affected
+builds can select different versions and reasons because the first project's BOM policy no
+longer contaminates other projects. Service names become `bomResolver` plus each project path;
+use the public manual-resolution adapters instead of looking up the experimental services by name.
+Turning the flag off restores the legacy cache behavior, including its known sharing defects.
+
+This flag is the rollout gate for future experimental Isolated Projects resolution work. It
+does not yet fix ancestor recommendation/reason lookup, `OverrideTransitives` producer inspection,
+or root-driven core-BOM distribution. Ordinary parent-to-child recommendation inheritance is
+unchanged. The existing BOM publishing/configuration-cache fix remains active independently
+of this flag.
 
 ## 2. Built-in recommendation providers
 

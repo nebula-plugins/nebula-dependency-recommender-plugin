@@ -22,6 +22,7 @@ import netflix.nebula.dependency.recommender.provider.RecommendationProviderCont
 import netflix.nebula.dependency.recommender.provider.RecommendationResolver;
 import netflix.nebula.dependency.recommender.publisher.MavenBomXmlGenerator;
 import netflix.nebula.dependency.recommender.util.BomResolutionUtil;
+import netflix.nebula.dependency.recommender.util.IsolatedProjectsSupport;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
@@ -50,11 +51,13 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
     private static final AtomicInteger COPY_COUNT = new AtomicInteger();
     private final Logger logger = Logging.getLogger(DependencyRecommendationsPlugin.class);
     private RecommendationProviderContainer recommendationProviderContainer;
+    private boolean isolatedProjectsSupport;
     //TODO: remove this exclusion once https://github.com/gradle/gradle/issues/6750 is resolved
     private final String SCALA_ANALYSIS_CONFIGURATION_PREFIX = "incrementalScalaAnalysis";
 
     @Override
     public void apply(final Project project) {
+        isolatedProjectsSupport = IsolatedProjectsSupport.isEnabled(project);
         Configuration bomConfiguration = project.getConfigurations().create(NEBULA_RECOMMENDER_BOM, c -> {
             c.getAttributes().attribute(
                     Usage.USAGE_ATTRIBUTE,
@@ -197,7 +200,7 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
         } else if (dependency instanceof ProjectDependency projectDependency) {
             // ConflictResolved has no dependency inspection state. Avoid accessing another
             // project's configurations for its no-op hook; other strategies still need the scan.
-            if (factory.getRecommendationStrategy().getClass() == RecommendationsConflictResolvedStrategy.class) {
+            if (isolatedProjectsSupport && factory.getRecommendationStrategy().getClass() == RecommendationsConflictResolvedStrategy.class) {
                 return;
             }
             if (!visited.contains(projectDependency)) {
