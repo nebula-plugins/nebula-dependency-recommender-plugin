@@ -116,6 +116,30 @@ publishing {
 }
 ```
 
+`fromConfigurations` accepts a closure returning one resolvable `Configuration` or an
+`Iterable<Configuration>`. It includes resolved transitive modules and Gradle's selected
+versions. `withDependencies` accepts a closure returning one coordinate string or an
+`Iterable<String>` and does not resolve transitives. Both closures run during publication
+configuration; configuration resolution stays lazy until the publication is needed.
+Multiple calls append contributions to one dependency-management section, preserving
+duplicates between contributions and the registration order of user `pom.withXml` actions.
+
+BOM POM generation with these APIs is verified on Gradle 9.1.0 and 9.7.1 with JDK 21,
+using strict configuration cache both with and without Isolated Projects. Coverage checks
+the generated XML against a no-cache build, cold storage, warm reuse, regeneration after
+deleting the POM, and changed dependency coordinates and versions. It includes a single
+project and independently configured sibling/nested publications. Unselected publications
+do not resolve their configurations. On Gradle 9.1 use
+`-Dorg.gradle.unsafe.isolated-projects=true`; on Gradle 9.7 use `--isolated-projects`.
+
+This scope covers project-local publications using Gradle's `maven-publish` plugin.
+Apply and configure plugins in each participating project. Custom `pom.withXml` actions
+and subclass callbacks through the protected closure helper must themselves satisfy
+Gradle's configuration-cache restrictions. This does not establish general Isolated
+Projects support for the recommender: ancestor recommendation inheritance, inspection
+of dependency projects, and root-driven core-BOM distribution still have isolation
+limitations. Other publishing-plugin combinations are not covered by this cache matrix.
+
 The resultant BOM would look like this:
 
 ```xml
