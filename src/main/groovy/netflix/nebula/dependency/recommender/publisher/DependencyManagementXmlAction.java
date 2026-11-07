@@ -36,7 +36,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Execution state for the built-in publishing DSL; deliberately contains no project model. */
+/**
+ * Appends resolved dependency coordinates to a publication's Maven dependency-management section.
+ *
+ * <p>POM XML actions execute after publication configuration and must survive configuration-cache
+ * storage and reuse. This action retains Gradle-managed providers mapped to plain coordinate values,
+ * rather than configurations, resolution-result objects, or Groovy closures with project/script
+ * delegates. The action and its nested transformers have no enclosing DSL instance to capture.
+ *
+ * <p>Contributions are appended in their supplied order. Deduplication happens within each resolved
+ * graph, not across contributions or other XML actions registered on the publication.
+ */
 final class DependencyManagementXmlAction implements Action<XmlProvider> {
     private final List<Provider<List<Coordinate>>> contributions;
 
@@ -44,6 +54,11 @@ final class DependencyManagementXmlAction implements Action<XmlProvider> {
         this.contributions = new ArrayList<>(contributions);
     }
 
+    /**
+     * Queries the coordinate providers and appends their entries when Gradle generates the POM.
+     *
+     * @param xml the publication's mutable POM XML
+     */
     @Override
     public void execute(XmlProvider xml) {
         Node dependencies = dependenciesNode(xml);
@@ -54,6 +69,13 @@ final class DependencyManagementXmlAction implements Action<XmlProvider> {
         }
     }
 
+    /**
+     * Reuses the first dependency-management section, or creates one for the first contribution.
+     * This lets repeated DSL calls share a section while leaving earlier XML contributions intact.
+     *
+     * @param xml the publication's mutable POM XML
+     * @return the dependencies node to which this action should append entries
+     */
     private static Node dependenciesNode(XmlProvider xml) {
         Node root = xml.asNode();
         List<?> management = (List<?>) root.get("dependencyManagement");
@@ -63,6 +85,10 @@ final class DependencyManagementXmlAction implements Action<XmlProvider> {
         return (Node) ((List<?>) ((Node) management.get(0)).get("dependencies")).get(0);
     }
 
+    /**
+     * Immutable group, artifact, and version snapshot suitable for configuration-cache storage.
+     * Copying the strings avoids retaining the Gradle identifier or its backing resolution model.
+     */
     static final class Coordinate implements Serializable {
         private final String group;
         private final String name;
@@ -82,8 +108,20 @@ final class DependencyManagementXmlAction implements Action<XmlProvider> {
         }
     }
 
-    /** Map before retaining the provider: neither resolution results nor model objects escape. */
+    /**
+     * Maps a resolution-root provider to immutable coordinates before the provider is retained by
+     * the XML action. Traversal uses Gradle's selected components, so conflict resolution and
+     * transitive dependencies are reflected in the published versions without resolving artifacts.
+     */
     static final class ResolvedCoordinates implements Transformer<List<Coordinate>, ResolvedComponentResult> {
+        /**
+         * Collects dependencies reachable from the root; the configuration's root is not itself
+         * added as an entry unless it is reached through a dependency edge.
+         *
+         * @param root the root component of a configuration's resolution result
+         * @return an immutable list with each encountered module version included once
+         * @throws GradleException if a traversed dependency could not be resolved
+         */
         @Override
         public List<Coordinate> transform(ResolvedComponentResult root) {
             List<Coordinate> coordinates = new ArrayList<>();
@@ -91,6 +129,20 @@ final class DependencyManagementXmlAction implements Action<XmlProvider> {
             return Collections.unmodifiableList(coordinates);
         }
 
+        /**
+         * Traverses non-constraint dependency edges depth first. Constraints affect selected
+         * versions but do not independently contribute BOM entries. Components without module
+         * coordinates are traversed without adding an entry, so their dependencies remain reachable.
+         *
+         * <p>Component identities prevent cycles and repeated traversal; module-version identities
+         * separately prevent duplicate coordinates. Unresolved edges fail publication rather than
+         * silently producing an incomplete BOM.
+         *
+         * @param component the component whose outgoing dependencies should be visited
+         * @param visited component identities already traversed in this graph
+         * @param modules module versions already emitted in this graph
+         * @param coordinates accumulated coordinates in traversal order
+         */
         private static void collect(ResolvedComponentResult component, Set<ComponentIdentifier> visited,
                                     Set<ModuleVersionIdentifier> modules, List<Coordinate> coordinates) {
             if (!visited.add(component.getId())) {
@@ -115,6 +167,12 @@ final class DependencyManagementXmlAction implements Action<XmlProvider> {
         }
     }
 
+    /**
+     * Appends explicit dependency notations without resolving a dependency graph or transitives.
+     * Only a defensive snapshot of the notation strings is retained, so the supplying DSL closure
+     * and its delegates are not part of the deferred action. Parsing remains deferred until POM
+     * generation, preserving the existing timing and validation errors for invalid notations.
+     */
     static final class ExplicitDependencies implements Action<XmlProvider> {
         private final List<String> notations;
 
