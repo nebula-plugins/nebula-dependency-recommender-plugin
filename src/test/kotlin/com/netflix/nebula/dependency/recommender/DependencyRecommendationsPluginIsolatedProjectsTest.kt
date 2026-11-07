@@ -46,9 +46,13 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         write("build.gradle", localPlugins + repository + """
             dependencyRecommendations { propertiesFile file: file('recommendations.properties') }
             dependencies { implementation 'sample:foo' }
+            tasks.register('removePolicy', Delete) { delete layout.projectDirectory.file('recommendations.properties') }
         """ + resolveTask)
 
         verifyReuseAndInvalidation(version, isolated, listOf(":resolveRecommendations"), "1.0", "2.0") {
+            // Let Gradle invalidate its filesystem snapshot before replacing this same-size
+            // fixture input; an immediate external write can race the file watcher.
+            if (it == "2.0") run(version, false, listOf(":removePolicy"), cache = false)
             write("recommendations.properties", "sample:foo=$it\n")
             emptyList()
         }
@@ -184,6 +188,24 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         check("1.0", "2.0", recommended = false)
         File(projectDir, "$appDir/build.gradle").appendText("\nconfigurations.runtimeClasspath.resolutionStrategy.force 'sample:foo:2.0'\n")
         check("2.0", "2.0", recommended = false, forced = true)
+
+        if (isolated) {
+            val properties = File(projectDir, "gradle.properties")
+            val optedOut = properties.readText().replace("nebula.dependency-recommender.isolatedProjectsSupport=true", "") +
+                "\nsample.version=2.0\n"
+            listOf("", "\nnebula.dependency-recommender.isolatedProjectsSupport=false\n").forEach { setting ->
+                properties.writeText(optedOut + setting)
+                val resolution = listOf(":$app:resolveRecommendations")
+                run(version, false, resolution, cache = false)
+                assertResolved(appDir, "2.0", setOf("lib-1.0.jar"))
+                assertStored(run(version, false, resolution))
+                assertReused(run(version, false, resolution))
+                assertResolved(appDir, "2.0", setOf("lib-1.0.jar"))
+                // Legacy traversal is deliberately retained when opted out. These failures
+                // document the disabled path; they are not evidence of isolation support.
+                assertIsolationFailure(version, resolution, "configurations", ":$app", ":$lib")
+            }
+        }
     }
 
     @ParameterizedTest(name = "late strategy selection: Gradle {0}, strategy={1}")
@@ -613,6 +635,7 @@ class DependencyRecommendationsPluginIsolatedProjectsTest {
         // An explicit Gradle property keeps positive cases independent of dynamic ancestor lookup.
         write("gradle.properties", """
             nebula.dependency-recommender.useBuildService=true
+            nebula.dependency-recommender.isolatedProjectsSupport=true
             systemProp.nebula.features.coreBomSupport=$core
             org.gradle.jvmargs=-Xmx${if (core) 513 else 512}m -Dnebula.features.coreBomSupport=$core
             org.gradle.parallel=true

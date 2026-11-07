@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A Gradle build service that resolves and caches BOM (Bill of Materials) recommendations
@@ -50,39 +51,20 @@ import java.util.*;
  * <p>The service works by:</p>
  * <ul>
  *   <li>Eagerly resolving BOMs during the configuration phase when exclusive locks are available</li>
- *   <li>Caching resolved recommendations separately for each owning configuration</li>
+ *   <li>Caching resolved recommendations indexed by BOM coordinates</li>
  *   <li>Providing cached results during dependency resolution phase to avoid lock conflicts</li>
  *   <li>Supporting full Maven model building with property interpolation and parent POM resolution</li>
  * </ul>
  * 
- * <p>The plugin registers a separate service for each project. Cache entries use configuration
- * identity, so matching dependency declarations never share parsed models across configuration
- * resolution or interpolation contexts. Entries live only for the current build.</p>
+ * <p>Thread-safe implementation using {@link ConcurrentHashMap} and synchronized blocks
+ * to handle concurrent access from multiple projects in parallel builds.</p>
  * 
  * @since 13.1.0
  */
 public abstract class BomResolverService implements BuildService<BuildServiceParameters.None> {
-    private final Map<Configuration, CacheEntry> cache = Collections.synchronizedMap(new IdentityHashMap<>());
-
-    private static final class CacheEntry {
-        private volatile BomResult result;
-    }
-
-    private static final class BomResult {
-        private final Map<String, String> recommendations;
-        private final Set<String> reasons;
-
-        private BomResult(Map<String, String> recommendations, Set<String> reasons) {
-            this.recommendations = Collections.unmodifiableMap(new HashMap<>(recommendations));
-            this.reasons = Collections.unmodifiableSet(new HashSet<>(reasons));
-        }
-
-        private Map<String, String> copyTo(Set<String> targetReasons) {
-            targetReasons.addAll(reasons);
-            // Preserve the mutable return type without allowing callers to change cached policy.
-            return new HashMap<>(recommendations);
-        }
-    }
+    private final ConcurrentHashMap<String, Map<String, String>> bomRecommendations = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Set<String>> bomReasons = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Object> locks = new ConcurrentHashMap<>();
 
     /**
      * Retrieves BOM recommendations for a given project configuration.
@@ -120,10 +102,15 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * @throws RuntimeException if the BOM was not pre-resolved and cached
      */
     public Map<String, String> getCachedRecommendationsFromConfiguration(Configuration configuration, Set<String> reasons) {
-        CacheEntry entry = cache.get(configuration);
-        BomResult cached = entry == null ? null : entry.result;
+        // First try to return cached data
+        String bomKey = createBomKeyFromConfiguration(configuration);
+        Map<String, String> cached = bomRecommendations.get(bomKey);
         if (cached != null) {
-            return cached.copyTo(reasons);
+            Set<String> cachedReasons = bomReasons.get(bomKey);
+            if (cachedReasons != null) {
+                reasons.addAll(cachedReasons);
+            }
+            return cached;
         }
         
         // If not cached, we need to resolve it, but we can't use the full Maven model building 
@@ -145,17 +132,15 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * @param configName the name of the configuration containing BOM dependencies
      */
     public void eagerlyResolveAndCacheBoms(Project project, String configName) {
-        Configuration configuration = null;
         try {
-            configuration = project.getConfigurations().getByName(configName);
+            Configuration configuration = project.getConfigurations().getByName(configName);
             Set<String> reasons = new HashSet<>();
             getRecommendationsFromConfiguration(configuration, project, reasons);
         } catch (Exception e) {
-            // Preserve the existing empty-result fallback, scoped to the failed configuration.
-            if (configuration != null) {
-                cache.computeIfAbsent(configuration, ignored -> new CacheEntry()).result =
-                        new BomResult(Collections.emptyMap(), Collections.emptySet());
-            }
+            // Cache empty results if resolution fails
+            String bomKey = createBomKey(project, configName);
+            bomRecommendations.put(bomKey, new HashMap<>());
+            bomReasons.put(bomKey, new HashSet<>());
         }
     }
     
@@ -174,20 +159,30 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * @throws RuntimeException if BOM resolution or parsing fails
      */
     public Map<String, String> getRecommendationsFromConfiguration(Configuration configuration, Project project, Set<String> reasons) {
-        CacheEntry entry = cache.computeIfAbsent(configuration, ignored -> new CacheEntry());
+        // Create cache key based on BOM files/coordinates
+        String bomKey = createBomKeyFromConfiguration(configuration);
+        Object lock = locks.computeIfAbsent(bomKey, k -> new Object());
         
         // Check if already resolved
-        BomResult cached = entry.result;
+        Map<String, String> cached = bomRecommendations.get(bomKey);
         if (cached != null) {
-            return cached.copyTo(reasons);
+            Set<String> cachedReasons = bomReasons.get(bomKey);
+            if (cachedReasons != null) {
+                reasons.addAll(cachedReasons);
+            }
+            return cached;
         }
         
         // Synchronize resolution to prevent concurrent access
-        synchronized (entry) {
+        synchronized (lock) {
             // Double-check pattern to avoid duplicate resolution
-            cached = entry.result;
+            cached = bomRecommendations.get(bomKey);
             if (cached != null) {
-                return cached.copyTo(reasons);
+                Set<String> cachedReasons = bomReasons.get(bomKey);
+                if (cachedReasons != null) {
+                    reasons.addAll(cachedReasons);
+                }
+                return cached;
             }
             
             try {
@@ -205,15 +200,62 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
                     recommendations.putAll(bomRecommendations);
                 }
                 
-                BomResult result = new BomResult(recommendations, currentReasons);
-                entry.result = result;
-                return result.copyTo(reasons);
+                bomRecommendations.put(bomKey, recommendations);
+                bomReasons.put(bomKey, currentReasons);
+                reasons.addAll(currentReasons);
+                return recommendations;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
     }
     
+    /**
+     * Creates a cache key for BOM recommendations based on project and configuration.
+     *
+     * <p>This method attempts to create a key based on the actual BOM coordinates
+     * in the configuration. If that fails, it falls back to using the project path
+     * and configuration name.</p>
+     *
+     * @param project the Gradle project
+     * @param configName the configuration name
+     * @return a unique cache key for the BOM
+     */
+    private String createBomKey(Project project, String configName) {
+        try {
+            Configuration configuration = project.getConfigurations().getByName(configName);
+            return createBomKeyFromConfiguration(configuration);
+        } catch (Exception e) {
+            // Fallback to project+config if we can't determine dependencies
+            return project.getPath() + ":" + configName;
+        }
+    }
+
+    /**
+     * Creates a cache key based on the actual BOM dependencies in a configuration.
+     *
+     * <p>This method creates a deterministic key by concatenating all dependency
+     * coordinates (group:name:version) in the configuration. This ensures that
+     * configurations with the same BOM dependencies share the same cache entry,
+     * regardless of which project they belong to.</p>
+     *
+     * @param configuration the Gradle configuration containing BOM dependencies
+     * @return a unique cache key based on the BOM coordinates
+     */
+    private String createBomKeyFromConfiguration(Configuration configuration) {
+        // Create a key based on the dependency coordinates in the configuration
+        StringBuilder keyBuilder = new StringBuilder();
+        configuration.getAllDependencies().forEach(dep -> {
+            keyBuilder.append(dep.getGroup())
+                      .append(":")
+                      .append(dep.getName())
+                      .append(":")
+                      .append(dep.getVersion())
+                      .append(";");
+        });
+        return keyBuilder.toString();
+    }
+
     /**
      * Parses a BOM file using Maven model building with full interpolation support.
      * 
@@ -231,7 +273,7 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * @return a map of dependency coordinates to recommended versions
      * @throws Exception if BOM parsing or model building fails
      */
-    private Map<String, String> parseBom(File bomFile, Project project, Set<String> reasons) throws Exception {
+    Map<String, String> parseBom(File bomFile, Project project, Set<String> reasons) throws Exception {
         Map<String, String> recommendations = new HashMap<>();
         
         DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();

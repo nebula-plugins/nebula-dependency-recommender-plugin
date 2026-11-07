@@ -1,6 +1,7 @@
 package com.netflix.nebula.dependency.recommender
 
 import netflix.nebula.dependency.recommender.service.BomResolverService
+import netflix.nebula.dependency.recommender.service.ProjectOwnedBomResolverService
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.BuildResult
@@ -22,6 +23,38 @@ import java.util.stream.Stream
 class BomCacheOwnershipTest {
     @TempDir
     lateinit var projectDir: File
+
+    @ParameterizedTest(name = "rollout and rollback: Gradle {0}")
+    @MethodSource("versions")
+    fun `unset and false preserve legacy cache behavior while true opts in and invalidates cache`(version: String) {
+        fixture(true, support = null)
+        val paths = structure(false)
+        listOf("left", "right").forEach { owner ->
+            File(projectDir, "$owner/build.gradle").appendText("\n" + """
+                if (!providers.gradleProperty('nebula.dependency-recommender.isolatedProjectsSupport').orElse('false').get().toBoolean()) {
+                    // Existing integrations can still retrieve the legacy service by name.
+                    assert gradle.sharedServices.registrations.getByName('bomResolver').service.get() instanceof
+                        netflix.nebula.dependency.recommender.service.BomResolverService
+                }
+            """.trimIndent())
+        }
+        val tasks = paths.flatMap { listOf("$it:resolveRecommendations", "$it:dependencyInsight") }
+        listOf<String?>(null, "false", "true", "false", "true", null).forEachIndexed { index, value ->
+            val enabled = value == "true"
+            val args = listOf("-Pleft.version=1.0", "-Pright.version=2.0") +
+                (value?.let { listOf("-Pnebula.dependency-recommender.isolatedProjectsSupport=$it") } ?: emptyList())
+            // Disabled cases deliberately characterize the existing contamination bug, not
+            // isolation support: both consumers receive the first project's BOM and reason.
+            val selected = if (enabled) listOf("1.0", "2.0") else listOf("1.0", "1.0")
+            verify(run(version, false, tasks, args, cache = false), paths, selected, selected)
+            val cold = run(version, false, tasks, args)
+            if (index < 3) assertStored(cold)
+            verify(cold, paths, selected, selected)
+            val warm = run(version, false, tasks, args)
+            assertTrue(warm.output.contains("Reusing configuration cache"), warm.output)
+            verify(warm, paths, selected, selected)
+        }
+    }
 
     @ParameterizedTest(name = "repository ownership: Gradle {0}, isolated={1}, dynamic={2}")
     @MethodSource("modes")
@@ -62,11 +95,11 @@ class BomCacheOwnershipTest {
         }
     }
 
-    @ParameterizedTest(name = "manual eager adapters: Gradle {0}, isolated={1}")
-    @MethodSource("cacheModes")
-    fun `disabled eager resolution permits late BOM changes and both manual adapters`(version: String, isolated: Boolean) {
+    @ParameterizedTest(name = "manual eager adapters: Gradle {0}, isolated={1}, support={2}")
+    @MethodSource("manualModes")
+    fun `disabled eager resolution permits late BOM changes and both manual adapters`(version: String, isolated: Boolean, support: Boolean) {
         listOf("util", "plugin").forEach { adapter ->
-            fixture(false)
+            fixture(false, support)
             val paths = structure(false)
             listOf("left", "right").forEach { owner ->
                 pom("$owner-repo", "bom", "2.0", "pom", management("\${$owner.version}"))
@@ -87,7 +120,9 @@ class BomCacheOwnershipTest {
                 """.trimIndent())
             }
             val tasks = paths.flatMap { listOf("$it:resolveRecommendations", "$it:dependencyInsight") }
-            listOf(listOf("1.0", "2.0"), listOf("2.0", "1.0")).forEach { selected ->
+            val policies = if (support) listOf(listOf("1.0", "2.0"), listOf("2.0", "1.0"))
+                else listOf(listOf("1.0", "1.0"), listOf("2.0", "2.0"))
+            policies.forEach { selected ->
                 val args = listOf("-Pleft.version=${selected[0]}", "-Pright.version=${selected[1]}")
                 verify(run(version, false, tasks, args, cache = false), paths, selected, listOf("2.0", "2.0"))
                 val cold = run(version, isolated, tasks, args)
@@ -176,15 +211,16 @@ class BomCacheOwnershipTest {
         }
         val project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.repositories.maven { it.setUrl(File(projectDir, "unit-repo").toURI()) }
-        val service = project.gradle.sharedServices.registerIfAbsent("testBomResolver", BomResolverService::class.java) {}.get()
+        val service = project.gradle.sharedServices.registerIfAbsent("testBomResolver", ProjectOwnedBomResolverService::class.java) {}.get()
         return project to service
     }
 
-    private fun fixture(dynamic: Boolean) {
+    private fun fixture(dynamic: Boolean, support: Boolean? = true) {
         write("build.gradle", "")
         write("parent/build.gradle", "")
         write("gradle.properties", """
             nebula.dependency-recommender.useBuildService=true
+            ${support?.let { "nebula.dependency-recommender.isolatedProjectsSupport=$it" } ?: ""}
             systemProp.nebula.features.coreBomSupport=false
             org.gradle.jvmargs=-Xmx512m -Dnebula.features.coreBomSupport=false
             org.gradle.parallel=true
@@ -290,6 +326,14 @@ class BomCacheOwnershipTest {
     }
 
     companion object {
+        @JvmStatic
+        fun versions(): Stream<String> = listOf("9.1.0", GradleVersion.current().version).distinct().stream()
+
+        @JvmStatic
+        fun manualModes(): Stream<Arguments> = versions().flatMap { version ->
+            Stream.of(Arguments.of(version, false, false), Arguments.of(version, false, true), Arguments.of(version, true, true))
+        }
+
         @JvmStatic
         fun cacheModes(): Stream<Arguments> = listOf("9.1.0", GradleVersion.current().version).distinct().stream().flatMap { version ->
             Stream.of(Arguments.of(version, false), Arguments.of(version, true))

@@ -16,6 +16,7 @@
 package netflix.nebula.dependency.recommender.provider;
 
 import netflix.nebula.dependency.recommender.service.BomResolverService;
+import netflix.nebula.dependency.recommender.util.IsolatedProjectsSupport;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.provider.Provider;
@@ -34,9 +35,7 @@ public abstract class ClasspathBasedRecommendationProvider extends AbstractRecom
         this.project = project;
         this.configName = configName;
         this.configuration = project.getConfigurations().getByName(configName);
-        this.bomResolverService = project.getGradle().getSharedServices().registerIfAbsent(
-            "bomResolver" + project.getPath(), BomResolverService.class, spec -> {}
-        );
+        this.bomResolverService = IsolatedProjectsSupport.registerBomResolver(project);
     }
 
     /**
