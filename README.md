@@ -80,8 +80,9 @@ recommendation policy are tested on Gradle 9.1.0 and 9.7.1 with strict ordinary 
 cache and Isolated Projects. Coverage compares resolved artifacts and reasons without cache,
 on cold storage, on warm reuse, and after policy, producer declaration, and force changes.
 Each project applies and configures the plugin locally. Policy misses can require
-explicit local ancestor layers as described below. `OverrideTransitives` retains declaration inspection to preserve
-explicit versions; its project-dependency workflow is not covered by this isolated guarantee.
+explicit local ancestor layers as described below. `OverrideTransitives` uses producer-owned
+inspection metadata when participating producers adopt the plugin locally; see its migration
+requirements below.
 
 With the flag enabled, BOM recommendation and reason caches belong to each project and configuration for the
 current build. Matching BOM coordinates in different projects still resolve against each
@@ -95,11 +96,60 @@ use the public manual-resolution adapters instead of looking up the experimental
 Turning the flag off restores the legacy cache behavior, including its known sharing defects.
 
 This flag is the rollout gate for future experimental Isolated Projects resolution work.
-Automatic parent policy import, `OverrideTransitives` producer inspection, and automatic
-cross-project core-BOM distribution remain outside the supported isolated scope. Core-BOM
-consumers can adopt local policy as described below. With the flag disabled,
+Automatic parent policy import and automatic cross-project core-BOM distribution remain
+outside the supported isolated scope. Core-BOM consumers can adopt local policy as described
+below. With the flag disabled,
 ordinary parent-to-child recommendation inheritance is unchanged. The existing BOM
 publishing/configuration-cache fix remains active independently of this flag.
+
+### OverrideTransitives project inspection and migration
+
+With the support flag enabled, non-core `OverrideTransitives` resolution reads producer-owned
+Gradle metadata instead of another project's configurations. Explicitly versioned declarations
+in dependency projects remain protected from transitive recommendations. Versionless requests
+can still receive recommendations, and forces retain precedence. Strategy selection remains
+lazy, including customization in `afterEvaluate`.
+
+Before opting in:
+
+1. Apply the same dependency-recommender plugin version locally in every producer reached
+   through project dependencies, including nested producers. A producer can keep the default
+   `ConflictResolved` strategy. Java or other language plugins alone do not export inspection
+   metadata; missing participation fails with an actionable error.
+2. Supply complete recommendation policy locally in each consumer, including any required
+   ancestor layers. Use a shared convention applied locally to keep policies equivalent.
+3. Set the build-wide support flag to `true`. Compare resolved artifacts, versions, and
+   dependency-insight reasons with the legacy build, then test strict configuration-cache
+   storage/reuse and Isolated Projects, including changed producer declarations and policy.
+
+Inspection deliberately follows the declared project dependency's target configuration, or
+`default` when none is specified, retaining the existing inspection scope. It does not replace
+that scope with the normally selected variant: for example, a test-fixtures variant can contain
+declarations absent from `default`. Ordinary classpath variant selection is unchanged. The
+separate inspection graph resolves no external modules or artifacts and requires no generated
+tasks. Each declared producer scope is inspected independently, preserving declarations even
+when different producer projects publish identical coordinates. A local visited set terminates
+project cycles. Configurations prefixed `nebulaRecommenderProjectInspection_` and their metadata
+are internal; do not use them in build DSL or configure them through broad configuration rules.
+
+Explicit inspection targets must be consumable. Unused non-consumable configurations keep
+their dependency providers deferred. If a default-only legacy inspection edge points to a
+non-consumable target that the actual classpath never selects, opt-in resolution reports that
+unsupported scope explicitly. It does not silently drop those declarations. The conventional
+`default` inspection scope remains available regardless of its role.
+
+Coverage on Gradle 9.1.0 and 9.7.1 compares real local Maven artifacts and contents, versions,
+and native reasons with legacy resolution. It includes sibling/nested producers, multiple
+source configurations, matching producer coordinates, explicit targets, test fixtures, project
+cycles, changed declarations, policy and forces, parallel/reversed task order, strict ordinary configuration cache and
+Isolated Projects cold/warm runs, and rollout/rollback in one daemon. Composite builds and
+custom recommendation strategies are outside this guarantee; custom strategies retain their
+existing inspection path.
+
+To roll back, remove the property or set it to `false`, and disable Gradle's Isolated Projects
+mode for the legacy path. The next invocation restores legacy inspection, including in the
+same daemon. The flag remains disabled by default; existing builds require no migration until
+they opt in. This does not import a root BOM or ancestor policy automatically.
 
 ### Build-service selection
 
@@ -242,8 +292,8 @@ and 9.7.1, native selection reasons, explicit versions, forces, platform/enforce
 manual adapters, changed BOM inputs, and strict cache storage/reuse. Java publication checks
 cover resolved POM versions and absence of the policy BOM from POM/module dependencies; other
 publishing plugins, custom recommendation providers in core mode, and composite builds are not
-established by this coverage. Automatic distribution and `OverrideTransitives` producer inspection
-remain separate work.
+established by this coverage. Automatic distribution remains separate work. Non-core
+`OverrideTransitives` project inspection has its own adoption requirements documented above.
 
 ## 2. Built-in recommendation providers
 
@@ -323,10 +373,10 @@ This scope covers project-local publications using Gradle's `maven-publish` plug
 Apply and configure plugins in each participating project. Custom `pom.withXml` actions
 and subclass callbacks through the protected closure helper must themselves satisfy
 Gradle's configuration-cache restrictions. This does not establish general Isolated
-Projects support for the recommender: automatic ancestor policy import, OverrideTransitives
-inspection of dependency projects, and automatic cross-project core-BOM distribution still
-have isolation limitations. Core consumers can adopt the local policy convention documented
-above. Other publishing-plugin combinations are not covered by this cache matrix.
+Projects support for the recommender: automatic ancestor policy import and automatic
+cross-project core-BOM distribution still have isolation limitations. Core consumers can adopt
+the local policy convention documented above. Other publishing-plugin combinations are not
+covered by this cache matrix.
 
 The resultant BOM would look like this:
 
