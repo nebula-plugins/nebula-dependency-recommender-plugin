@@ -270,6 +270,7 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * <ul>
      *   <li>Parse the BOM POM file</li>
      *   <li>Resolve parent POMs if referenced</li>
+     *   <li>Build dependency management from BOM imports, including nested imports</li>
      *   <li>Interpolate properties from both system and Gradle project properties</li>
      *   <li>Extract dependency management recommendations</li>
      * </ul>
@@ -285,6 +286,13 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * Reasons identify the effective child BOM model; inherited parents are not recorded
      * as separate recommendation sources. This method builds a fresh Maven model and
      * retains no parsed-model cache of its own.</p>
+     *
+     * <p>BOM imports also resolve through the same owning project's model resolver.
+     * Maven builds each imported model in its own property context, then merges its
+     * effective dependency management: explicit entries in the importing model take
+     * precedence, and the first imported definition wins among conflicting imports.
+     * Imported models contribute recommendations to the requested BOM's effective
+     * policy without adding separate reason sources.</p>
      * 
      * @param bomFile the BOM POM file to parse
      * @param project the Gradle project (used for property interpolation)
@@ -362,8 +370,9 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * <p>Every referenced model resolves through the owning project's Gradle repositories;
      * no other project's repository or recommendation state is consulted. Repository
      * declarations encountered inside POMs do not extend that repository set. Parent
-     * POMs are read during model building, so a local parent file is a configuration-time
-     * input even when the requested child BOM file has not changed.</p>
+     * and imported POMs are read during model building, so their local files are
+     * configuration-time inputs even when the requested top-level BOM file has not
+     * changed. Resolving an import does not read another Gradle project's state.</p>
      */
     private static class ProjectModelResolver implements ModelResolver {
         private final Project project;
