@@ -123,9 +123,36 @@ inherited parents are not added as separate recommendation sources.
 Maven inheritance requires no additional DSL. Automatic eager resolution and
 `eagerlyResolve=false` with either manual-resolution adapter retain their existing timing.
 The default-false support gate and rollback instructions above still apply.
-Imported BOMs, remote repository refresh
-policy, and provider fallback paths need separate evidence. Gradle root/ancestor recommendation
+Remote repository refresh policy and provider fallback paths need separate evidence.
+Gradle root/ancestor recommendation
 inheritance uses the local policy adoption described below.
+
+### Maven BOM imports
+
+The non-core Maven BOM recommendation provider builds effective dependency management from
+BOM imports (`<type>pom</type>` and `<scope>import</scope>`), including nested imports.
+With the support flag enabled, each imported model uses the consuming project's repositories
+and interpolation inputs. Declare repositories for the complete import graph locally.
+Imported models retain their own Maven property context; properties in the importing BOM
+do not act as inherited parent properties for an import.
+
+Within a Maven model, explicit dependency-management entries override imported entries.
+When imports manage the same dependency, the first imported definition wins. Recommendation
+reasons identify the effective top-level BOM declared to the provider; imported models do
+not become separate reason sources.
+
+Local Maven regressions on Gradle 9.1.0 and 9.7.1 verify resolved JAR contents, selected
+versions and native reasons for sibling/nested consumers, parallel and reversed order,
+changed repositories, import order and Gradle/system interpolation inputs. Editing only a
+direct or nested imported POM invalidates the tested cached policy while the top-level BOM
+stays unchanged. Comparisons cover no cache, strict ordinary configuration-cache storage/reuse,
+and strict Isolated Projects storage/reuse. Both manual-resolution adapters retain late
+customization timing with `eagerlyResolve=false`; unset/false/true and rollback are also
+checked in one daemon.
+
+These cases require no additional DSL or migration. The existing default-false flag and
+rollback instructions still apply. Remote repository refresh policy and fallback-provider
+behavior remain outside this imported-BOM coverage.
 
 ### OverrideTransitives project inspection and migration
 
