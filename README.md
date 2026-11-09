@@ -154,6 +154,31 @@ These cases require no additional DSL or migration. The existing default-false f
 rollback instructions still apply. Remote repository refresh policy and fallback-provider
 behavior remain outside this imported-BOM coverage.
 
+### BOM lookups before eager resolution
+
+An explicit lookup through the non-core Maven BOM provider can run before automatic eager resolution
+or a manual-resolution adapter has populated the service cache. This uses the provider's
+direct-parser fallback. With the support flag enabled, fallback interpolation reads Gradle
+and system properties through the owning project's provider factory, avoiding the dynamic
+`Project.getProperties()` access rejected by Gradle 9.7.1 Isolated Projects. The flag-disabled
+fallback retains its existing project-property behavior.
+
+Supply external interpolation inputs in `gradle.properties`, with `-P`, or as system
+properties when opting in. Move any interpolation values supplied only through project extra
+properties to those inputs; the enabled fallback uses the same sources as the service parser.
+Maven model properties and system/Gradle precedence are retained. Local regression coverage
+on Gradle 9.1.0 and 9.7.1 checks actual artifacts and native reasons, sibling/nested ownership,
+parallel/reversed ordering, changed BOM/property inputs, strict ordinary configuration-cache
+and Isolated Projects storage/reuse, and flag rollback in one daemon.
+
+Finish customization before explicitly requesting recommendations. Setting
+`eagerlyResolve=false` disables automatic eager resolution; it does not postpone a direct
+lookup. Both manual-resolution adapters and the default eager timing are unchanged. Existing
+fallback error handling is also unchanged; this coverage does not establish compatibility
+for service failures, invalid BOMs, remote refresh policy, other source types, or custom streams.
+To roll back, unset the support flag or set it to `false`, and disable Gradle's Isolated
+Projects mode for the legacy path.
+
 ### OverrideTransitives project inspection and migration
 
 With the support flag enabled, non-core `OverrideTransitives` resolution reads producer-owned
