@@ -278,6 +278,13 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * change independently of parsing semantics. This package-private method is an
      * implementation detail, not a subclass customization hook. Its effective model
      * depends on the supplied project's repository and interpolation context.</p>
+     *
+     * <p>Maven parent POMs contribute inherited properties and dependency management
+     * through {@link ProjectModelResolver}, using this same owning project at every
+     * level. This is Maven model inheritance and does not read Gradle ancestor projects.
+     * Reasons identify the effective child BOM model; inherited parents are not recorded
+     * as separate recommendation sources. This method builds a fresh Maven model and
+     * retains no parsed-model cache of its own.</p>
      * 
      * @param bomFile the BOM POM file to parse
      * @param project the Gradle project (used for property interpolation)
@@ -313,7 +320,9 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * A simple implementation of Maven's {@link ModelSource2} that reads from an InputStream.
      * 
      * <p>This class provides a minimal implementation for reading POM files during
-     * Maven model building. It's used internally by the BOM parsing process.</p>
+     * Maven model building. It's used internally by the BOM parsing process. It provides
+     * no filesystem location or related source, so Maven parent lookup uses coordinates
+     * through the model resolver rather than a POM's relative filesystem path.</p>
      */
     private static class SimpleModelSource implements ModelSource2 {
         InputStream in;
@@ -350,7 +359,11 @@ public abstract class BomResolverService implements BuildService<BuildServicePar
      * system. It can resolve parent POMs and other dependencies referenced in BOM files
      * by creating detached Gradle configurations and resolving them.</p>
      * 
-     * <p>Essential for handling complex BOM hierarchies with parent POM inheritance.</p>
+     * <p>Every referenced model resolves through the owning project's Gradle repositories;
+     * no other project's repository or recommendation state is consulted. Repository
+     * declarations encountered inside POMs do not extend that repository set. Parent
+     * POMs are read during model building, so a local parent file is a configuration-time
+     * input even when the requested child BOM file has not changed.</p>
      */
     private static class ProjectModelResolver implements ModelResolver {
         private final Project project;

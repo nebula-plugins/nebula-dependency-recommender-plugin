@@ -102,6 +102,31 @@ below. With the flag disabled,
 ordinary parent-to-child recommendation inheritance is unchanged. The existing BOM
 publishing/configuration-cache fix remains active independently of this flag.
 
+### Maven parent POMs
+
+A BOM's Maven `<parent>` still contributes inherited properties and dependency management.
+The project-owned cache preserves this behavior; enabling the support flag does not detach
+a child BOM from its Maven parent. Parent POMs are resolved by coordinates using the consuming
+project's Gradle repositories. Declare repositories containing the child BOM and its parents
+locally, and supply any required Gradle or system interpolation properties before resolution.
+Repositories declared inside POMs and filesystem-relative parent lookup are not used.
+
+Regression coverage on Gradle 9.1.0 and 9.7.1 verifies identical child/parent coordinates with
+different repository contents in sibling and nested projects, multiple parent levels,
+inherited property precedence, and Gradle/system interpolation changes. It compares actual
+JAR contents, selected versions, and dependency-insight reasons without configuration cache,
+with strict ordinary cache storage/reuse, and with strict Isolated Projects storage/reuse.
+Changing only a local repository's parent POM, while leaving the child BOM unchanged, also
+invalidates the tested cached policy. Reasons continue to identify the effective child BOM;
+inherited parents are not added as separate recommendation sources.
+
+Maven inheritance requires no additional DSL. Automatic eager resolution and
+`eagerlyResolve=false` with either manual-resolution adapter retain their existing timing.
+The default-false support gate and rollback instructions above still apply.
+Imported BOMs, remote repository refresh
+policy, and provider fallback paths need separate evidence. Gradle root/ancestor recommendation
+inheritance uses the local policy adoption described below.
+
 ### OverrideTransitives project inspection and migration
 
 With the support flag enabled, non-core `OverrideTransitives` resolution reads producer-owned

@@ -38,6 +38,12 @@ import java.util.*;
  * not persistent memoization across build invocations or support for changing an
  * already-resolved configuration.</p>
  *
+ * <p>The snapshot includes dependency management inherited from Maven parent POMs.
+ * Each parent's repository resolution and effective interpolation use the same owner
+ * as the child BOM. Matching parent coordinates in another project do not create a
+ * shared parsed-model entry. Gradle configuration-cache input tracking, rather than
+ * this in-memory map, determines whether a later build can reuse configured policy.</p>
+ *
  * <p>The provider and manual eager-resolution adapters select this service through
  * {@link netflix.nebula.dependency.recommender.util.IsolatedProjectsSupport#registerBomResolver(Project)}.
  * The legacy {@link BomResolverService} remains the default. Opted-in affected builds
