@@ -15,6 +15,9 @@
  */
 package netflix.nebula.dependency.recommender.provider;
 
+import netflix.nebula.dependency.recommender.service.ProjectPropertiesValueSource;
+import netflix.nebula.dependency.recommender.service.SystemPropertiesValueSource;
+import netflix.nebula.dependency.recommender.util.IsolatedProjectsSupport;
 import org.gradle.api.Project;
 
 import java.io.File;
@@ -23,14 +26,17 @@ import java.util.*;
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
     private volatile Map<String, String> recommendations = null;
     private Set<String> reasons = new HashSet<>();
+    private final boolean isolatedProjectsSupport;
 
     public MavenBomRecommendationProvider(Project project, String configName) {
         super(project, configName);
+        isolatedProjectsSupport = IsolatedProjectsSupport.isEnabled(project);
     }
 
     public MavenBomRecommendationProvider(Project project, String configName, Set<String> reasons) {
         super(project, configName);
         this.reasons = reasons;
+        isolatedProjectsSupport = IsolatedProjectsSupport.isEnabled(project);
     }
 
     @Override
@@ -38,6 +44,22 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
         return getRecommendations().get(org + ":" + name);
     }
 
+    /**
+     * Returns this provider's lazily initialized BOM policy, consulting the service first.
+     *
+     * <p>A lookup before eager or manual service population uses the direct parser. With
+     * experimental support enabled, that parser reads interpolation inputs through the
+     * owning project's provider factory, just like the service parser. It does not read
+     * the project's dynamic property map, which is unavailable under Isolated Projects.
+     * Supply external interpolation values as Gradle or system properties in that mode;
+     * project extra properties remain supported by the flag-disabled fallback.</p>
+     *
+     * <p>This lookup can resolve the BOM configuration. Finish BOM customization before
+     * requesting recommendations; disabling automatic eager resolution does not defer an
+     * explicit lookup. Existing service/fallback error handling is unchanged.</p>
+     *
+     * @return this provider's cached map from {@code group:artifact} to recommended version
+     */
     public Map<String, String> getRecommendations() {
         if (recommendations == null) {
             try {
@@ -71,6 +93,11 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
      *   <li>Parent POM resolution capability</li>
      *   <li>Integration with Gradle project properties</li>
      * </ul>
+     *
+     * <p>The rollout decision is captured at provider construction. Enabled builds use
+     * tracked Gradle/system-property interpolation sources; disabled builds retain the
+     * original dynamic project-property source. Neither path populates the service cache
+     * or changes automatic eager/manual-resolution timing.</p>
      * 
      * @return a map of dependency coordinates to recommended versions
      * @throws RuntimeException if BOM resolution or parsing fails
@@ -203,6 +230,11 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
      *   <li>Java system properties</li>
      *   <li>Gradle project properties (if project context is available)</li>
      * </ul>
+     *
+     * <p>When experimental support is enabled, the last two sources use the owning
+     * project's provider factory. This avoids enumerating project properties and tracks
+     * the queried Gradle/system inputs for configuration-cache invalidation. Source order
+     * remains Maven defaults, system values, then Gradle values, matching the service parser.</p>
      */
     private class ProjectPropertiesModelInterpolator extends org.apache.maven.model.interpolation.StringSearchModelInterpolator {
         
@@ -214,6 +246,11 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
         public java.util.List<org.codehaus.plexus.interpolation.ValueSource> createValueSources(org.apache.maven.model.Model model, java.io.File projectDir, org.apache.maven.model.building.ModelBuildingRequest request, org.apache.maven.model.building.ModelProblemCollector collector) {
             java.util.List<org.codehaus.plexus.interpolation.ValueSource> sources = new java.util.ArrayList<>();
             sources.addAll(super.createValueSources(model, projectDir, request, collector));
+            if (isolatedProjectsSupport && project != null) {
+                sources.add(new SystemPropertiesValueSource(project.getProviders()));
+                sources.add(new ProjectPropertiesValueSource(project.getProviders()));
+                return sources;
+            }
             sources.add(new org.codehaus.plexus.interpolation.PropertiesBasedValueSource(System.getProperties()));
             if (project != null) {
                 sources.add(new org.codehaus.plexus.interpolation.MapBasedValueSource(project.getProperties()));
