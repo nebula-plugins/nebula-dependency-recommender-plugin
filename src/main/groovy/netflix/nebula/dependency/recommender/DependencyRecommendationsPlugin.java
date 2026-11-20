@@ -284,8 +284,8 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * Looks for a version in the consumer and then in its nearest ancestor policy scopes.
      *
      * <p>With the rollout flag disabled, this retains recursive ancestor extension lookup.
-     * With the flag enabled, it queries only the supplied project's local
-     * {@link RecommendationProviderContainer#inheritedPolicy(String, Action)} layers.
+     * Ancestors without the plugin are skipped. With the flag enabled, it queries only
+     * the supplied project's local {@link RecommendationProviderContainer#inheritedPolicy(String, Action)} layers.
      * Those layers must be supplied by a local convention; the flag does not import
      * arbitrary parent build-script state. Each scope preserves provider LIFO order.</p>
      *
@@ -298,12 +298,14 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * @return the recommended version or <code>null</code>
      */
     public String getRecommendedVersionRecursive(Project project, ModuleVersionSelector mvSelector) {
-        RecommendationProviderContainer container = project.getExtensions().getByType(RecommendationProviderContainer.class);
-        String version = container.getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
-        if (version != null)
-            return version;
+        RecommendationProviderContainer container = project.getExtensions().findByType(RecommendationProviderContainer.class);
+        if (container != null) {
+            String version = container.getRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
+            if (version != null)
+                return version;
+        }
         if (IsolatedProjectsSupport.isEnabled(project))
-            return container.getInheritedRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
+            return container == null ? null : container.getInheritedRecommendedVersion(mvSelector.getGroup(), mvSelector.getName());
         if (project.getParent() != null)
             return getRecommendedVersionRecursive(project.getParent(), mvSelector);
         return null;
@@ -313,20 +315,23 @@ public class DependencyRecommendationsPlugin implements Plugin<Project> {
      * Returns the nearest nonempty reason set, independently of the scope providing a version.
      *
      * <p>The rollout path uses consumer-owned inherited policy layers; the disabled path
-     * retains recursive ancestor extension lookup. Neither path polls new providers here.
-     * A nearer scope's reasons can therefore be returned even when a more distant scope
-     * supplied the recommended version, preserving existing reason-selection behavior.</p>
+     * retains recursive ancestor extension lookup, skipping ancestors without the plugin.
+     * Neither path polls new providers here. A nearer scope's reasons can therefore be
+     * returned even when a more distant scope supplied the recommended version, preserving
+     * existing reason-selection behavior.</p>
      *
      * @param project the gradle <code>Project</code>
      * @return the nearest nonempty reason set, or an empty set after a complete chain
      */
     public Set<String> getReasonsRecursive(Project project) {
-        RecommendationProviderContainer container = project.getExtensions().getByType(RecommendationProviderContainer.class);
-        Set<String> reasons = container.getReasons();
-        if (!reasons.isEmpty())
-            return reasons;
+        RecommendationProviderContainer container = project.getExtensions().findByType(RecommendationProviderContainer.class);
+        if (container != null) {
+            Set<String> reasons = container.getReasons();
+            if (!reasons.isEmpty())
+                return reasons;
+        }
         if (IsolatedProjectsSupport.isEnabled(project))
-            return container.getInheritedReasons();
+            return container == null ? Collections.emptySet() : container.getInheritedReasons();
         if (project.getParent() != null)
             return getReasonsRecursive(project.getParent());
         return Collections.emptySet();
